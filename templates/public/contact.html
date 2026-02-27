@@ -1,0 +1,91 @@
+{% extends "public/base.html" %}
+{% block title %}Contact - HDATTAHER MOBILE{% endblock %}
+
+{% block content %}
+<section class="section" style="padding-top:100px;">
+    <div class="container">
+        <div class="section-header">
+            <h2><i class="fas fa-envelope" style="color:var(--primary);"></i> Contactez-nous</h2>
+            <p>Nous sommes à votre écoute. N'hésitez pas à nous contacter pour toute question.</p>
+        </div>
+
+        <div class="contact-grid">
+            <!-- Carte WhatsApp -->
+            <a href="https://wa.me/{{ settings.get('whatsapp','22791720755') }}" target="_blank"
+                class="contact-card whatsapp-card">
+                <div class="contact-card-icon">
+                    <i class="fab fa-whatsapp"></i>
+                </div>
+                <h3>WhatsApp</h3>
+                <p>{{ settings.get('whatsapp', '+22791720755') }}</p>
+                <span class="contact-card-action">Envoyer un message <i class="fas fa-arrow-right"></i></span>
+            </a>
+
+            <!-- Carte Localisation -->
+            <div class="contact-card location-card">
+                <div class="contact-card-icon">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <h3>Notre Boutique</h3>
+                <p>{{ settings.get('location', 'Niger') }}</p>
+                <span class="contact-card-action" style="opacity:0.6;">{{ settings.get('owner_name', 'HDATTAHER MOBILE')
+                    }}</span>
+            </div>
+
+            <!-- Carte Horaires -->
+            <div class="contact-card hours-card">
+                <div class="contact-card-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <h3>Horaires</h3>
+                <p>Lundi - Samedi<br>8h00 - 20h00</p>
+                <span class="contact-card-action" style="color:var(--success);">
+                    <i class="fas fa-circle" style="font-size:0.5rem;vertical-align:middle;"></i> Ouverts maintenant
+                </span>
+            </div>
+        </div>
+
+        <!-- Section réseaux sociaux -->
+        <div class="contact-social-section">
+            <h3>Suivez-nous sur les réseaux sociaux</h3>
+            <div class="contact-social-grid">
+                {% if settings.get('facebook', '') %}
+                <a href="{{ settings.get('facebook') }}" target="_blank" class="contact-social-card facebook">
+                    <i class="fab fa-facebook-f"></i>
+                    <span>Facebook</span>
+                </a>
+                {% endif %}
+                {% if settings.get('instagram', '') %}
+                <a href="{{ settings.get('instagram') }}" target="_blank" class="contact-social-card instagram">
+                    <i class="fab fa-instagram"></i>
+                    <span>Instagram</span>
+                </a>
+                {% endif %}
+                {% if settings.get('tiktok', '') %}
+                <a href="{{ settings.get('tiktok') }}" target="_blank" class="contact-social-card tiktok">
+                    <i class="fab fa-tiktok"></i>
+                    <span>TikTok</span>
+                </a>
+                {% endif %}
+                <a href="https://wa.me/{{ settings.get('whatsapp','22791720755') }}" target="_blank"
+                    class="contact-social-card whatsapp-social">
+                    <i class="fab fa-whatsapp"></i>
+                    <span>WhatsApp</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- CTA final -->
+        <div class="contact-cta">
+            <div class="contact-cta-content">
+                <h2>Une question sur un produit ?</h2>
+                <p>Notre équipe est disponible pour vous conseiller et vous aider à trouver le smartphone parfait.</p>
+                <a href="https://wa.me/{{ settings.get('whatsapp','22791720755') }}?text=Bonjour, j'ai une question sur vos produits"
+                    target="_blank" class="btn btn-whatsapp" style="font-size:1.1rem; padding:16px 36px;">
+                    <i class="fab fa-whatsapp"></i> Discuter maintenant
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

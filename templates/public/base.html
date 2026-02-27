@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="HDATTAHER MOBILE - Votre boutique de smartphones et accessoires au Niger. Les meilleurs prix et qualité.">
+    <title>{% block title %}HDATTAHER MOBILE{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- CSS dynamique depuis les paramètres admin -->
+    <style>
+        {
+                {
+                dynamic_css|safe
+            }
+        }
+    </style>
+    {% if settings.get('dark_mode', '0') == '1' %}
+    <script>document.documentElement.setAttribute('data-theme', 'dark');</script>
+    {% endif %}
+    <style>
+        .search-results-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-top: 4px;
+            box-shadow: var(--shadow-lg);
+            z-index: 100;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .search-result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .search-result-item:hover {
+            background: var(--bg-secondary);
+        }
+
+        .search-result-item:last-child {
+            border: none;
+        }
+
+        .search-price {
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .animate-on-scroll {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+
+        .animate-on-scroll.animate-in {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <!-- NAVBAR -->
+    <nav class="navbar" id="mainNav">
+        <a href="{{ url_for('index') }}" class="nav-logo">
+            {% if settings.get('logo_path', '') %}
+            <img src="{{ url_for('uploaded_file', filename=settings.get('logo_path')) }}" alt="Logo"
+                style="height:38px; border-radius:10px;">
+            {% else %}
+            <div class="logo-icon">HM</div>
+            {% endif %}
+            <span>HDATTAHER MOBILE</span>
+        </a>
+
+        <!-- Desktop nav links -->
+        <ul class="nav-links-desktop">
+            <li><a href="{{ url_for('index') }}" data-i18n="home">Accueil</a></li>
+            <li><a href="{{ url_for('products') }}" data-i18n="products">Produits</a></li>
+            <li><a href="{{ url_for('featured_products') }}">En Vedette</a></li>
+            <li><a href="{{ url_for('new_arrivals') }}">Nouveautés</a></li>
+            <li><a href="{{ url_for('contact') }}" data-i18n="contact">Contact</a></li>
+        </ul>
+
+        <div class="nav-actions">
+            <select class="lang-select" id="langSelect" aria-label="Langue">
+                <option value="fr">🇫🇷 FR</option>
+                <option value="en">🇬🇧 EN</option>
+                <option value="ar">🇸🇦 AR</option>
+            </select>
+            <button class="btn-icon" id="themeToggle" aria-label="Changer le thème">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+
+        <!-- Mobile hamburger -->
+        <button class="mobile-toggle" id="mobileToggle" aria-label="Menu" onclick="toggleMobileMenu()">
+            <span></span><span></span><span></span>
+        </button>
+    </nav>
+
+    <!-- ============================================================
+         MOBILE MENU (Slide-in Premium)
+         ============================================================ -->
+    <div class="mobile-overlay" id="mobileOverlay" onclick="closeMobileMenu()"></div>
+    <div class="mobile-menu" id="mobileMenu">
+        <!-- Header du menu mobile -->
+        <div class="mobile-menu-header">
+            <div class="nav-logo">
+                <div class="logo-icon">HM</div>
+                <span>HDATTAHER MOBILE</span>
+            </div>
+            <button class="mobile-menu-close" onclick="closeMobileMenu()" aria-label="Fermer">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- Liens principaux -->
+        <div class="mobile-menu-links">
+            <a href="{{ url_for('index') }}" class="mobile-menu-link">
+                <div class="mobile-link-icon"><i class="fas fa-home"></i></div>
+                <span>Accueil</span>
+                <i class="fas fa-chevron-right mobile-link-arrow"></i>
+            </a>
+            <a href="{{ url_for('products') }}" class="mobile-menu-link">
+                <div class="mobile-link-icon"><i class="fas fa-th-large"></i></div>
+                <span>Produits</span>
+                <i class="fas fa-chevron-right mobile-link-arrow"></i>
+            </a>
+            <a href="{{ url_for('featured_products') }}" class="mobile-menu-link">
+                <div class="mobile-link-icon"><i class="fas fa-star"></i></div>
+                <span>Produits en Vedette</span>
+                <i class="fas fa-chevron-right mobile-link-arrow"></i>
+            </a>
+            <a href="{{ url_for('new_arrivals') }}" class="mobile-menu-link">
+                <div class="mobile-link-icon"><i class="fas fa-bolt"></i></div>
+                <span>Nouvelles Arrivages</span>
+                <i class="fas fa-chevron-right mobile-link-arrow"></i>
+            </a>
+            <a href="{{ url_for('contact') }}" class="mobile-menu-link">
+                <div class="mobile-link-icon"><i class="fas fa-envelope"></i></div>
+                <span>Contact</span>
+                <i class="fas fa-chevron-right mobile-link-arrow"></i>
+            </a>
+        </div>
+
+        <!-- Catégories -->
+        <div class="mobile-menu-section">
+            <div class="mobile-menu-section-title">Catégories</div>
+            {% for cat in categories %}
+            <a href="{{ url_for('products', category=cat.id) }}" class="mobile-menu-link mobile-cat-link"
+                onclick="closeMobileMenu()">
+                <div class="mobile-link-icon"><i class="{{ cat.icon }}"></i></div>
+                <span>{{ cat.name }}</span>
+                <i class="fas fa-chevron-right mobile-link-arrow"></i>
+            </a>
+            {% endfor %}
+        </div>
+
+        <!-- Actions rapides -->
+        <div class="mobile-menu-actions">
+            <a href="https://wa.me/{{ settings.get('whatsapp','22791720755') }}" target="_blank"
+                class="mobile-action-btn whatsapp">
+                <i class="fab fa-whatsapp"></i> Contactez-nous via WhatsApp
+            </a>
+        </div>
+
+        <!-- Footer du menu -->
+        <div class="mobile-menu-footer">
+            <div class="social-links" style="justify-content: center;">
+                <a href="{{ settings.get('facebook','#') }}" target="_blank"><i class="fab fa-facebook-f"></i></a>
+                <a href="{{ settings.get('instagram','#') }}" target="_blank"><i class="fab fa-instagram"></i></a>
+                <a href="{{ settings.get('tiktok','#') }}" target="_blank"><i class="fab fa-tiktok"></i></a>
+            </div>
+            <p style="font-size:0.75rem; color:var(--text-secondary); margin-top:10px;">
+                © 2026 HDATTAHER MOBILE
+            </p>
+        </div>
+    </div>
+
+    <!-- FLASH MESSAGES -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-messages">
+        {% for category, message in messages %}
+        <div class="flash-msg {{ category }}">
+            <i
+                class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'error' %}exclamation-circle{% elif category == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <!-- MAIN CONTENT -->
+    {% block content %}{% endblock %}
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-grid container">
+            <div class="footer-brand">
+                <div class="nav-logo" style="margin-bottom:1rem;">
+                    <div class="logo-icon">HM</div>
+                    <span>HDATTAHER MOBILE</span>
+                </div>
+                <p data-i18n="footer_desc">Votre destination de confiance pour les smartphones et accessoires au Niger.
+                </p>
+                <div class="social-links">
+                    <a href="{{ settings.get('facebook','#') }}" target="_blank" aria-label="Facebook"><i
+                            class="fab fa-facebook-f"></i></a>
+                    <a href="{{ settings.get('instagram','#') }}" target="_blank" aria-label="Instagram"><i
+                            class="fab fa-instagram"></i></a>
+                    <a href="{{ settings.get('tiktok','#') }}" target="_blank" aria-label="TikTok"><i
+                            class="fab fa-tiktok"></i></a>
+                    <a href="https://wa.me/{{ settings.get('whatsapp','22791720755') }}" target="_blank"
+                        aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                </div>
+            </div>
+            <div>
+                <h4 data-i18n="quick_links">Liens Rapides</h4>
+                <ul class="footer-links">
+                    <li><a href="{{ url_for('index') }}" data-i18n="home">Accueil</a></li>
+                    <li><a href="{{ url_for('products') }}" data-i18n="products">Produits</a></li>
+                    <li><a href="{{ url_for('featured_products') }}">En Vedette</a></li>
+                    <li><a href="{{ url_for('new_arrivals') }}">Nouveautés</a></li>
+                    <li><a href="{{ url_for('contact') }}">Contact</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 data-i18n="our_categories">Nos Catégories</h4>
+                <ul class="footer-links">
+                    {% for cat in categories %}
+                    <li><a href="{{ url_for('products', category=cat.id) }}">{{ cat.name }}</a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div>
+                <h4 data-i18n="contact_us">Contactez-nous</h4>
+                <ul class="footer-links">
+                    <li><i class="fab fa-whatsapp"></i> {{ settings.get('whatsapp', '+22791720755') }}</li>
+                    <li><i class="fas fa-map-marker-alt"></i> {{ settings.get('location', 'Niger') }}</li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            &copy; 2026 HDATTAHER MOBILE. <span data-i18n="all_rights">Tous droits réservés</span>.
+        </div>
+    </footer>
+
+    <!-- WhatsApp Flottant -->
+    <a href="https://wa.me/{{ settings.get('whatsapp','22791720755') }}" target="_blank" class="whatsapp-float"
+        aria-label="WhatsApp">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // ============ Mobile Menu ============
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const overlay = document.getElementById('mobileOverlay');
+            const toggle = document.getElementById('mobileToggle');
+            const isOpen = menu.classList.contains('open');
+            if (isOpen) {
+                closeMobileMenu();
+            } else {
+                menu.classList.add('open');
+                overlay.classList.add('open');
+                toggle.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+        function closeMobileMenu() {
+            document.getElementById('mobileMenu').classList.remove('open');
+            document.getElementById('mobileOverlay').classList.remove('open');
+            document.getElementById('mobileToggle').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        // Fermer avec Escape
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeMobileMenu();
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

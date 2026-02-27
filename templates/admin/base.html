@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin{% endblock %} - HDATTAHER MOBILE</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+
+<body class="admin-body">
+    <button class="mobile-sidebar-toggle" id="sidebarToggle" aria-label="Menu">
+        <i class="fas fa-bars" id="sidebarToggleIcon"></i>
+    </button>
+    <div class="admin-layout">
+        <!-- SIDEBAR -->
+        <aside class="admin-sidebar" id="adminSidebar">
+            <div class="sidebar-logo">
+                <h2>HDATTAHER MOBILE</h2>
+                <small>Panneau d'administration</small>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="{{ url_for('admin_dashboard') }}"
+                    class="{% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
+                    <i class="fas fa-chart-pie"></i> Tableau de bord
+                </a>
+                <a href="{{ url_for('admin_products') }}"
+                    class="{% if request.endpoint in ['admin_products','admin_add_product','admin_edit_product'] %}active{% endif %}">
+                    <i class="fas fa-box"></i> Produits
+                </a>
+                <a href="{{ url_for('admin_categories') }}"
+                    class="{% if request.endpoint == 'admin_categories' %}active{% endif %}">
+                    <i class="fas fa-layer-group"></i> Catégories
+                </a>
+                <a href="{{ url_for('admin_settings') }}"
+                    class="{% if request.endpoint == 'admin_settings' %}active{% endif %}">
+                    <i class="fas fa-cog"></i> Paramètres
+                </a>
+                <a href="{{ url_for('admin_logs') }}"
+                    class="{% if request.endpoint == 'admin_logs' %}active{% endif %}">
+                    <i class="fas fa-clipboard-list"></i> Journal
+                </a>
+                <a href="{{ url_for('admin_profile') }}"
+                    class="{% if request.endpoint == 'admin_profile' %}active{% endif %}">
+                    <i class="fas fa-user-circle"></i> Mon Profil
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <a href="{{ url_for('admin_logout') }}"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
+            </div>
+        </aside>
+
+        <!-- OVERLAY (mobile) -->
+        <div class="admin-sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- MAIN -->
+        <main class="admin-main">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div style="margin-bottom:1rem;">
+                {% for category, message in messages %}
+                <div
+                    style="padding:12px 20px; border-radius:10px; margin-bottom:8px;
+                            background: {% if category == 'success' %}rgba(16,185,129,0.15); color:#10B981;{% elif category == 'error' %}rgba(239,68,68,0.15); color:#EF4444;{% else %}rgba(108,99,255,0.15); color:#6C63FF;{% endif %}; font-size:0.9rem; display:flex; align-items:center; gap:8px;">
+                    <i
+                        class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'error' %}times-circle{% else %}info-circle{% endif %}"></i>
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            {% block admin_content %}{% endblock %}
+        </main>
+    </div>
+
+    <script>
+        (function () {
+            const sidebar = document.getElementById('adminSidebar');
+            const toggle = document.getElementById('sidebarToggle');
+            const overlay = document.getElementById('sidebarOverlay');
+            const icon = document.getElementById('sidebarToggleIcon');
+
+            function openSidebar() {
+                sidebar.classList.add('open');
+                icon.className = 'fas fa-times';
+            }
+
+            function closeSidebar() {
+                sidebar.classList.remove('open');
+                icon.className = 'fas fa-bars';
+            }
+
+            toggle.addEventListener('click', function () {
+                if (sidebar.classList.contains('open')) {
+                    closeSidebar();
+                } else {
+                    openSidebar();
+                }
+            });
+
+            overlay.addEventListener('click', closeSidebar);
+
+            // Auto-close sidebar on nav link click (mobile)
+            sidebar.querySelectorAll('.sidebar-nav a, .sidebar-footer a').forEach(function (link) {
+                link.addEventListener('click', closeSidebar);
+            });
+        })();
+    </script>
+</body>
+
+</html>

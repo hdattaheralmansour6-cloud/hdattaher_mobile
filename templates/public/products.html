@@ -1,0 +1,108 @@
+{% extends "public/base.html" %}
+{% block title %}{{ page_title|default('Nos Produits') }} - HDATTAHER MOBILE{% endblock %}
+
+{% block content %}
+<section class="section" style="padding-top:100px;">
+    <div class="container">
+        <div class="section-header">
+            <h2>{{ page_title|default('Nos Produits') }}</h2>
+        </div>
+
+        <!-- Filtres -->
+        <div class="filters-bar">
+            <form method="GET" action="{{ url_for('products') }}"
+                style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; width:100%;">
+                <div class="search-box" style="position:relative;">
+                    <i class="fas fa-search"></i>
+                    <input type="text" name="search" id="liveSearch" data-i18n-placeholder="search"
+                        placeholder="Rechercher..." value="{{ search }}">
+                    <div class="search-results-dropdown" id="searchResults"></div>
+                </div>
+                <select name="category" class="filter-input">
+                    <option value="" data-i18n="all_categories">Toutes les catégories</option>
+                    {% for cat in all_categories %}
+                    <option value="{{ cat.id }}" {% if current_category==cat.id %}selected{% endif %}>{{ cat.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <input type="number" name="min_price" class="filter-input" placeholder="Prix min" style="width:110px;"
+                    value="{{ min_price if min_price is not none else '' }}">
+                <input type="number" name="max_price" class="filter-input" placeholder="Prix max" style="width:110px;"
+                    value="{{ max_price if max_price is not none else '' }}">
+                <select name="sort" class="filter-input">
+                    <option value="newest" {% if sort=='newest' %}selected{% endif %} data-i18n="newest">Plus récent
+                    </option>
+                    <option value="price_asc" {% if sort=='price_asc' %}selected{% endif %} data-i18n="price_asc">Prix
+                        croissant</option>
+                    <option value="price_desc" {% if sort=='price_desc' %}selected{% endif %} data-i18n="price_desc">
+                        Prix décroissant</option>
+                    <option value="popular" {% if sort=='popular' %}selected{% endif %} data-i18n="popular">Populaire
+                    </option>
+                </select>
+                <button type="submit" class="btn btn-primary btn-sm" data-i18n="filter">
+                    <i class="fas fa-filter"></i> Filtrer
+                </button>
+            </form>
+        </div>
+
+        <!-- Grille Produits -->
+        {% if products %}
+        <div class="products-grid">
+            {% for p in products %}
+            <div class="product-card animate-on-scroll">
+                <a href="{{ url_for('product_detail', product_id=p.id) }}">
+                    <div class="product-image">
+                        {% if p.image and p.image != 'default.png' %}
+                        <img src="{{ url_for('uploaded_file', filename=p.image) }}" alt="{{ p.name }}" loading="lazy">
+                        {% else %}
+                        <div class="placeholder-icon">📱</div>
+                        {% endif %}
+                        {% if p.discount > 0 %}
+                        <span class="badge-discount">-{{ p.discount }}%</span>
+                        {% endif %}
+                        {% if p.stock == 0 %}
+                        <span class="badge-stock out-of-stock">Rupture</span>
+                        {% elif p.stock <= 5 %} <span class="badge-stock low-stock">Stock faible</span>
+                            {% else %}
+                            <span class="badge-stock in-stock">En stock</span>
+                            {% endif %}
+                    </div>
+                </a>
+                <div class="product-info">
+                    <div class="product-brand">{{ p.brand }}</div>
+                    <h3 class="product-name">{{ p.name }}</h3>
+                    <div class="product-price-row">
+                        <span class="product-price">{{ "{:,.0f}".format(p.price) }} FCFA</span>
+                        {% if p.old_price and p.old_price > 0 %}
+                        <span class="product-old-price">{{ "{:,.0f}".format(p.old_price) }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="product-views"><i class="fas fa-eye"></i> {{ p.views }} vues</div>
+                    <div class="product-actions" style="margin-top:10px;">
+                        <a href="{{ url_for('product_detail', product_id=p.id) }}"
+                            class="btn btn-outline btn-sm">Voir</a>
+                        {% if p.stock > 0 %}
+                        <a href="https://wa.me/{{ settings.get('whatsapp','22791720755') }}?text=Bonjour, je veux acheter {{ p.name }}"
+                            target="_blank" class="btn btn-whatsapp btn-sm">
+                            <i class="fab fa-whatsapp"></i> Acheter
+                        </a>
+                        {% else %}
+                        <span class="btn btn-sm"
+                            style="background:#6b7280; color:#fff; cursor:not-allowed; opacity:0.7;">
+                            Rupture de stock
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="text-align:center; padding:4rem 0;">
+            <i class="fas fa-search" style="font-size:3rem; color:var(--text-secondary); opacity:0.5;"></i>
+            <h3 style="margin-top:1rem; color:var(--text-secondary);">Aucun produit trouvé</h3>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

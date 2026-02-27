@@ -1,0 +1,43 @@
+# ============================================================
+# HDATTAHER MOBILE - .gitignore
+# ============================================================
+
+# Clé secrète générée automatiquement
+.secret_key
+.env
+
+# Base de données
+*.db
+_backup_sqlite/
+instance/
+
+# Fichiers Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Uploads utilisateur
+static/uploads/*
+!static/uploads/.gitkeep
+
+# Environnement virtuel
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Scripts temporaires
+activate_supabase.py
+migration_is_new.sql
+GUIDE_MIGRATION_SUPABASE.md

@@ -1,0 +1,159 @@
+{% extends "admin/base.html" %}
+{% block title %}Produits{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <div>
+        <h1>Gestion des Produits</h1><span class="breadcrumb">{{ products|length }} produit(s)</span>
+    </div>
+    <a href="{{ url_for('admin_add_product') }}" class="btn-admin primary"><i class="fas fa-plus"></i> Nouveau
+        Produit</a>
+</div>
+
+<div class="admin-card">
+    <div class="admin-card-body" style="padding:0; overflow-x:auto;">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>Nom</th>
+                    <th>Catégorie</th>
+                    <th>Prix (FCFA)</th>
+                    <th>Stock</th>
+                    <th>Promo</th>
+                    <th>Vues</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in products %}
+                <tr>
+                    <td>
+                        {% if p.image and p.image != 'default.png' %}
+                        <img src="{{ url_for('uploaded_file', filename=p.image) }}" class="product-thumb" alt="">
+                        {% else %}
+                        <div class="product-thumb"
+                            style="display:flex;align-items:center;justify-content:center;background:var(--admin-bg);font-size:1.2rem;">
+                            📱</div>
+                        {% endif %}
+                    </td>
+                    <td style="font-weight:600;">{{ p.name[:30] }}{% if p.name|length > 30 %}...{% endif %}</td>
+                    <td>{{ p.category_name or 'N/A' }}</td>
+                    <td>{{ "{:,.0f}".format(p.price) }}</td>
+                    <td>
+                        {% if p.stock == 0 %}<span style="color:var(--admin-danger); font-weight:600;">Rupture</span>
+                        {% elif p.stock <= 5 %}<span style="color:var(--admin-warning); font-weight:600;">{{ p.stock
+                            }}</span>
+                            {% else %}<span style="color:var(--admin-success);">{{ p.stock }}</span>{% endif %}
+                    </td>
+                    <td>{% if p.discount > 0 %}<span style="color:var(--admin-danger); font-weight:600;">-{{ p.discount
+                            }}%</span>{% else %}-{% endif %}</td>
+                    <td><i class="fas fa-eye" style="color:var(--admin-primary);"></i> {{ p.views }}</td>
+                    <td>{% if p.is_active %}<span style="color:var(--admin-success);">✔ Actif</span>{% else %}<span
+                            style="color:var(--admin-text-sec);">Inactif</span>{% endif %}</td>
+                    <td>
+                        <div class="table-actions">
+                            <a href="{{ url_for('admin_edit_product', product_id=p.id) }}" class="btn-admin primary"
+                                style="padding:6px 12px; font-size:0.8rem;">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form id="delete-form-{{ p.id }}" method="POST"
+                                action="{{ url_for('admin_delete_product', product_id=p.id) }}" style="display:inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="confirmed" value="yes">
+                                <button type="button" class="btn-admin danger"
+                                    style="padding:6px 12px; font-size:0.8rem;"
+                                    onclick="showDeleteModal('{{ p.name[:40] }}', '{{ p.id }}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modale de confirmation de suppression -->
+<div id="deleteModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+    background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+    <div style="background:var(--admin-card); border:1px solid var(--admin-border); border-radius:20px;
+        padding:2rem; max-width:420px; width:90%; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.5);
+        animation: modalIn 0.25s ease-out;">
+        <div style="width:60px; height:60px; border-radius:50%; background:rgba(239,68,68,0.15);
+            display:flex; align-items:center; justify-content:center; margin:0 auto 1.2rem; font-size:1.5rem;">
+            <i class="fas fa-exclamation-triangle" style="color:var(--admin-danger);"></i>
+        </div>
+        <h3 style="font-size:1.2rem; margin-bottom:0.5rem; color:var(--admin-text);">Confirmer la suppression</h3>
+        <p style="color:var(--admin-text-sec); font-size:0.9rem; margin-bottom:1.5rem;">
+            Voulez-vous vraiment supprimer <strong id="deleteProductName" style="color:var(--admin-danger);"></strong> ?
+            <br><small>Cette action est irréversible.</small>
+        </p>
+        <div style="display:flex; gap:12px; justify-content:center;">
+            <button onclick="hideDeleteModal()" class="btn-admin"
+                style="background:var(--admin-border); padding:10px 24px;">
+                <i class="fas fa-times"></i> Annuler
+            </button>
+            <button id="confirmDeleteBtn" onclick="confirmDelete()" class="btn-admin danger" style="padding:10px 24px;">
+                <i class="fas fa-trash"></i> Supprimer
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    @keyframes modalIn {
+        from {
+            opacity: 0;
+            transform: scale(0.9) translateY(-20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+        }
+    }
+</style>
+
+<script>
+    let deleteProductId = null;
+
+    function showDeleteModal(productName, productId) {
+        deleteProductId = productId;
+        document.getElementById('deleteProductName').textContent = productName;
+        const modal = document.getElementById('deleteModal');
+        modal.style.display = 'flex';
+    }
+
+    function hideDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'none';
+        deleteProductId = null;
+    }
+
+    function confirmDelete() {
+        if (deleteProductId) {
+            const form = document.getElementById('delete-form-' + deleteProductId);
+            if (form) {
+                form.submit();
+            }
+        }
+    }
+
+    // Fermer la modale en cliquant à l'extérieur
+    document.getElementById('deleteModal').addEventListener('click', function (e) {
+        if (e.target === this) {
+            hideDeleteModal();
+        }
+    });
+
+    // Fermer la modale avec Escape
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            hideDeleteModal();
+        }
+    });
+</script>
+{% endblock %}

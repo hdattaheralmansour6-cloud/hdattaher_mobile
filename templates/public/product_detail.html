@@ -1,0 +1,98 @@
+{% extends "public/base.html" %}
+{% block title %}{{ product.name }} - HDATTAHER MOBILE{% endblock %}
+
+{% block content %}
+<section class="product-detail">
+    <div class="product-detail-grid">
+        <div class="product-detail-image">
+            {% if product.image and product.image != 'default.png' %}
+            <img src="{{ url_for('uploaded_file', filename=product.image) }}" alt="{{ product.name }}">
+            {% else %}
+            <div class="placeholder-icon" style="font-size:8rem; opacity:0.3;">📱</div>
+            {% endif %}
+        </div>
+        <div class="product-detail-info">
+            <span class="detail-brand">{{ product.brand }}</span>
+            <h1 class="detail-title">{{ product.name }}</h1>
+
+            <div style="display:flex; align-items:baseline; gap:12px; margin:1rem 0;">
+                <span class="detail-price">{{ "{:,.0f}".format(product.price) }} FCFA</span>
+                {% if product.old_price and product.old_price > 0 %}
+                <span class="detail-old-price">{{ "{:,.0f}".format(product.old_price) }} FCFA</span>
+                {% endif %}
+                {% if product.discount > 0 %}
+                <span class="badge-discount" style="position:static;">-{{ product.discount }}%</span>
+                {% endif %}
+            </div>
+
+            <p class="detail-description">{{ product.description }}</p>
+
+            <div class="detail-meta">
+                <div class="meta-item">
+                    <i class="fas fa-folder"></i>
+                    <span data-i18n="category">Catégorie</span>: {{ product.category_name }}
+                </div>
+                <div class="meta-item">
+                    <i class="fas fa-boxes-stacked"></i>
+                    <span data-i18n="stock">Stock</span>:
+                    {% if product.stock == 0 %}
+                    <span style="color:var(--danger); font-weight:600;">Rupture</span>
+                    {% elif product.stock <= 5 %} <span style="color:var(--warning); font-weight:600;">{{ product.stock
+                        }} (Stock faible)</span>
+                        {% else %}
+                        <span style="color:var(--success); font-weight:600;">{{ product.stock }} en stock</span>
+                        {% endif %}
+                </div>
+                <div class="meta-item">
+                    <i class="fas fa-eye"></i> {{ product.views + 1 }} <span data-i18n="views">vues</span>
+                </div>
+                <div class="meta-item">
+                    <i class="fas fa-tag"></i>
+                    <span data-i18n="brand">Marque</span>: {{ product.brand }}
+                </div>
+            </div>
+
+            <div style="display:flex; gap:1rem; margin-top:2rem; flex-wrap:wrap;">
+                <a href="https://wa.me/{{ settings.get('whatsapp','22791720755') }}?text=Bonjour Hdattaher! Je suis intéressé par: {{ product.name }} ({{ "
+                    {:,.0f}".format(product.price) }} FCFA). Est-il disponible?" target="_blank"
+                    class="btn btn-whatsapp" style="flex:1;">
+                    <i class="fab fa-whatsapp"></i> <span data-i18n="buy_whatsapp">Commander via WhatsApp</span>
+                </a>
+                <a href="{{ url_for('products') }}" class="btn btn-outline">
+                    <i class="fas fa-arrow-left"></i> Retour
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Produits similaires -->
+    {% if related %}
+    <div class="container" style="margin-top:4rem;">
+        <h2 style="font-weight:800; margin-bottom:1.5rem;" data-i18n="related_products">Produits Similaires</h2>
+        <div class="products-grid">
+            {% for p in related %}
+            <div class="product-card">
+                <a href="{{ url_for('product_detail', product_id=p.id) }}">
+                    <div class="product-image">
+                        {% if p.image and p.image != 'default.png' %}
+                        <img src="{{ url_for('uploaded_file', filename=p.image) }}" alt="{{ p.name }}" loading="lazy">
+                        {% else %}
+                        <div class="placeholder-icon">📱</div>
+                        {% endif %}
+                        {% if p.discount > 0 %}<span class="badge-discount">-{{ p.discount }}%</span>{% endif %}
+                    </div>
+                </a>
+                <div class="product-info">
+                    <div class="product-brand">{{ p.brand }}</div>
+                    <h3 class="product-name">{{ p.name }}</h3>
+                    <div class="product-price-row">
+                        <span class="product-price">{{ "{:,.0f}".format(p.price) }} FCFA</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

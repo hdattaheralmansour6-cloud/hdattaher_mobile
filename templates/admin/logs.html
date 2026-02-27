@@ -1,0 +1,71 @@
+{% extends "admin/base.html" %}
+{% block title %}Journal des Actions{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <div>
+        <h1>Journal des Actions</h1><span class="breadcrumb">{{ logs|length }} action(s)</span>
+    </div>
+</div>
+
+<div class="admin-card">
+    <div class="admin-card-body" style="padding:0; overflow-x:auto;">
+        {% if logs %}
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Action</th>
+                    <th>Détails</th>
+                    <th>Admin</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td style="white-space:nowrap; color:var(--admin-text-sec); font-size:0.85rem;">
+                        {{ log.created_at }}
+                    </td>
+                    <td>
+                        {% if 'Ajout' in log.action %}
+                        <span style="color:var(--admin-success); font-weight:600;">
+                            <i class="fas fa-plus-circle"></i> {{ log.action }}
+                        </span>
+                        {% elif 'Modification' in log.action %}
+                        <span style="color:var(--admin-warning); font-weight:600;">
+                            <i class="fas fa-edit"></i> {{ log.action }}
+                        </span>
+                        {% elif 'Suppression' in log.action %}
+                        <span style="color:var(--admin-danger); font-weight:600;">
+                            <i class="fas fa-trash"></i> {{ log.action }}
+                        </span>
+                        {% elif 'mot de passe' in log.action|lower %}
+                        <span style="color:var(--admin-primary); font-weight:600;">
+                            <i class="fas fa-key"></i> {{ log.action }}
+                        </span>
+                        {% else %}
+                        <span style="font-weight:600;">
+                            <i class="fas fa-info-circle"></i> {{ log.action }}
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td style="color:var(--admin-text-sec);">{{ log.details or '-' }}</td>
+                    <td>
+                        <span
+                            style="background:rgba(108,99,255,0.15); color:var(--admin-primary); padding:4px 10px; border-radius:6px; font-size:0.8rem; font-weight:600;">
+                            {{ log.username or 'admin' }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div style="text-align:center; padding:3rem; color:var(--admin-text-sec);">
+            <i class="fas fa-clipboard-list" style="font-size:3rem; margin-bottom:1rem; opacity:0.3;"></i>
+            <p>Aucune action enregistrée pour le moment.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

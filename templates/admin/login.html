@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion Admin - HDATTAHER MOBILE</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+
+<body class="admin-body">
+    <div class="login-page">
+        <div class="login-card">
+            <div class="logo-big">
+                <div class="icon">HM</div>
+                <h1>HDATTAHER MOBILE</h1>
+                <p>Espace Administration</p>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div style="padding:10px 16px; border-radius:10px; margin-bottom:1rem;
+                        background: {% if category == 'error' %}rgba(239,68,68,0.15); color:#EF4444;{% else %}rgba(108,99,255,0.15); color:#6C63FF;{% endif %}
+                        font-size:0.9rem;">
+                {{ message }}
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('admin_login') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group">
+                    <label for="username"><i class="fas fa-user"></i> Nom d'utilisateur</label>
+                    <input type="text" id="username" name="username" class="form-control" placeholder="admin" required
+                        autofocus>
+                </div>
+                <div class="form-group">
+                    <label for="password"><i class="fas fa-lock"></i> Mot de passe</label>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="••••••••"
+                        required>
+                </div>
+                <button type="submit" class="btn-admin primary"
+                    style="width:100%; justify-content:center; padding:14px; margin-top:0.5rem;">
+                    <i class="fas fa-sign-in-alt"></i> Se connecter
+                </button>
+            </form>
+
+        </div>
+    </div>
+</body>
+
+</html>

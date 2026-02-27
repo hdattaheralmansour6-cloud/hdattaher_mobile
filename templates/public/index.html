@@ -1,0 +1,246 @@
+{% extends "public/base.html" %}
+{% block title %}HDATTAHER MOBILE - Smartphones & Accessoires au Niger{% endblock %}
+
+{% block content %}
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-content">
+        <div class="hero-text">
+            <div class="hero-badge">
+                <i class="fas fa-bolt"></i>
+                <span>🇳🇪 N°1 au Niger</span>
+            </div>
+            <h1>
+                <span data-i18n="hero_title">Les Meilleurs</span><br>
+                <span class="gradient-text" data-i18n="hero_title2">Smartphones</span><br>
+                <span data-i18n="hero_title3">au Niger</span>
+            </h1>
+            <p data-i18n="hero_desc">Découvrez notre collection exclusive de smartphones et accessoires. Qualité
+                premium, prix imbattables.</p>
+            <div class="hero-buttons">
+                <a href="{{ url_for('products') }}" class="btn btn-primary">
+                    <i class="fas fa-shopping-bag"></i> <span data-i18n="shop_now">Acheter maintenant</span>
+                </a>
+                <a href="https://wa.me/{{ settings.get('whatsapp','22791720755') }}" target="_blank"
+                    class="btn btn-whatsapp">
+                    <i class="fab fa-whatsapp"></i> WhatsApp
+                </a>
+            </div>
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <div class="number counter" data-target="{{ stats.total_products }}">0</div>
+                    <div class="label" data-i18n="products_count">Produits</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="number counter" data-target="{{ stats.total_brands }}">0</div>
+                    <div class="label" data-i18n="brands_count">Marques</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="number counter" data-target="{{ stats.happy_clients }}">0</div>
+                    <div class="label" data-i18n="clients_count">Clients satisfaits</div>
+                </div>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="hero-phone-mockup">
+                <div class="phone-shine"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CATEGORIES -->
+<section class="section" style="background:var(--bg-secondary);">
+    <div class="container">
+        <div class="section-header animate-on-scroll">
+            <h2 data-i18n="our_categories">Nos Catégories</h2>
+            <p>Trouvez exactement ce que vous cherchez</p>
+        </div>
+        <div class="categories-grid">
+            {% for cat in categories %}
+            <a href="{{ url_for('products', category=cat.id) }}" class="category-card animate-on-scroll">
+                <i class="{{ cat.icon }}"></i>
+                <h3>{{ cat.name }}</h3>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- PRODUITS VEDETTES -->
+<section class="section">
+    <div class="container">
+        <div class="section-header animate-on-scroll">
+            <h2 data-i18n="featured">⭐ Produits Vedettes</h2>
+            <p>Nos meilleurs produits sélectionnés pour vous</p>
+        </div>
+        <div class="products-grid">
+            {% for p in featured %}
+            <div class="product-card animate-on-scroll">
+                <a href="{{ url_for('product_detail', product_id=p.id) }}">
+                    <div class="product-image">
+                        {% if p.image and p.image != 'default.png' %}
+                        <img src="{{ url_for('uploaded_file', filename=p.image) }}" alt="{{ p.name }}" loading="lazy">
+                        {% else %}
+                        <div class="placeholder-icon">📱</div>
+                        {% endif %}
+                        {% if p.discount > 0 %}
+                        <span class="badge-discount">-{{ p.discount }}%</span>
+                        {% endif %}
+                        {% if p.stock == 0 %}
+                        <span class="badge-stock out-of-stock" data-i18n="out_of_stock">Rupture</span>
+                        {% elif p.stock <= 5 %} <span class="badge-stock low-stock" data-i18n="low_stock">Stock
+                            faible</span>
+                            {% else %}
+                            <span class="badge-stock in-stock" data-i18n="in_stock">En stock</span>
+                            {% endif %}
+                    </div>
+                </a>
+                <div class="product-info">
+                    <div class="product-brand">{{ p.brand }}</div>
+                    <h3 class="product-name">{{ p.name }}</h3>
+                    <div class="product-price-row">
+                        <span class="product-price">{{ "{:,.0f}".format(p.price) }} FCFA</span>
+                        {% if p.old_price > 0 %}
+                        <span class="product-old-price">{{ "{:,.0f}".format(p.old_price) }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="product-views"><i class="fas fa-eye"></i> {{ p.views }} <span
+                            data-i18n="views">vues</span></div>
+                    <div class="product-actions" style="margin-top:10px;">
+                        <a href="{{ url_for('product_detail', product_id=p.id) }}" class="btn btn-outline btn-sm"
+                            data-i18n="view_details">Voir détails</a>
+                        {% if p.stock > 0 %}
+                        <a href="https://wa.me/{{ settings.get('whatsapp','22791720755') }}?text=Bonjour, je veux acheter {{ p.name }}"
+                            target="_blank" class="btn btn-whatsapp btn-sm">
+                            <i class="fab fa-whatsapp"></i> Acheter
+                        </a>
+                        {% else %}
+                        <span class="btn btn-sm"
+                            style="background:#6b7280; color:#fff; cursor:not-allowed; opacity:0.7;">
+                            Rupture de stock
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div style="text-align:center; margin-top:2rem;">
+            <a href="{{ url_for('products') }}" class="btn btn-primary" data-i18n="view_all">Voir tout</a>
+        </div>
+    </div>
+</section>
+
+<!-- PROMOTIONS -->
+{% if promos %}
+<section class="promo-banner">
+    <h2 data-i18n="special_offers">🔥 Offres Spéciales</h2>
+    <p>Profitez de nos réductions exceptionnelles!</p>
+    <a href="{{ url_for('products', category=3) }}" class="btn" style="margin-top:1rem;">
+        <i class="fas fa-arrow-right"></i> <span data-i18n="view_all">Voir tout</span>
+    </a>
+</section>
+<section class="section">
+    <div class="container">
+        <div class="products-grid">
+            {% for p in promos %}
+            <div class="product-card animate-on-scroll">
+                <a href="{{ url_for('product_detail', product_id=p.id) }}">
+                    <div class="product-image">
+                        {% if p.image and p.image != 'default.png' %}
+                        <img src="{{ url_for('uploaded_file', filename=p.image) }}" alt="{{ p.name }}" loading="lazy">
+                        {% else %}
+                        <div class="placeholder-icon">📱</div>
+                        {% endif %}
+                        <span class="badge-discount">-{{ p.discount }}%</span>
+                    </div>
+                </a>
+                <div class="product-info">
+                    <div class="product-brand">{{ p.brand }}</div>
+                    <h3 class="product-name">{{ p.name }}</h3>
+                    <div class="product-price-row">
+                        <span class="product-price">{{ "{:,.0f}".format(p.price) }} FCFA</span>
+                        {% if p.old_price > 0 %}
+                        <span class="product-old-price">{{ "{:,.0f}".format(p.old_price) }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="product-actions" style="margin-top:10px;">
+                        {% if p.stock > 0 %}
+                        <a href="https://wa.me/{{ settings.get('whatsapp','22791720755') }}?text=Bonjour, je veux acheter {{ p.name }}"
+                            target="_blank" class="btn btn-whatsapp btn-sm btn-block">
+                            <i class="fab fa-whatsapp"></i> Acheter
+                        </a>
+                        {% else %}
+                        <span class="btn btn-sm btn-block"
+                            style="background:#6b7280; color:#fff; cursor:not-allowed; opacity:0.7; text-align:center;">
+                            Rupture de stock
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- NOUVEAUTÉS -->
+<section class="section" style="background:var(--bg-secondary);">
+    <div class="container">
+        <div class="section-header animate-on-scroll">
+            <h2 data-i18n="latest">🆕 Nouveautés</h2>
+        </div>
+        <div class="products-grid">
+            {% for p in latest[:4] %}
+            <div class="product-card animate-on-scroll">
+                <a href="{{ url_for('product_detail', product_id=p.id) }}">
+                    <div class="product-image">
+                        {% if p.image and p.image != 'default.png' %}
+                        <img src="{{ url_for('uploaded_file', filename=p.image) }}" alt="{{ p.name }}" loading="lazy">
+                        {% else %}
+                        <div class="placeholder-icon">📱</div>
+                        {% endif %}
+                        {% if p.discount > 0 %}
+                        <span class="badge-discount">-{{ p.discount }}%</span>
+                        {% endif %}
+                        {% if p.stock == 0 %}
+                        <span class="badge-stock out-of-stock">Rupture</span>
+                        {% elif p.stock <= 5 %} <span class="badge-stock low-stock">Stock faible</span>
+                            {% else %}
+                            <span class="badge-stock in-stock">En stock</span>
+                            {% endif %}
+                    </div>
+                </a>
+                <div class="product-info">
+                    <div class="product-brand">{{ p.brand }}</div>
+                    <h3 class="product-name">{{ p.name }}</h3>
+                    <div class="product-price-row">
+                        <span class="product-price">{{ "{:,.0f}".format(p.price) }} FCFA</span>
+                        {% if p.old_price > 0 %}
+                        <span class="product-old-price">{{ "{:,.0f}".format(p.old_price) }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="product-actions" style="margin-top:10px;">
+                        <a href="{{ url_for('product_detail', product_id=p.id) }}" class="btn btn-outline btn-sm"
+                            data-i18n="view_details">Voir détails</a>
+                        {% if p.stock > 0 %}
+                        <a href="https://wa.me/{{ settings.get('whatsapp','22791720755') }}?text=Bonjour, je veux acheter {{ p.name }}"
+                            target="_blank" class="btn btn-whatsapp btn-sm">
+                            <i class="fab fa-whatsapp"></i> Acheter
+                        </a>
+                        {% else %}
+                        <span class="btn btn-sm"
+                            style="background:#6b7280; color:#fff; cursor:not-allowed; opacity:0.7;">
+                            Rupture de stock
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

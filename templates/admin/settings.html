@@ -1,0 +1,194 @@
+{% extends "admin/base.html" %}
+{% block title %}Paramètres{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <div>
+        <h1>Paramètres du Site</h1>
+    </div>
+</div>
+
+<form method="POST" action="{{ url_for('admin_settings') }}" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <!-- Infos Générales -->
+    <div class="admin-card">
+        <div class="admin-card-header">
+            <h3><i class="fas fa-store"></i> Informations Générales</h3>
+        </div>
+        <div class="admin-card-body">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Nom du site</label>
+                    <input type="text" name="site_name" class="form-control" value="{{ settings.get('site_name','') }}">
+                </div>
+                <div class="form-group">
+                    <label>Propriétaire</label>
+                    <input type="text" name="owner_name" class="form-control"
+                        value="{{ settings.get('owner_name','') }}">
+                </div>
+                <div class="form-group">
+                    <label>WhatsApp</label>
+                    <input type="text" name="whatsapp" class="form-control" value="{{ settings.get('whatsapp','') }}">
+                </div>
+                <div class="form-group">
+                    <label>Localisation</label>
+                    <input type="text" name="location" class="form-control" value="{{ settings.get('location','') }}">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thème -->
+    <div class="admin-card">
+        <div class="admin-card-header">
+            <h3><i class="fas fa-palette"></i> Couleurs du Thème</h3>
+        </div>
+        <div class="admin-card-body">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Couleur Principale</label>
+                    <div class="color-picker-group">
+                        <input type="color" name="primary_color" value="{{ settings.get('primary_color','#6C63FF') }}">
+                        <span>{{ settings.get('primary_color','#6C63FF') }}</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Couleur Secondaire</label>
+                    <div class="color-picker-group">
+                        <input type="color" name="secondary_color"
+                            value="{{ settings.get('secondary_color','#FF6584') }}">
+                        <span>{{ settings.get('secondary_color','#FF6584') }}</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Couleur d'Accent</label>
+                    <div class="color-picker-group">
+                        <input type="color" name="accent_color" value="{{ settings.get('accent_color','#00D9FF') }}">
+                        <span>{{ settings.get('accent_color','#00D9FF') }}</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Promotions Actives</label>
+                    <label class="toggle-switch" style="display:block; margin-top:8px;">
+                        <input type="checkbox" name="promotions_active" value="1" {% if
+                            settings.get('promotions_active','1')=='1' %}checked{% endif %}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>Mode Sombre (Public)</label>
+                    <label class="toggle-switch" style="display:block; margin-top:8px;">
+                        <input type="checkbox" name="dark_mode" value="1" {% if settings.get('dark_mode','0')=='1'
+                            %}checked{% endif %}>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="form-group full-width">
+                    <label><i class="fas fa-image"></i> Logo du Site</label>
+                    {% if settings.get('logo_path', '') %}
+                    <div style="margin:8px 0;">
+                        <img src="{{ url_for('uploaded_file', filename=settings.get('logo_path')) }}" alt="Logo actuel"
+                            style="height:50px; border-radius:10px; border:2px solid var(--admin-border);">
+                        <span style="color:var(--admin-text-sec); font-size:0.8rem; margin-left:8px;">Logo actuel</span>
+                    </div>
+                    {% endif %}
+                    <input type="file" name="logo" class="form-control" accept="image/*" style="padding:8px;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- À Propos -->
+    <div class="admin-card">
+        <div class="admin-card-header">
+            <h3><i class="fas fa-info-circle"></i> Section À Propos</h3>
+        </div>
+        <div class="admin-card-body">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Titre (Français)</label>
+                    <input type="text" name="about_title" class="form-control"
+                        value="{{ settings.get('about_title','') }}">
+                </div>
+                <div class="form-group">
+                    <label>Title (English)</label>
+                    <input type="text" name="about_title_en" class="form-control"
+                        value="{{ settings.get('about_title_en','') }}">
+                </div>
+                <div class="form-group full-width">
+                    <label>العنوان (عربي)</label>
+                    <input type="text" name="about_title_ar" class="form-control"
+                        value="{{ settings.get('about_title_ar','') }}" dir="rtl">
+                </div>
+                <div class="form-group full-width">
+                    <label>Texte (Français)</label>
+                    <textarea name="about_text" class="form-control"
+                        rows="4">{{ settings.get('about_text','') }}</textarea>
+                </div>
+                <div class="form-group full-width">
+                    <label>Text (English)</label>
+                    <textarea name="about_text_en" class="form-control"
+                        rows="4">{{ settings.get('about_text_en','') }}</textarea>
+                </div>
+                <div class="form-group full-width">
+                    <label>النص (عربي)</label>
+                    <textarea name="about_text_ar" class="form-control" rows="4"
+                        dir="rtl">{{ settings.get('about_text_ar','') }}</textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Réseaux Sociaux -->
+    <div class="admin-card">
+        <div class="admin-card-header">
+            <h3><i class="fas fa-share-alt"></i> Réseaux Sociaux</h3>
+        </div>
+        <div class="admin-card-body">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label><i class="fab fa-facebook" style="color:#1877F2;"></i> Facebook</label>
+                    <input type="url" name="facebook" class="form-control" value="{{ settings.get('facebook','') }}">
+                </div>
+                <div class="form-group">
+                    <label><i class="fab fa-instagram" style="color:#E4405F;"></i> Instagram</label>
+                    <input type="url" name="instagram" class="form-control" value="{{ settings.get('instagram','') }}">
+                </div>
+                <div class="form-group">
+                    <label><i class="fab fa-tiktok"></i> TikTok</label>
+                    <input type="url" name="tiktok" class="form-control" value="{{ settings.get('tiktok','') }}">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn-admin primary" style="padding:14px 32px;">
+        <i class="fas fa-save"></i> Sauvegarder les Paramètres
+    </button>
+</form>
+
+<!-- Changer Mot de Passe -->
+<div class="admin-card" style="margin-top:2rem;">
+    <div class="admin-card-header">
+        <h3><i class="fas fa-lock"></i> Changer le Mot de Passe</h3>
+    </div>
+    <div class="admin-card-body">
+        <form method="POST" action="{{ url_for('admin_change_password') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Ancien mot de passe</label>
+                    <input type="password" name="old_password" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Nouveau mot de passe</label>
+                    <input type="password" name="new_password" class="form-control" required minlength="6">
+                </div>
+            </div>
+            <button type="submit" class="btn-admin danger" style="margin-top:1rem;">
+                <i class="fas fa-key"></i> Changer le Mot de Passe
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
