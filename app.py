@@ -369,7 +369,7 @@ def api_products():
 #  ROUTES ADMIN
 # ============================================================
 
-@app.route('/admin/login', methods=['GET', 'POST'])
+@app.route('/azawad', methods=['GET', 'POST'])
 def admin_login():
     if 'logged_in' in session:
         return redirect(url_for('admin_dashboard'))
