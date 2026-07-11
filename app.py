@@ -704,7 +704,7 @@ def admin_add_category():
     return redirect(url_for('admin_categories'))
 
 
-@app.route('/admin/category/delete/<cat_id>', methods=['POST'])
+@app.route('/azawad/category/delete/<cat_id>', methods=['POST'])
 @login_required
 def admin_delete_category(cat_id):
     cat = db.fetch_one('categories', 'name', {'id': cat_id})
