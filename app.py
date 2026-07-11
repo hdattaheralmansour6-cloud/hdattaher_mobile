@@ -682,7 +682,7 @@ def admin_categories():
     return render_template('admin/categories.html', cats=cats)
 
 
-@app.route('/admin/category/add', methods=['POST'])
+@app.route('/azawad/category/add', methods=['POST'])
 @login_required
 def admin_add_category():
     name = request.form.get('name', '').strip()
