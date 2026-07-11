@@ -603,7 +603,7 @@ def admin_add_product():
     return render_template('admin/product_form.html', product=None, categories=cats, action='add')
 
 
-@app.route('/admin/product/edit/<product_id>', methods=['GET', 'POST'])
+@app.route('/azawad/product/edit/<product_id>', methods=['GET', 'POST'])
 @login_required
 def admin_edit_product(product_id):
     product = db.fetch_one('products', '*', {'id': product_id})
