@@ -547,7 +547,7 @@ def admin_profile():
     return render_template('admin/profile.html', admin=admin)
 
 
-@app.route('/admin/products')
+@app.route('/azawad/products')
 @login_required
 def admin_products():
     products_list = db.fetch_all('products', '*, categories(name)', order=('created_at', False))
