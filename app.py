@@ -459,7 +459,7 @@ def admin_dashboard():
     return render_template('admin/dashboard.html', stats=stats, recent=recent, top_viewed=top_viewed)
 
 
-@app.route('/admin/profile', methods=['GET', 'POST'])
+@app.route('/azawad/profile', methods=['GET', 'POST'])
 @login_required
 def admin_profile():
     """Page Mon Profil — modifier username / mot de passe"""
