@@ -13,7 +13,7 @@ from werkzeug.utils import secure_filename
 from flask_wtf.csrf import CSRFProtect
 from config import Config
 from database import db, verify_admin_password, get_settings_dict, get_supabase, init_supabase
-
+# test redeploiement storage
 app = Flask(__name__)
 app.config.from_object(Config)
 
