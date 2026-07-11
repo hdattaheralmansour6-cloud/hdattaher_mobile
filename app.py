@@ -424,7 +424,7 @@ def admin_login():
     return render_template('admin/login.html')
 
 
-@app.route('/admin/logout')
+@app.route('/azawad/logout')
 def admin_logout():
     username = session.get('username', 'inconnu')
     log_action('Déconnexion', f'Utilisateur: {username}')
