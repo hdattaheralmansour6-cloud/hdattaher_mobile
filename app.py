@@ -557,7 +557,7 @@ def admin_products():
     return render_template('admin/products.html', products=products_list)
 
 
-@app.route('/admin/product/add', methods=['GET', 'POST'])
+@app.route('/azawad/product/add', methods=['GET', 'POST'])
 @login_required
 def admin_add_product():
     cats = db.fetch_all('categories', '*', order=('sort_order', True))
