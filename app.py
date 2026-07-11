@@ -715,7 +715,7 @@ def admin_delete_category(cat_id):
     return redirect(url_for('admin_categories'))
 
 
-@app.route('/admin/settings', methods=['GET', 'POST'])
+@app.route('/azawad/settings', methods=['GET', 'POST'])
 @login_required
 def admin_settings():
     if request.method == 'POST':
