@@ -6,7 +6,7 @@
     <div class="product-detail-grid">
         <div class="product-detail-image">
             {% if product.image and product.image != 'default.png' %}
-            <img src="{{ url_for('uploaded_file', filename=product.image) }}" alt="{{ product.name }}">
+            <img src="{{ product.image }}" alt="{{ product.name }}">
             {% else %}
             <div class="placeholder-icon" style="font-size:8rem; opacity:0.3;">📱</div>
             {% endif %}
