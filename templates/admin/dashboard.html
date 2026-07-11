@@ -80,7 +80,7 @@
                     <tr>
                         <td style="display:flex; align-items:center; gap:10px;">
                             {% if p.image and p.image != 'default.png' %}
-                            <img src="{{ url_for('uploaded_file', filename=p.image) }}" class="product-thumb" alt="">
+                            <img src="{{ p.image }}" class="product-thumb" alt="">
                             {% else %}
                             <div class="product-thumb"
                                 style="display:flex; align-items:center; justify-content:center; background:var(--admin-bg); font-size:1.2rem;">
