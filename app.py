@@ -641,11 +641,31 @@ def admin_edit_product(product_id):
             file = request.files['image']
             if file and file.filename and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
+
                 if filename:
                     timestamp = str(int(time.time()))
-                    image_filename = f"{timestamp}_{filename}"
-                    os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)
-                    file.save(os.path.join(Config.UPLOAD_FOLDER, image_filename))
+                    storage_filename = f"{timestamp}_{filename}"
+
+                    file_bytes = file.read()
+                    sb = get_supabase()
+
+                    sb.storage.from_('product-images').upload(
+                    storage_filename,
+                    file_bytes,
+                    {
+                        'content-type': file.content_type,
+                        'upsert': 'true'
+                    }
+                )
+
+                image_filename = sb.storage.from_(
+                    'product-images'
+                ).get_public_url(storage_filename)
+                
+                    
+                    
+                    
+                    
 
         db.update('products', {
             'name': name,
