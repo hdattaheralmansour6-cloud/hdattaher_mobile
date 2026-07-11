@@ -655,7 +655,7 @@ def admin_edit_product(product_id):
     return render_template('admin/product_form.html', product=product, categories=cats, action='edit')
 
 
-@app.route('/admin/product/delete/<product_id>', methods=['POST'])
+@app.route('/azawad/product/delete/<product_id>', methods=['POST'])
 @login_required
 def admin_delete_product(product_id):
     confirmed = request.form.get('confirmed', '')
