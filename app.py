@@ -750,7 +750,7 @@ def admin_settings():
     return render_template('admin/settings.html')
 
 
-@app.route('/admin/password', methods=['POST'])
+@app.route('/azawad/password', methods=['POST'])
 @login_required
 def admin_change_password():
     old_pwd = request.form.get('old_password', '')
@@ -779,7 +779,7 @@ def admin_change_password():
     return redirect(url_for('admin_settings'))
 
 
-@app.route('/admin/logs')
+@app.route('/azawad/logs')
 @login_required
 def admin_logs():
     sb = get_supabase()
