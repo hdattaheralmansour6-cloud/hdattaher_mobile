@@ -675,7 +675,7 @@ def admin_delete_product(product_id):
     return redirect(url_for('admin_products'))
 
 
-@app.route('/admin/categories')
+@app.route('/azawad/categories')
 @login_required
 def admin_categories():
     cats = db.fetch_all('categories', '*', order=('sort_order', True))
