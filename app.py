@@ -254,7 +254,9 @@ def products():
     for p in products_list:
         cat = p.pop('categories', None)
         p['category_name'] = cat['name'] if cat else None
-
+        
+        if p.get('image') and not p['image'].startswith('http'):
+            p['image'] = sb.storage.from_('product-images').get_public_url(p['image'])
     all_categories = db.fetch_all('categories', '*', {'is_active': True}, order=('sort_order', True))
 
     return render_template('public/products.html',
