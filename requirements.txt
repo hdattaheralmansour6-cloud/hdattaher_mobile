@@ -5,3 +5,4 @@ Flask-WTF>=1.2
 supabase>=2.0
 python-dotenv>=1.0
 gunicorn>=22.0
+deep-translator>=1.11.4
