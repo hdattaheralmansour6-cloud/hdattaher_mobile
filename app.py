@@ -13,10 +13,22 @@ from werkzeug.utils import secure_filename
 from flask_wtf.csrf import CSRFProtect
 from config import Config
 from database import db, verify_admin_password, get_settings_dict, get_supabase, init_supabase
+from deep_translator import GoogleTranslator
 # test redeploiement storage 2
 app = Flask(__name__)
 app.config.from_object(Config)
 
+def auto_translate(text, target):
+    if not text:
+        return ""
+
+    try:
+        return GoogleTranslator(source="fr", target=target).translate(text)
+    except Exception:
+        return text
+
+# ===========================
+# PROTECTION CSRF GLOBALE
 # ============================================================
 #  PROTECTION CSRF GLOBALE
 # ============================================================
@@ -566,6 +578,14 @@ def admin_add_product():
 
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
+        
+        name_en = auto_translate(name, "en")
+        name_ar = auto_translate(name, "ar")
+
+        description = request.form.get("description", "").strip()
+        description_en = auto_translate(description, "en")
+        description_ar = auto_translate(description, "ar")
+
         if not name:
             flash('Le nom du produit est obligatoire.', 'error')
             return render_template('admin/product_form.html', product=None, categories=cats, action='add')
@@ -600,11 +620,11 @@ def admin_add_product():
 
         db.insert('products', {
             'name': name,
-            'name_en': request.form.get('name_en', ''),
-            'name_ar': request.form.get('name_ar', ''),
-            'description': request.form.get('description', ''),
-            'description_en': request.form.get('description_en', ''),
-            'description_ar': request.form.get('description_ar', ''),
+            'name_en': name_en,
+            'name_ar': name_ar,
+            'description': description,
+            'description_en': description_en,
+            'description_ar': description_ar,
             'price': safe_float(request.form.get('price'), 0),
             'old_price': safe_float(request.form.get('old_price'), 0),
             'discount': safe_int(request.form.get('discount'), 0),
@@ -671,11 +691,11 @@ def admin_edit_product(product_id):
 
         db.update('products', {
             'name': name,
-            'name_en': request.form.get('name_en', ''),
-            'name_ar': request.form.get('name_ar', ''),
-            'description': request.form.get('description', ''),
-            'description_en': request.form.get('description_en', ''),
-            'description_ar': request.form.get('description_ar', ''),
+            'name_en': name_en,
+            'name_ar': name_ar,
+            'description': description,
+            'description_en': description_en,
+            'description_ar': description_ar,
             'price': safe_float(request.form.get('price'), 0),
             'old_price': safe_float(request.form.get('old_price'), 0),
             'discount': safe_int(request.form.get('discount'), 0),
