@@ -253,5 +253,33 @@ document.addEventListener('DOMContentLoaded', () => {
   AnimationManager.init();
   initFlashMessages();
   initSearch();
+  
+  document.querySelectorAll("[data-category]").forEach(el => {
+    const lang = localStorage.getItem("language") || "fr";
+    const name = el.dataset.category;
+
+    const translations = {
+        Smartphones: {
+            fr: "Smartphones",
+            en: "Smartphones",
+            ar: "الهواتف"
+        },
+        Accessoires: {
+            fr: "Accessoires",
+            en: "Accessories",
+            ar: "الإكسسوارات"
+        },
+        Promotions: {
+            fr: "Promotions",
+            en: "Promotions",
+            ar: "العروض"
+        }
+    };
+
+    if (translations[name] && translations[name][lang]) {
+        el.textContent = translations[name][lang];
+    }
+});
+
   initCounters();
 });
