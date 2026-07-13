@@ -62,7 +62,7 @@
             {% for cat in categories %}
             <a href="{{ url_for('products', category=cat.id) }}" class="category-card animate-on-scroll">
                 <i class="{{ cat.icon }}"></i>
-                <h3>{{ cat.name }}</h3>
+                <h3 data-category="{{ cat.name }}">{{ cat.name }}</h3>
             </a>
             {% endfor %}
         </div>
