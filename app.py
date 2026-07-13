@@ -292,7 +292,8 @@ def product_detail(product_id):
 
     cat = product.pop('categories', None)
     product['category_name'] = cat['name'] if cat else None
-
+    if product.get('image') and not product['image'].startswith('http'):
+    product['image'] = sb.storage.from_('product-images').get_public_url(product['image'])
     # Enregistrer la vue (le trigger Postgres incrémente automatiquement views)
     ip = request.remote_addr
     ua = request.headers.get('User-Agent', '')[:200]
@@ -314,7 +315,8 @@ def product_detail(product_id):
     for p in related:
         c = p.pop('categories', None)
         p['category_name'] = c['name'] if c else None
-
+    if p.get('image') and not p['image'].startswith('http'):
+    p['image'] = sb.storage.from_('product-images').get_public_url(p['image'])
     return render_template('public/product_detail.html', product=product, related=related)
 
 
