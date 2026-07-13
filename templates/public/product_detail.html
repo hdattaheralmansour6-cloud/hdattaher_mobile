@@ -75,7 +75,7 @@
                 <a href="{{ url_for('product_detail', product_id=p.id) }}">
                     <div class="product-image">
                         {% if p.image and p.image != 'default.png' %}
-                        <img src="{{ url_for('uploaded_file', filename=p.image) }}" alt="{{ p.name }}" loading="lazy">
+                        <img src="{{ p.image }}">
                         {% else %}
                         <div class="placeholder-icon">📱</div>
                         {% endif %}
