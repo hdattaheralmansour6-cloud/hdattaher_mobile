@@ -22,16 +22,6 @@
                         required>
                 </div>
                 <div class="form-group">
-                    <label>Name (English)</label>
-                    <input type="text" name="name_en" class="form-control"
-                        value="{{ product.name_en if product else '' }}">
-                </div>
-                <div class="form-group">
-                    <label>الاسم (عربي)</label>
-                    <input type="text" name="name_ar" class="form-control"
-                        value="{{ product.name_ar if product else '' }}" dir="rtl">
-                </div>
-                <div class="form-group">
                     <label>Marque</label>
                     <input type="text" name="brand" class="form-control" value="{{ product.brand if product else '' }}"
                         placeholder="Apple, Samsung...">
