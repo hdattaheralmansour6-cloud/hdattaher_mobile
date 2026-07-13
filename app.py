@@ -656,6 +656,15 @@ def admin_edit_product(product_id):
 
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
+        
+        description = request.form.get("description", "").strip()
+
+        name_en = auto_translate(name, "en")
+        name_ar = auto_translate(name, "ar")
+
+        description_en = auto_translate(description, "en")
+        description_ar = auto_translate(description, "ar")
+        
         if not name:
             flash('Le nom est obligatoire.', 'error')
             return render_template('admin/product_form.html', product=product, categories=cats, action='edit')
