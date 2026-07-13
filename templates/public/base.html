@@ -134,39 +134,39 @@
         <div class="mobile-menu-links">
             <a href="{{ url_for('index') }}" class="mobile-menu-link">
                 <div class="mobile-link-icon"><i class="fas fa-home"></i></div>
-                <span>Accueil</span>
+                <span data-i18n="home">Accueil</span>
                 <i class="fas fa-chevron-right mobile-link-arrow"></i>
             </a>
             <a href="{{ url_for('products') }}" class="mobile-menu-link">
                 <div class="mobile-link-icon"><i class="fas fa-th-large"></i></div>
-                <span>Produits</span>
+                <span data-i18n="products">Produits</span>
                 <i class="fas fa-chevron-right mobile-link-arrow"></i>
             </a>
             <a href="{{ url_for('featured_products') }}" class="mobile-menu-link">
                 <div class="mobile-link-icon"><i class="fas fa-star"></i></div>
-                <span>Produits en Vedette</span>
+                <span data-i18n="featured">Produits en Vedette</span>
                 <i class="fas fa-chevron-right mobile-link-arrow"></i>
             </a>
             <a href="{{ url_for('new_arrivals') }}" class="mobile-menu-link">
                 <div class="mobile-link-icon"><i class="fas fa-bolt"></i></div>
-                <span>Nouvelles Arrivages</span>
+                <span data-i18n="new_arrivals">Nouvelles Arrivages</span>
                 <i class="fas fa-chevron-right mobile-link-arrow"></i>
             </a>
             <a href="{{ url_for('contact') }}" class="mobile-menu-link">
                 <div class="mobile-link-icon"><i class="fas fa-envelope"></i></div>
-                <span>Contact</span>
+                <span data-i18n="contact">Contact</span>
                 <i class="fas fa-chevron-right mobile-link-arrow"></i>
             </a>
         </div>
 
         <!-- Catégories -->
         <div class="mobile-menu-section">
-            <div class="mobile-menu-section-title">Catégories</div>
+            <div class="mobile-menu-section-title" data-i18n="our_categories">Catégories</div>
             {% for cat in categories %}
             <a href="{{ url_for('products', category=cat.id) }}" class="mobile-menu-link mobile-cat-link"
                 onclick="closeMobileMenu()">
                 <div class="mobile-link-icon"><i class="{{ cat.icon }}"></i></div>
-                <span>{{ cat.name }}</span>
+                <span data-category="{{ cat.name }}">{{ cat.name }}</span>
                 <i class="fas fa-chevron-right mobile-link-arrow"></i>
             </a>
             {% endfor %}
@@ -176,7 +176,7 @@
         <div class="mobile-menu-actions">
             <a href="https://wa.me/{{ settings.get('whatsapp','22791720755') }}" target="_blank"
                 class="mobile-action-btn whatsapp">
-                <i class="fab fa-whatsapp"></i> Contactez-nous via WhatsApp
+                <i class="fab fa-whatsapp"></i> <span data-i18n="whatsapp_contact">Contactez-nous via WhatsApp</span>
             </a>
         </div>
 
