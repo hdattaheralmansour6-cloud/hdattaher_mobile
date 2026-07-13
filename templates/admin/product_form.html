@@ -94,7 +94,7 @@
                             onchange="previewImg(this)">
                     </div>
                     <img id="imagePreview" class="image-preview" {% if product and product.image and product.image
-                        !='default.png' %} src="{{ url_for('uploaded_file', filename=product.image) }}"
+                        !='default.png' %} src="{{ product.image }}"
                         style="display:block;margin-top:1rem;" {% else %}style="display:none;" {% endif %}>
                 </div>
             </div>
