@@ -207,7 +207,7 @@ def index():
     stats = {
         'total_products': total_products,
         'total_brands': unique_brands,
-        'happy_clients': 500,
+        'happy_clients': 1000,
     }
 
     return render_template('public/index.html', featured=featured, latest=latest,
