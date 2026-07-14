@@ -7,31 +7,32 @@
 {% block content %}
 <div class="account-wrapper">
     <div class="account-card">
-        <h1>Connexion</h1>
-        <p class="account-subtitle">Content de vous revoir !</p>
+        <h1 data-i18n="login_title">Connexion</h1>
+        <p class="account-subtitle" data-i18n="login_subtitle">Content de vous revoir !</p>
 
         <form method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
             <div class="account-field">
-                <label for="email">Email</label>
+                <label for="email" data-i18n="email_label">Email</label>
                 <input type="email" id="email" name="email" required
                        value="{{ request.form.get('email', '') }}">
             </div>
 
             <div class="account-field">
-                <label for="password">Mot de passe</label>
+                <label for="password" data-i18n="password_label">Mot de passe</label>
                 <input type="password" id="password" name="password" required>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-block">Se connecter</button>
+            <button type="submit" class="btn btn-primary btn-block" data-i18n="login_btn">Se connecter</button>
         </form>
 
         <div class="account-footer-link">
-            <a href="{{ url_for('customer_forgot_password') }}">Mot de passe oublié ?</a>
+            <a href="{{ url_for('customer_forgot_password') }}" data-i18n="forgot_password_link">Mot de passe oublié ?</a>
         </div>
         <div class="account-footer-link">
-            Pas encore de compte ? <a href="{{ url_for('customer_register') }}">S'inscrire</a>
+            <span data-i18n="no_account">Pas encore de compte ?</span>
+            <a href="{{ url_for('customer_register') }}" data-i18n="signup_link">S'inscrire</a>
         </div>
     </div>
 </div>

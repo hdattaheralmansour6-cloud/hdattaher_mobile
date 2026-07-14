@@ -7,13 +7,13 @@
 {% block content %}
 <div class="account-wrapper account-wide">
     <div class="account-nav-tabs">
-        <a href="{{ url_for('customer_profile') }}">Mon profil</a>
-        <a href="{{ url_for('customer_orders') }}" class="active">Mes commandes</a>
-        <a href="{{ url_for('customer_logout') }}">Déconnexion</a>
+        <a href="{{ url_for('customer_profile') }}" data-i18n="my_profile_tab">Mon profil</a>
+        <a href="{{ url_for('customer_orders') }}" class="active" data-i18n="my_orders_tab">Mes commandes</a>
+        <a href="{{ url_for('customer_logout') }}" data-i18n="logout_tab">Déconnexion</a>
     </div>
 
     <div class="account-card account-section">
-        <h2>Historique de mes commandes</h2>
+        <h2 data-i18n="orders_history_title">Historique de mes commandes</h2>
 
         {% if orders %}
             {% for order in orders %}
@@ -29,7 +29,8 @@
         {% else %}
             <div class="account-empty">
                 <i class="fas fa-box-open"></i>
-                <p>Vous n'avez pas encore de commande.<br>Le système de commandes en ligne arrive très bientôt !</p>
+                <p data-i18n="no_orders">Vous n'avez pas encore de commande.</p>
+                <p data-i18n="orders_coming_soon">Le système de commandes en ligne arrive très bientôt !</p>
             </div>
         {% endif %}
     </div>
