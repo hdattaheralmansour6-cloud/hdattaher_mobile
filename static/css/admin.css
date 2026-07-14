@@ -25,12 +25,18 @@
     box-sizing: border-box;
 }
 
+html {
+    overflow-x: hidden;
+    width: 100%;
+}
+
 body.admin-body {
     font-family: 'Inter', sans-serif;
     background: var(--admin-bg);
     color: var(--admin-text);
     min-height: 100vh;
     overflow-x: hidden;
+    width: 100%;
 }
 
 a {
