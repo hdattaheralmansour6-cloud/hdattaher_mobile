@@ -7,30 +7,32 @@
 {% block content %}
 <div class="account-wrapper account-wide">
     <div class="account-nav-tabs">
-        <a href="{{ url_for('customer_profile') }}" data-i18n="my_profile_tab">Mon profil</a>
-        <a href="{{ url_for('customer_orders') }}" class="active" data-i18n="my_orders_tab">Mes commandes</a>
-        <a href="{{ url_for('customer_logout') }}" data-i18n="logout_tab">Déconnexion</a>
+        <a href="{{ url_for('customer_profile') }}">Mon profil</a>
+        <a href="{{ url_for('customer_orders') }}" class="active">Mes commandes</a>
+        <a href="{{ url_for('customer_logout') }}">Déconnexion</a>
     </div>
 
     <div class="account-card account-section">
-        <h2 data-i18n="orders_history_title">Historique de mes commandes</h2>
+        <h2>Historique de mes commandes</h2>
 
         {% if orders %}
             {% for order in orders %}
-            <div class="account-order-row">
+            <a href="{{ url_for('customer_order_detail', order_id=order.id) }}"
+               class="account-order-row" style="text-decoration:none; color:inherit;">
                 <div>
                     <strong>Commande #{{ order.order_number }}</strong><br>
-                    <span style="color:var(--text-secondary); font-size:0.85rem;">{{ order.created_at }}</span>
+                    <span style="color:var(--text-secondary); font-size:0.85rem;">{{ order.created_at[:10] if order.created_at else '' }}</span>
                 </div>
                 <div>{{ order.status }}</div>
-                <div>{{ order.total }} FCFA</div>
-            </div>
+                <div>{{ "{:,.0f}".format(order.total) }} FCFA</div>
+            </a>
             {% endfor %}
         {% else %}
             <div class="account-empty">
                 <i class="fas fa-box-open"></i>
-                <p data-i18n="no_orders">Vous n'avez pas encore de commande.</p>
-                <p data-i18n="orders_coming_soon">Le système de commandes en ligne arrive très bientôt !</p>
+                <p>Vous n'avez pas encore de commande.<br>
+                    <a href="{{ url_for('products') }}">Découvrir nos produits</a>
+                </p>
             </div>
         {% endif %}
     </div>
