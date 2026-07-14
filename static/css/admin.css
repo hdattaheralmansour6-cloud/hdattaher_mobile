@@ -30,6 +30,7 @@ body.admin-body {
     background: var(--admin-bg);
     color: var(--admin-text);
     min-height: 100vh;
+    overflow-x: hidden;
 }
 
 a {
