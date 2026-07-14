@@ -1,0 +1,62 @@
+{% extends "public/base.html" %}
+{% block title %}Valider ma commande - HDATTAHER MOBILE{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="section" style="padding-top:100px;">
+    <div class="container">
+        <div class="section-header">
+            <h2>Valider ma commande</h2>
+        </div>
+
+        <div class="account-wrapper account-wide" style="margin-top:0;">
+            <div class="account-card account-section">
+                <h2>Récapitulatif</h2>
+                {% for item in items %}
+                <div class="account-order-row">
+                    <span>{{ item.product.name }} × {{ item.quantity }}</span>
+                    <strong>{{ "{:,.0f}".format(item.subtotal) }} FCFA</strong>
+                </div>
+                {% endfor %}
+                <div class="account-order-row" style="border-bottom:none;">
+                    <strong>Total</strong>
+                    <strong>{{ "{:,.0f}".format(total) }} FCFA</strong>
+                </div>
+            </div>
+
+            <div class="account-card account-section">
+                <h2>Informations de livraison</h2>
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <div class="account-field">
+                        <label for="shipping_name">Nom complet *</label>
+                        <input type="text" id="shipping_name" name="shipping_name" required
+                               value="{{ customer.full_name if customer else '' }}">
+                    </div>
+
+                    <div class="account-field">
+                        <label for="shipping_phone">Téléphone *</label>
+                        <input type="tel" id="shipping_phone" name="shipping_phone" required
+                               value="{{ customer.phone if customer else '' }}">
+                    </div>
+
+                    <div class="account-field">
+                        <label for="shipping_address">Adresse de livraison *</label>
+                        <textarea id="shipping_address" name="shipping_address" rows="3" required>{{ customer.address if customer else '' }}</textarea>
+                    </div>
+
+                    <div class="account-field">
+                        <label for="notes">Notes (optionnel)</label>
+                        <textarea id="notes" name="notes" rows="2"></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block">Confirmer la commande</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
