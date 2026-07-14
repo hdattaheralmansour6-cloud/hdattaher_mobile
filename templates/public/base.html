@@ -246,7 +246,11 @@
                 <h4 data-i18n="our_categories">Nos Catégories</h4>
                 <ul class="footer-links">
                     {% for cat in categories %}
-                    <li><a href="{{ url_for('products', category=cat.id) }}">{{ cat.name }}</a></li>
+                    <li>
+                        <a href="{{ url_for('products', category=cat.id) }}">
+                            <span data-category="{{ cat.name }}">{{ cat.name }}</span>
+                        </a>
+                    </li>
                     {% endfor %}
                 </ul>
             </div>
