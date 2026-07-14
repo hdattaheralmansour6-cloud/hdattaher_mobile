@@ -106,6 +106,16 @@ const translations = {
   }
 };
 
+// Traduit tout élément portant data-name-fr / data-name-en / data-name-ar
+// (catégories et produits venant de la base de données) selon la langue active.
+function applyDataNameTranslations() {
+  const lang = localStorage.getItem('lang') || 'fr';
+  document.querySelectorAll('[data-name-fr]').forEach(el => {
+    const value = el.getAttribute('data-name-' + lang) || el.getAttribute('data-name-fr');
+    if (value) el.textContent = value;
+  });
+}
+
 const LangManager = {
   init() {
     const saved = localStorage.getItem('lang') || 'fr';
@@ -129,6 +139,7 @@ const LangManager = {
       const key = el.getAttribute('data-i18n-placeholder');
       if (t[key]) el.placeholder = t[key];
     });
+    applyDataNameTranslations();
   }
 };
 
@@ -257,32 +268,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initFlashMessages();
   initSearch();
   
-  document.querySelectorAll("[data-category]").forEach(el => {
-    const lang = localStorage.getItem("lang") || "fr";
-    const name = el.dataset.category;
-
-    const translations = {
-        Smartphones: {
-            fr: "Smartphones",
-            en: "Smartphones",
-            ar: "الهواتف"
-        },
-        Accessoires: {
-            fr: "Accessoires",
-            en: "Accessories",
-            ar: "الإكسسوارات"
-        },
-        Promotions: {
-            fr: "Promotions",
-            en: "Promotions",
-            ar: "العروض"
-        }
-    };
-
-    if (translations[name] && translations[name][lang]) {
-        el.textContent = translations[name][lang];
-    }
-});
+  applyDataNameTranslations();
 
   initCounters();
 });
