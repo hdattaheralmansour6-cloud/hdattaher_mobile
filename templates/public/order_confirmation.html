@@ -1,0 +1,41 @@
+{% extends "public/base.html" %}
+{% block title %}Commande confirmée - HDATTAHER MOBILE{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="section" style="padding-top:100px;">
+    <div class="container">
+        <div class="account-wrapper">
+            <div class="account-card" style="text-align:center;">
+                <i class="fas fa-check-circle" style="font-size:3rem; color:var(--admin-success, #16A34A); margin-bottom:16px;"></i>
+                <h1>Commande confirmée !</h1>
+                <p class="account-subtitle">Numéro de commande : <strong>{{ order.order_number }}</strong></p>
+
+                <div style="text-align:left; margin-top:20px;">
+                    {% for item in items %}
+                    <div class="account-order-row">
+                        <span>{{ item.product_name }} × {{ item.quantity }}</span>
+                        <strong>{{ "{:,.0f}".format(item.subtotal) }} FCFA</strong>
+                    </div>
+                    {% endfor %}
+                    <div class="account-order-row" style="border-bottom:none;">
+                        <strong>Total</strong>
+                        <strong>{{ "{:,.0f}".format(order.total) }} FCFA</strong>
+                    </div>
+                </div>
+
+                <p style="margin-top:20px; color:var(--text-secondary); font-size:0.9rem;">
+                    Nous vous contacterons bientôt au {{ order.shipping_phone }} pour confirmer la livraison.
+                </p>
+
+                <div style="display:flex; gap:10px; justify-content:center; margin-top:20px; flex-wrap:wrap;">
+                    <a href="{{ url_for('customer_orders') }}" class="btn btn-outline">Mes commandes</a>
+                    <a href="{{ url_for('products') }}" class="btn btn-primary">Continuer mes achats</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
