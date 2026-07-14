@@ -53,9 +53,18 @@
             </div>
 
             <div style="display:flex; gap:1rem; margin-top:2rem; flex-wrap:wrap;">
+                {% if product.stock > 0 %}
+                <form method="POST" action="{{ url_for('cart_add', product_id=product.id) }}" style="flex:1; min-width:180px;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="quantity" value="1">
+                    <button type="submit" class="btn btn-primary" style="width:100%;">
+                        <i class="fas fa-cart-plus"></i> Ajouter au panier
+                    </button>
+                </form>
+                {% endif %}
                 <a href="https://wa.me/{{ settings.get('whatsapp','22791720755') }}?text=Bonjour Hdattaher! Je suis intéressé par: {{ product.name }} ({{ "
                     {:,.0f}".format(product.price) }} FCFA). Est-il disponible?" target="_blank"
-                    class="btn btn-whatsapp" style="flex:1;">
+                    class="btn btn-whatsapp" style="flex:1; min-width:180px;">
                     <i class="fab fa-whatsapp"></i> <span data-i18n="buy_whatsapp">Commander via WhatsApp</span>
                 </a>
                 <a href="{{ url_for('products') }}" class="btn btn-outline">
