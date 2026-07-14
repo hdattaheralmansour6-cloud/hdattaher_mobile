@@ -13,7 +13,7 @@
         </div>
         <div class="product-detail-info">
             <span class="detail-brand">{{ product.brand }}</span>
-            <h1 class="detail-title">{{ product.name }}</h1>
+            <h1 class="detail-title" data-name-fr="{{ product.name }}" data-name-en="{{ product.name_en or product.name }}" data-name-ar="{{ product.name_ar or product.name }}">{{ product.name }}</h1>
 
             <div style="display:flex; align-items:baseline; gap:12px; margin:1rem 0;">
                 <span class="detail-price">{{ "{:,.0f}".format(product.price) }} FCFA</span>
@@ -25,7 +25,7 @@
                 {% endif %}
             </div>
 
-            <p class="detail-description">{{ product.description }}</p>
+            <p class="detail-description" data-name-fr="{{ product.description }}" data-name-en="{{ product.description_en or product.description }}" data-name-ar="{{ product.description_ar or product.description }}">{{ product.description }}</p>
 
             <div class="detail-meta">
                 <div class="meta-item">
@@ -84,7 +84,7 @@
                 </a>
                 <div class="product-info">
                     <div class="product-brand">{{ p.brand }}</div>
-                    <h3 class="product-name">{{ p.name }}</h3>
+                    <h3 class="product-name" data-name-fr="{{ p.name }}" data-name-en="{{ p.name_en or p.name }}" data-name-ar="{{ p.name_ar or p.name }}">{{ p.name }}</h3>
                     <div class="product-price-row">
                         <span class="product-price">{{ "{:,.0f}".format(p.price) }} FCFA</span>
                     </div>
