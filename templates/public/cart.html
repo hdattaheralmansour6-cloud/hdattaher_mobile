@@ -1,0 +1,64 @@
+{% extends "public/base.html" %}
+{% block title %}Mon panier - HDATTAHER MOBILE{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="section" style="padding-top:100px;">
+    <div class="container">
+        <div class="section-header">
+            <h2>Mon panier</h2>
+        </div>
+
+        {% if items %}
+        <div class="account-card account-wide" style="margin:0 auto;">
+            {% for item in items %}
+            <div class="account-order-row">
+                <div style="display:flex; align-items:center; gap:14px; flex:1;">
+                    {% if item.product.image and item.product.image != 'default.png' %}
+                    <img src="{{ item.product.image }}" alt=""
+                         style="width:56px; height:56px; border-radius:10px; object-fit:cover;">
+                    {% endif %}
+                    <div>
+                        <strong>{{ item.product.name }}</strong><br>
+                        <span style="color:var(--text-secondary); font-size:0.85rem;">
+                            {{ "{:,.0f}".format(item.product.price) }} FCFA
+                        </span>
+                    </div>
+                </div>
+
+                <form method="POST" action="{{ url_for('cart_update', product_id=item.product.id) }}"
+                      style="display:flex; align-items:center; gap:8px;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="number" name="quantity" value="{{ item.quantity }}" min="1"
+                           max="{{ item.product.stock }}" style="width:60px; padding:6px; border-radius:8px;
+                           border:1px solid var(--border); background:var(--bg); color:var(--text);">
+                    <button type="submit" class="btn btn-outline btn-sm">Mettre à jour</button>
+                </form>
+
+                <strong>{{ "{:,.0f}".format(item.subtotal) }} FCFA</strong>
+
+                <form method="POST" action="{{ url_for('cart_remove', product_id=item.product.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger btn-sm">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </form>
+            </div>
+            {% endfor %}
+
+            <div style="display:flex; justify-content:space-between; align-items:center; padding-top:20px;">
+                <h3>Total : {{ "{:,.0f}".format(total) }} FCFA</h3>
+                <a href="{{ url_for('checkout') }}" class="btn btn-primary">Valider la commande</a>
+            </div>
+        </div>
+        {% else %}
+        <div class="account-empty">
+            <i class="fas fa-shopping-cart"></i>
+            <p>Votre panier est vide.<br><a href="{{ url_for('products') }}">Découvrir nos produits</a></p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
