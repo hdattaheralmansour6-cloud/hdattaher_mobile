@@ -7,6 +7,10 @@
     <meta name="description"
         content="HDATTAHER MOBILE - Votre boutique de smartphones et accessoires au Niger. Les meilleurs prix et qualité.">
     <title>{% block title %}HDATTAHER MOBILE{% endblock %}</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon/favicon.ico') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon/favicon-32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon/favicon-16.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon/apple-touch-icon.png') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <!-- CSS dynamique depuis les paramètres admin -->
