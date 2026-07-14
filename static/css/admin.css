@@ -727,29 +727,41 @@ input:checked+.toggle-slider::before {
 
     .products-table tr {
         border-bottom: 1px solid var(--admin-border);
-        padding: 1rem;
+        padding: 0.6rem 0.8rem;
+        position: relative;
     }
 
     .products-table td {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 1rem;
-        padding: 6px 0;
+        gap: 0.6rem;
+        padding: 3px 0;
         white-space: normal !important;
         text-align: right;
         border: none;
+        font-size: 0.85rem;
+        min-height: 22px;
     }
 
     .products-table td[data-label="Image"] {
         justify-content: flex-start;
+        padding: 0 0 4px 0;
+        min-height: 0;
+    }
+
+    .products-table td[data-label="Image"] .product-thumb,
+    .products-table td[data-label="Image"] img {
+        width: 34px;
+        height: 34px;
+        border-radius: 6px;
     }
 
     .products-table td::before {
         content: attr(data-label);
         font-weight: 700;
         color: var(--admin-text-sec);
-        font-size: 0.75rem;
+        font-size: 0.68rem;
         text-transform: uppercase;
         text-align: left;
         flex-shrink: 0;
@@ -757,6 +769,17 @@ input:checked+.toggle-slider::before {
 
     .products-table td[data-label="Image"]::before {
         display: none;
+    }
+
+    .products-table td[data-label="Nom"] {
+        font-size: 0.95rem;
+        padding-bottom: 6px;
+        margin-bottom: 2px;
+        border-bottom: 1px dashed var(--admin-border);
+    }
+
+    .products-table td[data-label="Actions"] {
+        padding-top: 8px;
     }
 
     /* Les mini-tableaux du tableau de bord (2-3 colonnes) n'ont pas besoin
