@@ -166,7 +166,7 @@
             <a href="{{ url_for('products', category=cat.id) }}" class="mobile-menu-link mobile-cat-link"
                 onclick="closeMobileMenu()">
                 <div class="mobile-link-icon"><i class="{{ cat.icon }}"></i></div>
-                <span data-category="{{ cat.name }}">{{ cat.name }}</span>
+                <span data-name-fr="{{ cat.name }}" data-name-en="{{ cat.name_en or cat.name }}" data-name-ar="{{ cat.name_ar or cat.name }}">{{ cat.name }}</span>
                 <i class="fas fa-chevron-right mobile-link-arrow"></i>
             </a>
             {% endfor %}
@@ -248,7 +248,7 @@
                     {% for cat in categories %}
                     <li>
                         <a href="{{ url_for('products', category=cat.id) }}">
-                            <span data-category="{{ cat.slug }}">{{ cat.name }}</span>
+                            <span data-name-fr="{{ cat.name }}" data-name-en="{{ cat.name_en or cat.name }}" data-name-ar="{{ cat.name_ar or cat.name }}">{{ cat.name }}</span>
                         </a>
                     </li>
                     {% endfor %}
