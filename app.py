@@ -11,8 +11,8 @@ from flask import (Flask, render_template, request, redirect, url_for,
                    flash, session, jsonify, send_from_directory, abort)
 from werkzeug.utils import secure_filename
 from flask_wtf.csrf import CSRFProtect
-from flask_login import (login_user, logout_user, login_required,
-                          current_user)
+from flask_login import (login_user, logout_user, current_user,
+                          login_required as customer_login_required)
 from config import Config
 from database import db, verify_admin_password, get_settings_dict, get_supabase, init_supabase
 from deep_translator import GoogleTranslator
@@ -102,7 +102,7 @@ def safe_int(value, default=0):
         return default
 
 
-def login_required(f):
+def admin_login_required(f):
     """Décorateur pour protéger les routes admin"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -458,7 +458,7 @@ def admin_logout():
 
 
 @app.route('/admin')
-@login_required
+@admin_login_required
 def admin_dashboard():
     sb = get_supabase()
     stats = {
@@ -484,7 +484,7 @@ def admin_dashboard():
 
 
 @app.route('/azawad/profile', methods=['GET', 'POST'])
-@login_required
+@admin_login_required
 def admin_profile():
     """Page Mon Profil — modifier username / mot de passe"""
     admin_id = session.get('user_id')
@@ -572,7 +572,7 @@ def admin_profile():
 
 
 @app.route('/azawad/products')
-@login_required
+@admin_login_required
 def admin_products():
     products_list = db.fetch_all('products', '*, categories(name)', order=('created_at', False))
     for p in products_list:
@@ -582,7 +582,7 @@ def admin_products():
 
 
 @app.route('/azawad/product/add', methods=['GET', 'POST'])
-@login_required
+@admin_login_required
 def admin_add_product():
     cats = db.fetch_all('categories', '*', order=('sort_order', True))
 
@@ -653,7 +653,7 @@ def admin_add_product():
 
 
 @app.route('/azawad/product/edit/<product_id>', methods=['GET', 'POST'])
-@login_required
+@admin_login_required
 def admin_edit_product(product_id):
     product = db.fetch_one('products', '*', {'id': product_id})
     cats = db.fetch_all('categories', '*', order=('sort_order', True))
@@ -734,7 +734,7 @@ def admin_edit_product(product_id):
 
 
 @app.route('/azawad/product/delete/<product_id>', methods=['POST'])
-@login_required
+@admin_login_required
 def admin_delete_product(product_id):
     confirmed = request.form.get('confirmed', '')
     if confirmed != 'yes':
@@ -754,14 +754,14 @@ def admin_delete_product(product_id):
 
 
 @app.route('/azawad/categories')
-@login_required
+@admin_login_required
 def admin_categories():
     cats = db.fetch_all('categories', '*', order=('sort_order', True))
     return render_template('admin/categories.html', cats=cats)
 
 
 @app.route('/azawad/category/add', methods=['POST'])
-@login_required
+@admin_login_required
 def admin_add_category():
     name = request.form.get('name', '').strip()
     if not name:
@@ -783,7 +783,7 @@ def admin_add_category():
 
 
 @app.route('/azawad/category/delete/<cat_id>', methods=['POST'])
-@login_required
+@admin_login_required
 def admin_delete_category(cat_id):
     cat = db.fetch_one('categories', 'name', {'id': cat_id})
     cat_name = cat['name'] if cat else 'Inconnue'
@@ -794,7 +794,7 @@ def admin_delete_category(cat_id):
 
 
 @app.route('/azawad/settings', methods=['GET', 'POST'])
-@login_required
+@admin_login_required
 def admin_settings():
     if request.method == 'POST':
         fields = ['site_name', 'owner_name', 'whatsapp', 'location',
@@ -829,7 +829,7 @@ def admin_settings():
 
 
 @app.route('/azawad/password', methods=['POST'])
-@login_required
+@admin_login_required
 def admin_change_password():
     old_pwd = request.form.get('old_password', '')
     new_pwd = request.form.get('new_password', '')
@@ -858,7 +858,7 @@ def admin_change_password():
 
 
 @app.route('/azawad/logs')
-@login_required
+@admin_login_required
 def admin_logs():
     sb = get_supabase()
     result = sb.table('admin_logs').select('*, admins(username)') \
@@ -949,7 +949,7 @@ def customer_login():
 
 
 @app.route('/compte/deconnexion')
-@login_required
+@customer_login_required
 def customer_logout():
     logout_user()
     flash('Vous êtes déconnecté.', 'info')
@@ -957,7 +957,7 @@ def customer_logout():
 
 
 @app.route('/compte/profil', methods=['GET', 'POST'])
-@login_required
+@customer_login_required
 def customer_profile():
     if request.method == 'POST':
         form_type = request.form.get('form_type')
@@ -998,7 +998,7 @@ def customer_profile():
 
 
 @app.route('/compte/commandes')
-@login_required
+@customer_login_required
 def customer_orders():
     # La table des commandes sera ajoutée en Phase 2.
     # Cette page fonctionne déjà et affichera automatiquement
