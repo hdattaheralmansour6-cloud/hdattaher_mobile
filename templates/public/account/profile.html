@@ -1,0 +1,72 @@
+{% extends "public/base.html" %}
+{% block title %}Mon compte{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="account-wrapper account-wide">
+    <div class="account-nav-tabs">
+        <a href="{{ url_for('customer_profile') }}" class="active">Mon profil</a>
+        <a href="{{ url_for('customer_orders') }}">Mes commandes</a>
+        <a href="{{ url_for('customer_logout') }}">Déconnexion</a>
+    </div>
+
+    <div class="account-card account-section">
+        <h2>Informations personnelles</h2>
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="form_type" value="profile">
+
+            <div class="account-field">
+                <label for="full_name">Nom complet</label>
+                <input type="text" id="full_name" name="full_name" required
+                       value="{{ customer.full_name if customer else '' }}">
+            </div>
+
+            <div class="account-field">
+                <label>Email</label>
+                <input type="email" value="{{ customer.email if customer else '' }}" disabled>
+            </div>
+
+            <div class="account-field">
+                <label for="phone">Téléphone</label>
+                <input type="tel" id="phone" name="phone"
+                       value="{{ customer.phone if customer else '' }}">
+            </div>
+
+            <div class="account-field">
+                <label for="address">Adresse</label>
+                <textarea id="address" name="address" rows="3">{{ customer.address if customer else '' }}</textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Enregistrer</button>
+        </form>
+    </div>
+
+    <div class="account-card account-section">
+        <h2>Changer le mot de passe</h2>
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="form_type" value="password">
+
+            <div class="account-field">
+                <label for="current_password">Mot de passe actuel</label>
+                <input type="password" id="current_password" name="current_password" required>
+            </div>
+
+            <div class="account-field">
+                <label for="new_password">Nouveau mot de passe</label>
+                <input type="password" id="new_password" name="new_password" required minlength="6">
+            </div>
+
+            <div class="account-field">
+                <label for="confirm_new_password">Confirmer le nouveau mot de passe</label>
+                <input type="password" id="confirm_new_password" name="confirm_new_password" required minlength="6">
+            </div>
+
+            <button type="submit" class="btn btn-outline">Changer le mot de passe</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
