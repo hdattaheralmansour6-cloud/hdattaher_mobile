@@ -248,7 +248,7 @@
                     {% for cat in categories %}
                     <li>
                         <a href="{{ url_for('products', category=cat.id) }}">
-                            <span data-category="{{ cat.name }}">{{ cat.name }}</span>
+                            <span data-category="{{ cat.slug }}">{{ cat.name }}</span>
                         </a>
                     </li>
                     {% endfor %}
