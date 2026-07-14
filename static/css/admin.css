@@ -704,91 +704,46 @@ input:checked+.toggle-slider::before {
         min-width: 600px;
     }
 
-    /* Tableau "Gestion des Produits" : même style épuré que les
-       mini-tableaux du tableau de bord, sans défilement ni zoom nécessaire */
+    /* Tableau "Gestion des Produits" : vrai tableau compact, avec un léger
+       défilement horizontal (comme le tableau produits complet), texte réduit
+       pour limiter au maximum le besoin de scroller */
     .admin-card-body:has(.products-table) {
-        overflow-x: visible;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     .products-table {
-        min-width: 0;
+        min-width: 480px;
         width: 100%;
     }
 
-    .products-table thead {
-        display: none;
-    }
-
-    .products-table tbody {
-        display: block;
-    }
-
-    .products-table tr {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        border-bottom: 1px solid var(--admin-border);
-        padding: 0.9rem 0;
-        gap: 0 10px;
-    }
-
+    .products-table th,
     .products-table td {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        border: none;
-        white-space: normal !important;
-        font-size: 0.85rem;
-        padding: 5px 0;
-        width: 100%;
-    }
-
-    /* Image + Nom sur la même ligne, comme dans "Derniers Produits" */
-    .products-table td[data-label="Image"] {
-        order: 1;
-        justify-content: flex-start;
-        width: auto;
-        flex: 0 0 auto;
-        padding: 0;
-    }
-
-    .products-table td[data-label="Image"] .product-thumb,
-    .products-table td[data-label="Image"] img {
-        width: 40px;
-        height: 40px;
-        border-radius: 8px;
+        padding: 8px 8px;
+        font-size: 0.72rem;
+        white-space: nowrap;
     }
 
     .products-table td[data-label="Nom"] {
-        order: 2;
-        width: auto;
-        flex: 1 1 auto;
-        min-width: 0;
-        justify-content: flex-start;
-        font-size: 1rem;
-        font-weight: 700;
-        padding: 0 0 0 10px;
+        font-weight: 600;
+        white-space: normal;
+        max-width: 110px;
     }
 
-    .products-table td:not([data-label="Image"]):not([data-label="Nom"]) {
-        order: 3;
+    .products-table .product-thumb,
+    .products-table img {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
     }
 
-    .products-table td[data-label="Actions"] {
-        padding-top: 8px;
+    .products-table .table-actions {
+        gap: 3px;
     }
 
-    .products-table td::before {
-        content: attr(data-label);
-        font-weight: 700;
-        color: var(--admin-text-sec);
-        font-size: 0.7rem;
-        text-transform: uppercase;
-        letter-spacing: 0.02em;
-    }
-
-    .products-table td[data-label="Image"]::before {
-        display: none;
+    .products-table .btn-admin {
+        padding: 4px 8px !important;
+        font-size: 0.7rem !important;
     }
 
     /* Les mini-tableaux du tableau de bord (2-3 colonnes) n'ont pas besoin
