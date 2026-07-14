@@ -1,0 +1,62 @@
+{% extends "admin/base.html" %}
+{% block title %}Commandes{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <div>
+        <h1>Gestion des Commandes</h1><span class="breadcrumb">{{ orders|length }} commande(s)</span>
+    </div>
+</div>
+
+<div class="admin-card">
+    <div class="admin-card-body" style="padding:1rem;">
+        <form method="GET" style="margin-bottom:16px;">
+            <select name="status" onchange="this.form.submit()" class="form-control" style="max-width:220px;">
+                <option value="">Tous les statuts</option>
+                {% for s in statuses %}
+                <option value="{{ s }}" {% if status_filter==s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+    <div class="admin-card-body" style="padding:0; overflow-x:auto;">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>N° Commande</th>
+                    <th>Client</th>
+                    <th>Total</th>
+                    <th>Statut</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td style="font-weight:600;">{{ order.order_number }}</td>
+                    <td>{{ order.customer_name }}<br>
+                        <span style="font-size:0.78rem; color:var(--admin-text-sec);">{{ order.customer_email }}</span>
+                    </td>
+                    <td>{{ "{:,.0f}".format(order.total) }} FCFA</td>
+                    <td>{{ order.status }}</td>
+                    <td>{{ order.created_at[:10] if order.created_at else '' }}</td>
+                    <td>
+                        <a href="{{ url_for('admin_order_detail', order_id=order.id) }}" class="btn-admin primary"
+                           style="padding:6px 12px; font-size:0.8rem;">
+                            <i class="fas fa-eye"></i> Voir
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="text-align:center; padding:30px; color:var(--admin-text-sec);">
+                        Aucune commande pour le moment.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
