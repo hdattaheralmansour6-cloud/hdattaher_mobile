@@ -724,9 +724,12 @@ input:checked+.toggle-slider::before {
     }
 
     .products-table tr {
-        display: block;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
         border-bottom: 1px solid var(--admin-border);
         padding: 0.9rem 0;
+        gap: 0 10px;
     }
 
     .products-table td {
@@ -737,12 +740,16 @@ input:checked+.toggle-slider::before {
         white-space: normal !important;
         font-size: 0.85rem;
         padding: 5px 0;
+        width: 100%;
     }
 
-    /* En-tête : image + nom côte à côte, comme dans "Derniers Produits" */
+    /* Image + Nom sur la même ligne, comme dans "Derniers Produits" */
     .products-table td[data-label="Image"] {
+        order: 1;
         justify-content: flex-start;
-        padding-bottom: 4px;
+        width: auto;
+        flex: 0 0 auto;
+        padding: 0;
     }
 
     .products-table td[data-label="Image"] .product-thumb,
@@ -753,9 +760,18 @@ input:checked+.toggle-slider::before {
     }
 
     .products-table td[data-label="Nom"] {
+        order: 2;
+        width: auto;
+        flex: 1 1 auto;
+        min-width: 0;
+        justify-content: flex-start;
         font-size: 1rem;
         font-weight: 700;
-        padding-bottom: 8px;
+        padding: 0 0 0 10px;
+    }
+
+    .products-table td:not([data-label="Image"]):not([data-label="Nom"]) {
+        order: 3;
     }
 
     .products-table td[data-label="Actions"] {
