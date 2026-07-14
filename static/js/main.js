@@ -30,7 +30,7 @@ const ThemeManager = {
 // ============================================================
 const translations = {
   fr: {
-    home: 'Accueil', products: 'Produits', about: 'À propos', contact: 'Contact',
+    home: 'Accueil', products: 'Produits', about: 'À propos', contact: 'Contact', whatsapp_contact: 'Contactez-nous via WhatsApp',
     search: 'Rechercher...', all_categories: 'Toutes les catégories',
     sort_by: 'Trier par', newest: 'Plus récent', price_asc: 'Prix croissant',
     price_desc: 'Prix décroissant', popular: 'Populaire',
@@ -54,7 +54,7 @@ const translations = {
     stock: 'Stock', brand: 'Marque',
   },
   en: {
-    home: 'Home', products: 'Products', about: 'About', contact: 'Contact',
+    home: 'Home', products: 'Products', about: 'About', contact: 'Contact', whatsapp_contact: 'Contact us via WhatsApp',
     search: 'Search...', all_categories: 'All categories',
     sort_by: 'Sort by', newest: 'Newest', price_asc: 'Price ascending',
     price_desc: 'Price descending', popular: 'Popular',
@@ -78,7 +78,7 @@ const translations = {
     stock: 'Stock', brand: 'Brand',
   },
   ar: {
-    home: 'الرئيسية', products: 'المنتجات', about: 'حولنا', contact: 'اتصل بنا',
+    home: 'الرئيسية', products: 'المنتجات', about: 'حولنا', contact: 'اتصل بنا', whatsapp_contact: 'تواصل معنا عبر واتساب',
     search: '...بحث', all_categories: 'جميع الفئات',
     sort_by: 'ترتيب حسب', newest: 'الأحدث', price_asc: 'السعر تصاعدياً',
     price_desc: 'السعر تنازلياً', popular: 'الأكثر شعبية',
