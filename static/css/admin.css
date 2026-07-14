@@ -703,6 +703,24 @@ input:checked+.toggle-slider::before {
         min-width: 600px;
     }
 
+    /* Les mini-tableaux du tableau de bord (2-3 colonnes) n'ont pas besoin
+       de défiler : ils s'adaptent normalement à la largeur de l'écran */
+    .dashboard-grid .admin-table {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .dashboard-grid .admin-table th,
+    .dashboard-grid .admin-table td {
+        white-space: normal;
+        word-break: break-word;
+    }
+
+    .dashboard-grid .admin-table td[style*="display:flex"] span {
+        min-width: 0;
+        flex: 1;
+    }
+
     .admin-table th,
     .admin-table td {
         padding: 10px 12px;
