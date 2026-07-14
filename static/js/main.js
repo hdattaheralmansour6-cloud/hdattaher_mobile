@@ -40,6 +40,7 @@ const translations = {
     hero_desc: 'Découvrez notre collection exclusive de smartphones et accessoires. Qualité premium, prix imbattables.',
     shop_now: 'Acheter maintenant', our_products: 'Nos Produits',
     featured: 'Produits Vedettes', new_arrivals: 'Nouveautés',
+    featured_products: 'Produits en Vedette',
     categories_desc: 'Trouvez exactement ce que vous cherchez',
     featured_desc: 'Nos meilleurs produits sélectionnés pour vous',
     special_offers: 'Offres Spéciales', view_all: 'Voir tout',
