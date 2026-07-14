@@ -110,6 +110,15 @@
             <button class="btn-icon" id="themeToggle" aria-label="Changer le thème">
                 <i class="fas fa-moon"></i>
             </button>
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('customer_profile') }}" class="btn-icon" aria-label="Mon compte">
+                <i class="fas fa-user"></i>
+            </a>
+            {% else %}
+            <a href="{{ url_for('customer_login') }}" class="btn-icon" aria-label="Connexion">
+                <i class="fas fa-user"></i>
+            </a>
+            {% endif %}
         </div>
 
         <!-- Mobile hamburger -->
@@ -161,6 +170,19 @@
                 <span data-i18n="contact">Contact</span>
                 <i class="fas fa-chevron-right mobile-link-arrow"></i>
             </a>
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('customer_profile') }}" class="mobile-menu-link">
+                <div class="mobile-link-icon"><i class="fas fa-user"></i></div>
+                <span>Mon compte</span>
+                <i class="fas fa-chevron-right mobile-link-arrow"></i>
+            </a>
+            {% else %}
+            <a href="{{ url_for('customer_login') }}" class="mobile-menu-link">
+                <div class="mobile-link-icon"><i class="fas fa-user"></i></div>
+                <span>Connexion / Inscription</span>
+                <i class="fas fa-chevron-right mobile-link-arrow"></i>
+            </a>
+            {% endif %}
         </div>
 
         <!-- Catégories -->
