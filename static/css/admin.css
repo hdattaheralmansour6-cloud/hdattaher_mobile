@@ -704,19 +704,15 @@ input:checked+.toggle-slider::before {
         min-width: 600px;
     }
 
-    /* Tableau "Gestion des Produits" : affichage en cartes séparées,
-       sans défilement ni zoom nécessaire sur mobile */
+    /* Tableau "Gestion des Produits" : même style épuré que les
+       mini-tableaux du tableau de bord, sans défilement ni zoom nécessaire */
     .admin-card-body:has(.products-table) {
         overflow-x: visible;
-        padding: 0.8rem !important;
-        background: var(--admin-bg);
     }
 
     .products-table {
         min-width: 0;
         width: 100%;
-        border-spacing: 0 0.7rem;
-        border-collapse: separate;
     }
 
     .products-table thead {
@@ -728,31 +724,25 @@ input:checked+.toggle-slider::before {
     }
 
     .products-table tr {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 0 10px;
-        background: var(--admin-card);
-        border: 1px solid var(--admin-border);
-        border-radius: 14px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        padding: 0.85rem 1rem;
-        margin-bottom: 0.85rem;
+        display: block;
+        border-bottom: 1px solid var(--admin-border);
+        padding: 0.9rem 0;
     }
 
     .products-table td {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
         border: none;
         white-space: normal !important;
-        font-size: 0.82rem;
+        font-size: 0.85rem;
         padding: 5px 0;
     }
 
-    /* En-tête de carte : image + nom côte à côte */
+    /* En-tête : image + nom côte à côte, comme dans "Derniers Produits" */
     .products-table td[data-label="Image"] {
-        order: 1;
-        flex: 0 0 auto;
-        width: auto;
-        padding: 0;
+        justify-content: flex-start;
+        padding-bottom: 4px;
     }
 
     .products-table td[data-label="Image"] .product-thumb,
@@ -763,56 +753,25 @@ input:checked+.toggle-slider::before {
     }
 
     .products-table td[data-label="Nom"] {
-        order: 2;
-        flex: 1 1 auto;
-        width: auto;
-        min-width: 0;
-        display: flex;
-        align-items: center;
         font-size: 1rem;
         font-weight: 700;
-        text-align: left;
-        justify-content: flex-start;
-        padding: 0 0 0 10px;
-    }
-
-    /* Champs secondaires : mini-grille 2 colonnes */
-    .products-table td:not([data-label="Image"]):not([data-label="Nom"]):not([data-label="Actions"]) {
-        order: 3;
-        flex: 0 0 50%;
-        width: 50%;
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 2px;
-        text-align: left;
-        border-top: 1px solid var(--admin-border);
-        margin-top: 8px;
-        padding-top: 8px;
+        padding-bottom: 8px;
     }
 
     .products-table td[data-label="Actions"] {
-        order: 99;
-        flex: 0 0 100%;
-        width: 100%;
-        display: flex;
-        justify-content: flex-end;
-        border-top: 1px solid var(--admin-border);
-        margin-top: 8px;
-        padding-top: 10px;
+        padding-top: 8px;
     }
 
     .products-table td::before {
         content: attr(data-label);
         font-weight: 700;
         color: var(--admin-text-sec);
-        font-size: 0.65rem;
+        font-size: 0.7rem;
         text-transform: uppercase;
         letter-spacing: 0.02em;
     }
 
-    .products-table td[data-label="Image"]::before,
-    .products-table td[data-label="Nom"]::before {
+    .products-table td[data-label="Image"]::before {
         display: none;
     }
 
