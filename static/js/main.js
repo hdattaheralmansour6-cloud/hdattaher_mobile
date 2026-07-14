@@ -258,7 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initSearch();
   
   document.querySelectorAll("[data-category]").forEach(el => {
-    const lang = localStorage.getItem("language") || "fr";
+    const lang = localStorage.getItem("lang") || "fr";
     const name = el.dataset.category;
 
     const translations = {
