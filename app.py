@@ -11,12 +11,20 @@ from flask import (Flask, render_template, request, redirect, url_for,
                    flash, session, jsonify, send_from_directory, abort)
 from werkzeug.utils import secure_filename
 from flask_wtf.csrf import CSRFProtect
+from flask_login import (login_user, logout_user, login_required,
+                          current_user)
 from config import Config
 from database import db, verify_admin_password, get_settings_dict, get_supabase, init_supabase
 from deep_translator import GoogleTranslator
+from customer_auth import (login_manager, create_customer, verify_customer_password,
+                            update_customer_last_login, update_customer_profile,
+                            change_customer_password, create_password_reset_token,
+                            verify_reset_token, consume_reset_token, get_customer_by_email)
+from werkzeug.security import check_password_hash
 # test redeploiement storage 2
 app = Flask(__name__)
 app.config.from_object(Config)
+login_manager.init_app(app)
 
 def auto_translate(text, target):
     if not text:
@@ -874,6 +882,172 @@ def uploaded_file(filename):
     if not filename:
         abort(404)
     return send_from_directory(Config.UPLOAD_FOLDER, filename)
+
+
+# ============================================================
+#  COMPTES CLIENTS (Flask-Login)
+# ============================================================
+
+@app.route('/compte/inscription', methods=['GET', 'POST'])
+def customer_register():
+    if current_user.is_authenticated:
+        return redirect(url_for('customer_profile'))
+
+    if request.method == 'POST':
+        full_name = request.form.get('full_name', '').strip()
+        email = request.form.get('email', '').strip()
+        phone = request.form.get('phone', '').strip()
+        password = request.form.get('password', '')
+        confirm = request.form.get('confirm_password', '')
+
+        if not full_name or not email or not password:
+            flash('Veuillez remplir tous les champs obligatoires.', 'error')
+            return render_template('public/account/register.html')
+
+        if password != confirm:
+            flash('Les mots de passe ne correspondent pas.', 'error')
+            return render_template('public/account/register.html')
+
+        if len(password) < 6:
+            flash('Le mot de passe doit contenir au moins 6 caractères.', 'error')
+            return render_template('public/account/register.html')
+
+        customer, error = create_customer(full_name, email, phone, password)
+        if error:
+            flash(error, 'error')
+            return render_template('public/account/register.html')
+
+        login_user(customer)
+        update_customer_last_login(customer.id)
+        flash('Bienvenue ! Votre compte a été créé.', 'success')
+        return redirect(url_for('customer_profile'))
+
+    return render_template('public/account/register.html')
+
+
+@app.route('/compte/connexion', methods=['GET', 'POST'])
+def customer_login():
+    if current_user.is_authenticated:
+        return redirect(url_for('customer_profile'))
+
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        password = request.form.get('password', '')
+
+        row = verify_customer_password(email, password)
+        if row:
+            from customer_auth import Customer
+            login_user(Customer(row), remember=True)
+            update_customer_last_login(row['id'])
+            flash('Connexion réussie !', 'success')
+            next_page = request.args.get('next')
+            return redirect(next_page or url_for('customer_profile'))
+        else:
+            flash('Email ou mot de passe incorrect.', 'error')
+
+    return render_template('public/account/login.html')
+
+
+@app.route('/compte/deconnexion')
+@login_required
+def customer_logout():
+    logout_user()
+    flash('Vous êtes déconnecté.', 'info')
+    return redirect(url_for('index'))
+
+
+@app.route('/compte/profil', methods=['GET', 'POST'])
+@login_required
+def customer_profile():
+    if request.method == 'POST':
+        form_type = request.form.get('form_type')
+
+        if form_type == 'profile':
+            full_name = request.form.get('full_name', '').strip()
+            phone = request.form.get('phone', '').strip()
+            address = request.form.get('address', '').strip()
+            if not full_name:
+                flash('Le nom est obligatoire.', 'error')
+            else:
+                update_customer_profile(current_user.id, full_name, phone, address)
+                flash('Profil mis à jour.', 'success')
+            return redirect(url_for('customer_profile'))
+
+        elif form_type == 'password':
+            current_password = request.form.get('current_password', '')
+            new_password = request.form.get('new_password', '')
+            confirm_password = request.form.get('confirm_new_password', '')
+
+            row = db.fetch_all('customers', filters={'id': current_user.id}, limit=1)
+            row = row[0] if row else None
+
+            if not row or not check_password_hash(row['password_hash'], current_password):
+                flash('Mot de passe actuel incorrect.', 'error')
+            elif len(new_password) < 6:
+                flash('Le nouveau mot de passe doit contenir au moins 6 caractères.', 'error')
+            elif new_password != confirm_password:
+                flash('Les nouveaux mots de passe ne correspondent pas.', 'error')
+            else:
+                change_customer_password(current_user.id, new_password)
+                flash('Mot de passe modifié.', 'success')
+            return redirect(url_for('customer_profile'))
+
+    rows = db.fetch_all('customers', filters={'id': current_user.id}, limit=1)
+    customer = rows[0] if rows else None
+    return render_template('public/account/profile.html', customer=customer)
+
+
+@app.route('/compte/commandes')
+@login_required
+def customer_orders():
+    # La table des commandes sera ajoutée en Phase 2.
+    # Cette page fonctionne déjà et affichera automatiquement
+    # l'historique une fois la Phase 2 en place.
+    orders = []
+    return render_template('public/account/orders.html', orders=orders)
+
+
+@app.route('/compte/mot-de-passe-oublie', methods=['GET', 'POST'])
+def customer_forgot_password():
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        token = create_password_reset_token(email)
+        # Message identique que l'email existe ou non (sécurité : ne pas révéler
+        # quels emails sont enregistrés).
+        flash("Si un compte existe avec cet email, un lien de réinitialisation a été généré.", 'info')
+        if token:
+            reset_link = url_for('customer_reset_password', token=token, _external=True)
+            log_action('Demande de réinitialisation mot de passe', f'Email: {email}')
+            # L'envoi d'email n'est pas encore configuré sur ce projet.
+            # En attendant, le lien est affiché ici pour test/démo.
+            flash(f"Lien de réinitialisation (temporaire, pas encore envoyé par email) : {reset_link}", 'info')
+        return redirect(url_for('customer_login'))
+
+    return render_template('public/account/forgot_password.html')
+
+
+@app.route('/compte/reinitialiser/<token>', methods=['GET', 'POST'])
+def customer_reset_password(token):
+    customer_id = verify_reset_token(token)
+    if not customer_id:
+        flash('Ce lien de réinitialisation est invalide ou expiré.', 'error')
+        return redirect(url_for('customer_forgot_password'))
+
+    if request.method == 'POST':
+        new_password = request.form.get('new_password', '')
+        confirm_password = request.form.get('confirm_password', '')
+
+        if len(new_password) < 6:
+            flash('Le mot de passe doit contenir au moins 6 caractères.', 'error')
+        elif new_password != confirm_password:
+            flash('Les mots de passe ne correspondent pas.', 'error')
+        else:
+            change_customer_password(customer_id, new_password)
+            consume_reset_token(token)
+            flash('Mot de passe réinitialisé. Vous pouvez vous connecter.', 'success')
+            return redirect(url_for('customer_login'))
+
+    return render_template('public/account/reset_password.html', token=token)
 
 
 # ============================================================
