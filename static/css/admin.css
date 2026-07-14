@@ -230,6 +230,7 @@ textarea.form-control {
 
 .admin-main {
     flex: 1;
+    min-width: 0;
     margin-left: 260px;
     padding: 2rem;
     min-height: 100vh;
@@ -578,7 +579,7 @@ input:checked+.toggle-slider::before {
     }
 
     .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 1rem;
     }
 
@@ -637,7 +638,7 @@ input:checked+.toggle-slider::before {
 
     /* ---- Stats Cards ---- */
     .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 0.8rem;
     }
 
@@ -827,7 +828,7 @@ input:checked+.toggle-slider::before {
 
     /* ---- Stats: still 2-col but compact ---- */
     .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 0.6rem;
     }
 
