@@ -21,7 +21,7 @@
                 <select name="category" class="filter-input">
                     <option value="" data-i18n="all_categories">Toutes les catégories</option>
                     {% for cat in all_categories %}
-                    <option value="{{ cat.id }}" {% if current_category==cat.id %}selected{% endif %}>{{ cat.name }}
+                    <option value="{{ cat.id }}" {% if current_category==cat.id %}selected{% endif %} data-name-fr="{{ cat.name }}" data-name-en="{{ cat.name_en or cat.name }}" data-name-ar="{{ cat.name_ar or cat.name }}">{{ cat.name }}
                     </option>
                     {% endfor %}
                 </select>
@@ -72,7 +72,7 @@
                 </a>
                 <div class="product-info">
                     <div class="product-brand">{{ p.brand }}</div>
-                    <h3 class="product-name">{{ p.name }}</h3>
+                    <h3 class="product-name" data-name-fr="{{ p.name }}" data-name-en="{{ p.name_en or p.name }}" data-name-ar="{{ p.name_ar or p.name }}">{{ p.name }}</h3>
                     <div class="product-price-row">
                         <span class="product-price">{{ "{:,.0f}".format(p.price) }} FCFA</span>
                         {% if p.old_price and p.old_price > 0 %}
