@@ -330,32 +330,34 @@ function initFlashMessages() {
 //  SEARCH LIVE
 // ============================================================
 function initSearch() {
-  const input = document.getElementById('liveSearch');
-  const results = document.getElementById('searchResults');
-  if (!input || !results) return;
-  let timeout;
-  input.addEventListener('input', function () {
-    clearTimeout(timeout);
-    const q = this.value.trim();
-    if (q.length < 2) { results.style.display = 'none'; return; }
-    timeout = setTimeout(() => {
-      fetch('/api/products?q=' + encodeURIComponent(q))
-        .then(r => r.json())
-        .then(data => {
-          if (data.length === 0) { results.style.display = 'none'; return; }
-          results.innerHTML = data.map(p => `
-            <a href="/product/${p.id}" class="search-result-item">
-              <span>${p.name}</span>
-              <span class="search-price">${formatPrice(p.price)}</span>
-            </a>
-          `).join('');
-          results.style.display = 'block';
-        });
-    }, 300);
-  });
-  document.addEventListener('click', (e) => {
-    if (!input.contains(e.target) && !results.contains(e.target))
-      results.style.display = 'none';
+  document.querySelectorAll('.live-search-input').forEach(function (input) {
+    const wrapper = input.closest('.search-box');
+    const results = wrapper ? wrapper.querySelector('.search-results-dropdown') : null;
+    if (!results) return;
+    let timeout;
+    input.addEventListener('input', function () {
+      clearTimeout(timeout);
+      const q = this.value.trim();
+      if (q.length < 2) { results.style.display = 'none'; return; }
+      timeout = setTimeout(() => {
+        fetch('/api/products?q=' + encodeURIComponent(q))
+          .then(r => r.json())
+          .then(data => {
+            if (data.length === 0) { results.style.display = 'none'; return; }
+            results.innerHTML = data.map(p => `
+              <a href="/product/${p.id}" class="search-result-item">
+                <span>${p.name}</span>
+                <span class="search-price">${formatPrice(p.price)}</span>
+              </a>
+            `).join('');
+            results.style.display = 'block';
+          });
+      }, 300);
+    });
+    document.addEventListener('click', (e) => {
+      if (!input.contains(e.target) && !results.contains(e.target))
+        results.style.display = 'none';
+    });
   });
 }
 
@@ -384,6 +386,42 @@ function initCounters() {
 }
 
 // ============================================================
+//  CARROUSEL DE BANNIÈRES
+// ============================================================
+let bannerIndex = 0;
+let bannerTimer = null;
+
+function bannerCarouselGoTo(index) {
+  const track = document.getElementById('bannerTrack');
+  if (!track) return;
+  const slides = track.children.length;
+  if (slides === 0) return;
+  bannerIndex = ((index % slides) + slides) % slides;
+  track.style.transform = `translateX(-${bannerIndex * 100}%)`;
+  document.querySelectorAll('.banner-dot').forEach((dot, i) => {
+    dot.classList.toggle('active', i === bannerIndex);
+  });
+  resetBannerAutoplay();
+}
+
+function bannerCarouselGo(direction) {
+  bannerCarouselGoTo(bannerIndex + direction);
+}
+
+function resetBannerAutoplay() {
+  if (bannerTimer) clearInterval(bannerTimer);
+  const track = document.getElementById('bannerTrack');
+  if (!track || track.children.length < 2) return;
+  bannerTimer = setInterval(() => bannerCarouselGoTo(bannerIndex + 1), 4000);
+}
+
+function initBannerCarousel() {
+  const track = document.getElementById('bannerTrack');
+  if (!track) return;
+  resetBannerAutoplay();
+}
+
+// ============================================================
 //  INITIALISATION
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
@@ -393,6 +431,7 @@ document.addEventListener('DOMContentLoaded', () => {
   AnimationManager.init();
   initFlashMessages();
   initSearch();
+  initBannerCarousel();
   
   applyDataNameTranslations();
 
