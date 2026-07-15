@@ -32,17 +32,6 @@
                     <input type="text" name="subtitle" class="form-control"
                         value="{{ banner.subtitle if banner else '' }}" placeholder="Ex: Jusqu'à -30% sur une sélection">
                 </div>
-                <div class="form-group full-width">
-                    <label>Lien au clic (optionnel)</label>
-                    <input type="text" name="link_url" class="form-control"
-                        value="{{ banner.link_url if banner else '' }}" placeholder="/products">
-                    <small style="color:var(--admin-text-sec); display:block; margin-top:4px;">
-                        Laisse vide si la bannière n'a pas besoin d'être cliquable. Sinon, utilise une adresse
-                        qui commence par <code>/</code> (ex. <code>/products</code> ou <code>/product/&lt;id&gt;</code>),
-                        ou une adresse complète commençant par <code>https://</code>. Un lien mal écrit
-                        redirigera vers la page "À propos" (erreur 404).
-                    </small>
-                </div>
                 <div class="form-group">
                     <label>Bannière active</label>
                     <label class="toggle-switch" style="display:block; margin-top:8px;">
