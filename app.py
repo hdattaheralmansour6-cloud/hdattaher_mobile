@@ -1408,16 +1408,10 @@ def customer_forgot_password():
         except Exception:
             pass
 
-        settings = get_settings()
-        whatsapp_number = settings.get('whatsapp', '22791720755')
-        message = quote(f"Bonjour, je veux mon code pour réinitialiser mon mot de passe. Email : {email}")
-        wa_link = f"https://wa.me/{whatsapp_number}?text={message}"
-
-        # WhatsApp est ouvert dans un nouvel onglet par le JS du formulaire ;
-        # ici on amène directement le client sur la page de saisie du code.
-        # wa_link est passé en secours si le JS n'a pas pu ouvrir WhatsApp.
+        # L'application WhatsApp est ouverte par le JS du formulaire (lien natif,
+        # sans nouvel onglet) ; ici on amène ce même onglet sur la page de saisie du code.
         flash("Envoyez le message WhatsApp pré-rempli, puis collez ici le code reçu.", 'success')
-        return redirect(url_for('customer_reset_password', email=email, wa=1))
+        return redirect(url_for('customer_reset_password', email=email))
 
     return render_template('public/account/forgot_password.html')
 
@@ -1426,13 +1420,7 @@ def customer_forgot_password():
 def customer_reset_password():
     if request.method == 'GET':
         email = request.args.get('email', '').strip()
-        show_wa_help = request.args.get('wa') == '1'
-        settings = get_settings()
-        whatsapp_number = settings.get('whatsapp', '22791720755')
-        message = quote(f"Bonjour, je veux mon code pour réinitialiser mon mot de passe. Email : {email}")
-        wa_link = f"https://wa.me/{whatsapp_number}?text={message}"
-        return render_template('public/account/reset_password.html', email=email,
-                               show_wa_help=show_wa_help, wa_link=wa_link)
+        return render_template('public/account/reset_password.html', email=email)
 
     if request.method == 'POST':
         email = request.form.get('email', '').strip()
@@ -1454,8 +1442,7 @@ def customer_reset_password():
             flash('Mot de passe réinitialisé. Vous pouvez vous connecter.', 'success')
             return redirect(url_for('customer_login'))
 
-        return render_template('public/account/reset_password.html', email=email,
-                               show_wa_help=False, wa_link=None)
+        return render_template('public/account/reset_password.html', email=email)
 
 
 # ============================================================
