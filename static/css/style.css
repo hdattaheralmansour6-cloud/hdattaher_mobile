@@ -2286,3 +2286,125 @@ textarea {
     right: 12px;
   }
 }
+
+/* ============================================================
+   CARROUSEL DE BANNIÈRES (page d'accueil)
+   ============================================================ */
+.banner-carousel {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 7;
+  max-height: 480px;
+  overflow: hidden;
+  background: var(--bg-secondary);
+}
+
+@media (max-width: 768px) {
+  .banner-carousel {
+    aspect-ratio: 4 / 3;
+    max-height: 320px;
+  }
+}
+
+.banner-track {
+  display: flex;
+  height: 100%;
+  transition: transform 0.5s ease;
+}
+
+.banner-slide {
+  flex: 0 0 100%;
+  position: relative;
+  height: 100%;
+}
+
+.banner-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.banner-track > a {
+  flex: 0 0 100%;
+  display: block;
+  height: 100%;
+  text-decoration: none;
+}
+
+.banner-caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 24px 28px;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0) 100%);
+  color: #fff;
+}
+
+.banner-caption h3 {
+  font-size: 1.4rem;
+  margin: 0 0 4px;
+}
+
+.banner-caption p {
+  font-size: 0.95rem;
+  margin: 0;
+  opacity: 0.9;
+}
+
+.banner-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  transition: var(--transition);
+}
+
+.banner-arrow:hover {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.banner-arrow-prev { left: 14px; }
+.banner-arrow-next { right: 14px; }
+
+@media (max-width: 768px) {
+  .banner-arrow { display: none; }
+}
+
+.banner-dots {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 5;
+}
+
+.banner-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 0;
+  transition: var(--transition);
+}
+
+.banner-dot.active {
+  background: #fff;
+  width: 22px;
+  border-radius: 4px;
+}
