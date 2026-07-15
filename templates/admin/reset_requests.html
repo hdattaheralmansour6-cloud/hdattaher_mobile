@@ -45,7 +45,7 @@
                     </td>
                     <td>{{ r.created_at[:16].replace('T',' ') if r.created_at else '' }}</td>
                     <td>
-                        <a href="https://wa.me/{{ r.customer_phone }}?text=Voici votre code de réinitialisation : {{ r.code }}"
+                        <a href="https://wa.me/{{ r.customer_phone }}?text=Voici votre code de réinitialisation : {{ r.code }}. Il expire dans 30 minutes."
                            target="_blank" class="btn-admin" style="padding:6px 12px; font-size:0.8rem; background:#25D366; color:#fff;">
                             <i class="fab fa-whatsapp"></i> Envoyer
                         </a>
