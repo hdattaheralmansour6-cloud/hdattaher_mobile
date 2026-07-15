@@ -844,6 +844,8 @@ def admin_add_banner():
         title = request.form.get('title', '').strip()
         subtitle = request.form.get('subtitle', '').strip()
         link_url = request.form.get('link_url', '').strip()
+        if link_url and not link_url.startswith(('/', 'http://', 'https://')):
+            link_url = '/' + link_url
         sort_order = safe_int(request.form.get('sort_order'), 0)
         is_active = bool(request.form.get('is_active'))
 
@@ -894,6 +896,8 @@ def admin_edit_banner(banner_id):
         title = request.form.get('title', '').strip()
         subtitle = request.form.get('subtitle', '').strip()
         link_url = request.form.get('link_url', '').strip()
+        if link_url and not link_url.startswith(('/', 'http://', 'https://')):
+            link_url = '/' + link_url
         sort_order = safe_int(request.form.get('sort_order'), 0)
         is_active = bool(request.form.get('is_active'))
 
