@@ -121,21 +121,23 @@ def generate_reset_code(email):
     """
     customer = get_customer_by_email(email)
     if not customer:
+        print(f"[generate_reset_code] Aucun client trouvé pour l'email : {email!r}", flush=True)
         return False
 
     try:
         code = f"{random.randint(0, 999999):06d}"
         expires_at = (datetime.utcnow() + timedelta(minutes=30)).isoformat()
-        db.insert('password_resets', {
+        inserted = db.insert('password_resets', {
             'customer_id': customer['id'],
             'code': code,
             'expires_at': expires_at,
             'used': False,
         })
+        print(f"[generate_reset_code] Code {code} créé pour {email!r} (customer_id={customer['id']}) -> {inserted}", flush=True)
     except Exception as e:
         # Ne bloque jamais le client si la table n'est pas encore prête côté Supabase,
         # mais on garde une trace de l'erreur exacte dans les logs Render pour diagnostiquer.
-        print(f"[generate_reset_code] Erreur insertion password_resets : {e}")
+        print(f"[generate_reset_code] Erreur insertion password_resets pour {email!r} : {e}", flush=True)
         return False
     return True
 
@@ -184,10 +186,11 @@ def get_pending_reset_requests():
             'password_resets', '*, customers(full_name, email, phone)',
             filters={'used': False}, order=('created_at', False),
         )
+        print(f"[get_pending_reset_requests] {len(rows)} ligne(s) non utilisée(s) trouvée(s) en base", flush=True)
     except Exception as e:
         # La table n'existe peut-être pas encore (migration SQL non exécutée) :
         # on ne casse jamais l'espace admin pour autant.
-        print(f"[get_pending_reset_requests] Erreur lecture password_resets : {e}")
+        print(f"[get_pending_reset_requests] Erreur lecture password_resets : {e}", flush=True)
         return []
     pending = []
     now = datetime.utcnow()
