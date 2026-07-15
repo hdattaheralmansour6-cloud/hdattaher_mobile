@@ -184,6 +184,51 @@ def make_session_permanent():
 #  ROUTES PUBLIQUES
 # ============================================================
 
+@app.route('/robots.txt')
+def robots_txt():
+    lines = [
+        'User-agent: *',
+        'Allow: /',
+        'Disallow: /azawad/',
+        'Disallow: /compte/',
+        'Disallow: /panier/',
+        f'Sitemap: {Config.SITE_URL}/sitemap.xml',
+    ]
+    return Response('\n'.join(lines), mimetype='text/plain')
+
+
+@app.route('/sitemap.xml')
+def sitemap_xml():
+    base = Config.SITE_URL
+    urls = [
+        {'loc': f'{base}/', 'changefreq': 'daily', 'priority': '1.0'},
+        {'loc': f'{base}/products', 'changefreq': 'daily', 'priority': '0.9'},
+    ]
+
+    products = db.fetch_all('products', 'id, updated_at', {'is_active': True})
+    for p in products:
+        urls.append({
+            'loc': f'{base}/product/{p["id"]}',
+            'lastmod': (p.get('updated_at') or '')[:10],
+            'changefreq': 'weekly',
+            'priority': '0.8',
+        })
+
+    xml_parts = ['<?xml version="1.0" encoding="UTF-8"?>',
+                 '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+    for u in urls:
+        xml_parts.append('  <url>')
+        xml_parts.append(f'    <loc>{u["loc"]}</loc>')
+        if u.get('lastmod'):
+            xml_parts.append(f'    <lastmod>{u["lastmod"]}</lastmod>')
+        xml_parts.append(f'    <changefreq>{u["changefreq"]}</changefreq>')
+        xml_parts.append(f'    <priority>{u["priority"]}</priority>')
+        xml_parts.append('  </url>')
+    xml_parts.append('</urlset>')
+
+    return Response('\n'.join(xml_parts), mimetype='application/xml')
+
+
 @app.route('/')
 def index():
     """Page d'accueil"""

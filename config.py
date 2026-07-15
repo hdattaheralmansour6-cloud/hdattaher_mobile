@@ -55,3 +55,6 @@ class Config:
     # --- Rate limiting connexion ---
     LOGIN_MAX_ATTEMPTS = 5
     LOGIN_LOCKOUT_SECONDS = 300
+
+    # --- SEO / domaine du site ---
+    SITE_URL = os.environ.get('SITE_URL', 'https://hdattahermobile.com')
