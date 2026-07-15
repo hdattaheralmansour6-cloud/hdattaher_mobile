@@ -9,6 +9,8 @@ from datetime import datetime, timedelta
 from functools import wraps
 from flask import (Flask, render_template, request, redirect, url_for,
                    flash, session, jsonify, send_from_directory, abort, Response)
+from flask_caching import Cache
+from flask_compress import Compress
 from werkzeug.utils import secure_filename
 from flask_wtf.csrf import CSRFProtect
 from flask_login import (login_user, logout_user, login_required as customer_login_required,
@@ -29,6 +31,12 @@ from invoice_generator import generate_invoice_pdf
 # test redeploiement storage 2
 app = Flask(__name__)
 app.config.from_object(Config)
+
+# --- Performance : cache mémoire + compression des réponses (Phase 6) ---
+app.config['CACHE_TYPE'] = 'SimpleCache'
+app.config['CACHE_DEFAULT_TIMEOUT'] = 120  # 2 minutes
+cache = Cache(app)
+Compress(app)
 login_manager.init_app(app)
 
 def auto_translate(text, target):
@@ -125,6 +133,7 @@ def login_required(f):
     return decorated_function
 
 
+@cache.memoize(timeout=120)
 def get_settings():
     return get_settings_dict()
 
@@ -143,6 +152,7 @@ def log_action(action, details=''):
         pass
 
 
+@cache.memoize(timeout=120)
 def get_categories_list():
     return db.fetch_all('categories', '*',
                         filters={'is_active': True},
@@ -831,6 +841,7 @@ def admin_add_category():
             'icon': request.form.get('icon', 'fas fa-box'),
         })
         log_action('Ajout catégorie', f'Catégorie: {name}')
+        cache.delete_memoized(get_categories_list)
         flash('Catégorie ajoutée!', 'success')
     except Exception:
         flash('Erreur: catégorie existe déjà.', 'error')
@@ -844,6 +855,7 @@ def admin_delete_category(cat_id):
     cat_name = cat['name'] if cat else 'Inconnue'
     db.delete('categories', {'id': cat_id})
     log_action('Suppression catégorie', f'Catégorie: {cat_name}')
+    cache.delete_memoized(get_categories_list)
     flash('Catégorie supprimée.', 'success')
     return redirect(url_for('admin_categories'))
 
@@ -877,6 +889,7 @@ def admin_settings():
                     db.upsert('settings', {'key': 'logo_path', 'value': logo_filename}, on_conflict='key')
 
         log_action('Modification paramètres', 'Paramètres mis à jour')
+        cache.delete_memoized(get_settings)
         flash('Paramètres sauvegardés!', 'success')
         return redirect(url_for('admin_settings'))
 

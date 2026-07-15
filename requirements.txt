@@ -8,3 +8,5 @@ python-dotenv>=1.0
 gunicorn>=22.0
 deep-translator>=1.11.4
 reportlab>=4.0
+Flask-Caching>=2.1
+Flask-Compress>=1.15

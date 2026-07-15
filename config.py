@@ -58,3 +58,6 @@ class Config:
 
     # --- SEO / domaine du site ---
     SITE_URL = os.environ.get('SITE_URL', 'https://hdattahermobile.com')
+
+    # --- Performance : cache navigateur pour les fichiers statiques (7 jours) ---
+    SEND_FILE_MAX_AGE_DEFAULT = 7 * 24 * 60 * 60
