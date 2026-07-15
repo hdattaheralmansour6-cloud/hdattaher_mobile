@@ -11,7 +11,7 @@ from flask import (Flask, render_template, request, redirect, url_for,
                    flash, session, jsonify, send_from_directory, abort)
 from werkzeug.utils import secure_filename
 from flask_wtf.csrf import CSRFProtect
-from flask_login import (login_user, logout_user, login_required,
+from flask_login import (login_user, logout_user, login_required as customer_login_required,
                           current_user)
 from config import Config
 from database import db, verify_admin_password, get_settings_dict, get_supabase, init_supabase
@@ -925,7 +925,7 @@ def cart_remove(product_id):
 # ============================================================
 
 @app.route('/commande/valider', methods=['GET', 'POST'])
-@login_required
+@customer_login_required
 def checkout():
     items, total = cart_module.get_cart_details()
     if not items:
@@ -962,7 +962,7 @@ def checkout():
 
 
 @app.route('/commande/confirmation/<order_id>')
-@login_required
+@customer_login_required
 def order_confirmation(order_id):
     order, items = get_order_with_items(order_id)
     if not order or str(order.get('customer_id')) != str(current_user.id):
@@ -1074,7 +1074,7 @@ def customer_login():
 
 
 @app.route('/compte/deconnexion')
-@login_required
+@customer_login_required
 def customer_logout():
     logout_user()
     flash('Vous êtes déconnecté.', 'info')
@@ -1082,7 +1082,7 @@ def customer_logout():
 
 
 @app.route('/compte/profil', methods=['GET', 'POST'])
-@login_required
+@customer_login_required
 def customer_profile():
     if request.method == 'POST':
         form_type = request.form.get('form_type')
@@ -1123,14 +1123,14 @@ def customer_profile():
 
 
 @app.route('/compte/commandes')
-@login_required
+@customer_login_required
 def customer_orders():
     orders = get_customer_orders(current_user.id)
     return render_template('public/account/orders.html', orders=orders)
 
 
 @app.route('/compte/commande/<order_id>')
-@login_required
+@customer_login_required
 def customer_order_detail(order_id):
     order, items = get_order_with_items(order_id)
     if not order or str(order.get('customer_id')) != str(current_user.id):
