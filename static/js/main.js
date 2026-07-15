@@ -90,6 +90,11 @@ const translations = {
     download_invoice: 'Télécharger la facture',
     status_pending: 'En attente', status_confirmed: 'Confirmée', status_preparing: 'Préparation',
     status_shipped: 'Expédiée', status_delivered: 'Livrée', status_cancelled: 'Annulée',
+    reset_code_instructions: 'Contactez-nous sur WhatsApp avec votre adresse email pour recevoir votre code de réinitialisation.',
+    forgot_subtitle_code: 'Entrez votre email, nous générerons un code de réinitialisation à récupérer sur WhatsApp.',
+    send_code_btn: 'Obtenir mon code', have_code_link: "J'ai déjà un code", no_code_link: "Je n'ai pas encore de code",
+    reset_subtitle_code: 'Entrez le code reçu sur WhatsApp ainsi que votre nouveau mot de passe.',
+    reset_code_label: 'Code reçu sur WhatsApp',
   },
   en: {
     home: 'Home', products: 'Products', about: 'About', contact: 'Contact', whatsapp_contact: 'Contact us via WhatsApp',
@@ -152,6 +157,11 @@ const translations = {
     download_invoice: 'Download invoice',
     status_pending: 'Pending', status_confirmed: 'Confirmed', status_preparing: 'Preparing',
     status_shipped: 'Shipped', status_delivered: 'Delivered', status_cancelled: 'Cancelled',
+    reset_code_instructions: 'Contact us on WhatsApp with your email address to receive your reset code.',
+    forgot_subtitle_code: "Enter your email, we'll generate a reset code for you to get on WhatsApp.",
+    send_code_btn: 'Get my code', have_code_link: 'I already have a code', no_code_link: "I don't have a code yet",
+    reset_subtitle_code: 'Enter the code received on WhatsApp along with your new password.',
+    reset_code_label: 'Code received on WhatsApp',
   },
   ar: {
     home: 'الرئيسية', products: 'المنتجات', about: 'حولنا', contact: 'اتصل بنا', whatsapp_contact: 'تواصل معنا عبر واتساب',
@@ -214,6 +224,11 @@ const translations = {
     download_invoice: 'تحميل الفاتورة',
     status_pending: 'قيد الانتظار', status_confirmed: 'مؤكد', status_preparing: 'قيد التحضير',
     status_shipped: 'تم الشحن', status_delivered: 'تم التوصيل', status_cancelled: 'ملغى',
+    reset_code_instructions: 'تواصل معنا عبر واتساب مع بريدك الإلكتروني للحصول على رمز إعادة التعيين.',
+    forgot_subtitle_code: 'أدخل بريدك الإلكتروني، وسننشئ رمز إعادة تعيين يمكنك الحصول عليه عبر واتساب.',
+    send_code_btn: 'الحصول على رمزي', have_code_link: 'لدي رمز بالفعل', no_code_link: 'ليس لدي رمز بعد',
+    reset_subtitle_code: 'أدخل الرمز المستلم عبر واتساب مع كلمة المرور الجديدة.',
+    reset_code_label: 'الرمز المستلم عبر واتساب',
   }
 };
 
