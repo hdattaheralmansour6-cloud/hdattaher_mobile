@@ -285,8 +285,10 @@ def index():
         'happy_clients': 1000,
     }
 
+    banners = db.fetch_all('banners', '*', {'is_active': True}, order=('sort_order', True))
+
     return render_template('public/index.html', featured=featured, latest=latest,
-                           promos=promos, stats=stats)
+                           promos=promos, stats=stats, banners=banners)
 
 
 @app.route('/products')
@@ -822,6 +824,122 @@ def admin_delete_product(product_id):
     log_action('Suppression produit', f'Produit: {product_name}')
     flash('Produit supprimé.', 'success')
     return redirect(url_for('admin_products'))
+
+
+# ============================================================
+#  BANNIÈRES DU CARROUSEL (page d'accueil)
+# ============================================================
+
+@app.route('/azawad/banners')
+@login_required
+def admin_banners():
+    banners = db.fetch_all('banners', '*', order=('sort_order', True))
+    return render_template('admin/banners.html', banners=banners)
+
+
+@app.route('/azawad/banner/add', methods=['GET', 'POST'])
+@login_required
+def admin_add_banner():
+    if request.method == 'POST':
+        title = request.form.get('title', '').strip()
+        subtitle = request.form.get('subtitle', '').strip()
+        link_url = request.form.get('link_url', '').strip()
+        sort_order = safe_int(request.form.get('sort_order'), 0)
+        is_active = bool(request.form.get('is_active'))
+
+        image_filename = None
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and file.filename and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                if filename:
+                    timestamp = str(int(time.time()))
+                    storage_filename = f"{timestamp}_{filename}"
+                    file_bytes = file.read()
+                    sb = get_supabase()
+                    sb.storage.from_('product-images').upload(
+                        storage_filename, file_bytes,
+                        {'content-type': file.content_type, 'upsert': 'true'}
+                    )
+                    image_filename = sb.storage.from_('product-images').get_public_url(storage_filename)
+
+        if not image_filename:
+            flash("Une image est obligatoire pour une bannière.", 'error')
+            return render_template('admin/banner_form.html', banner=None, action='add')
+
+        db.insert('banners', {
+            'title': title,
+            'subtitle': subtitle,
+            'link_url': link_url or None,
+            'image': image_filename,
+            'sort_order': sort_order,
+            'is_active': is_active,
+        })
+        log_action('Ajout bannière', f'Titre: {title or "(sans titre)"}')
+        flash('Bannière ajoutée avec succès !', 'success')
+        return redirect(url_for('admin_banners'))
+
+    return render_template('admin/banner_form.html', banner=None, action='add')
+
+
+@app.route('/azawad/banner/edit/<banner_id>', methods=['GET', 'POST'])
+@login_required
+def admin_edit_banner(banner_id):
+    banner = db.fetch_one('banners', '*', {'id': banner_id})
+    if not banner:
+        flash('Bannière introuvable.', 'error')
+        return redirect(url_for('admin_banners'))
+
+    if request.method == 'POST':
+        title = request.form.get('title', '').strip()
+        subtitle = request.form.get('subtitle', '').strip()
+        link_url = request.form.get('link_url', '').strip()
+        sort_order = safe_int(request.form.get('sort_order'), 0)
+        is_active = bool(request.form.get('is_active'))
+
+        image_filename = banner['image']
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and file.filename and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                if filename:
+                    timestamp = str(int(time.time()))
+                    storage_filename = f"{timestamp}_{filename}"
+                    file_bytes = file.read()
+                    sb = get_supabase()
+                    sb.storage.from_('product-images').upload(
+                        storage_filename, file_bytes,
+                        {'content-type': file.content_type, 'upsert': 'true'}
+                    )
+                    image_filename = sb.storage.from_('product-images').get_public_url(storage_filename)
+
+        db.update('banners', {
+            'title': title,
+            'subtitle': subtitle,
+            'link_url': link_url or None,
+            'image': image_filename,
+            'sort_order': sort_order,
+            'is_active': is_active,
+        }, {'id': banner_id})
+        log_action('Modification bannière', f'Titre: {title or "(sans titre)"}')
+        flash('Bannière modifiée avec succès !', 'success')
+        return redirect(url_for('admin_banners'))
+
+    return render_template('admin/banner_form.html', banner=banner, action='edit')
+
+
+@app.route('/azawad/banner/delete/<banner_id>', methods=['POST'])
+@login_required
+def admin_delete_banner(banner_id):
+    banner = db.fetch_one('banners', '*', {'id': banner_id})
+    if not banner:
+        flash('Bannière introuvable.', 'error')
+        return redirect(url_for('admin_banners'))
+
+    db.delete('banners', {'id': banner_id})
+    log_action('Suppression bannière', f'Titre: {banner.get("title") or "(sans titre)"}')
+    flash('Bannière supprimée.', 'success')
+    return redirect(url_for('admin_banners'))
 
 
 @app.route('/azawad/categories')
