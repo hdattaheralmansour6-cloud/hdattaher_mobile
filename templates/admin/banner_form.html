@@ -33,6 +33,31 @@
                         value="{{ banner.subtitle if banner else '' }}" placeholder="Ex: Jusqu'à -30% sur une sélection">
                 </div>
                 <div class="form-group">
+                    <label>Titre en anglais (optionnel)</label>
+                    <input type="text" name="title_en" class="form-control"
+                        value="{{ banner.title_en or '' if banner else '' }}" placeholder="Ex: Big Summer Sale">
+                </div>
+                <div class="form-group">
+                    <label>Titre en arabe (optionnel)</label>
+                    <input type="text" name="title_ar" class="form-control" dir="rtl"
+                        value="{{ banner.title_ar or '' if banner else '' }}" placeholder="مثال: تخفيضات الصيف الكبرى">
+                </div>
+                <div class="form-group">
+                    <label>Sous-titre en anglais (optionnel)</label>
+                    <input type="text" name="subtitle_en" class="form-control"
+                        value="{{ banner.subtitle_en or '' if banner else '' }}" placeholder="Ex: Up to -30% on a selection">
+                </div>
+                <div class="form-group">
+                    <label>Sous-titre en arabe (optionnel)</label>
+                    <input type="text" name="subtitle_ar" class="form-control" dir="rtl"
+                        value="{{ banner.subtitle_ar or '' if banner else '' }}" placeholder="مثال: حتى -30% على تشكيلة">
+                </div>
+                <div class="form-group full-width">
+                    <small style="color:var(--admin-text-sec);">
+                        Si les champs anglais/arabe sont vides, le texte français sera affiché dans toutes les langues.
+                    </small>
+                </div>
+                <div class="form-group">
                     <label>Bannière active</label>
                     <label class="toggle-switch" style="display:block; margin-top:8px;">
                         <input type="checkbox" name="is_active"
