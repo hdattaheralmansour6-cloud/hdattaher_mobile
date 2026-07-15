@@ -8,7 +8,7 @@ import time
 from datetime import datetime, timedelta
 from functools import wraps
 from flask import (Flask, render_template, request, redirect, url_for,
-                   flash, session, jsonify, send_from_directory, abort)
+                   flash, session, jsonify, send_from_directory, abort, Response)
 from werkzeug.utils import secure_filename
 from flask_wtf.csrf import CSRFProtect
 from flask_login import (login_user, logout_user, login_required as customer_login_required,
@@ -25,6 +25,7 @@ import cart as cart_module
 from order_manager import (create_order_from_cart, get_customer_orders, get_order_with_items,
                             update_order_status, get_all_orders, ORDER_STATUSES,
                             get_dashboard_stats)
+from invoice_generator import generate_invoice_pdf
 # test redeploiement storage 2
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -1014,6 +1015,27 @@ def admin_update_order_status(order_id):
     return redirect(request.referrer or url_for('admin_orders'))
 
 
+@app.route('/azawad/commande/facture/<order_id>')
+def admin_order_invoice(order_id):
+    if 'logged_in' not in session:
+        return redirect(url_for('admin_login'))
+    order, items = get_order_with_items(order_id)
+    if not order:
+        flash('Commande introuvable.', 'error')
+        return redirect(url_for('admin_orders'))
+
+    # Récupérer le nom du client pour l'affichage sur la facture
+    customer = db.fetch_one('customers', 'full_name, email', {'id': order.get('customer_id')})
+    order['customer_name'] = customer['full_name'] if customer else 'Client supprimé'
+
+    pdf_bytes = generate_invoice_pdf(order, items, get_settings())
+    return Response(
+        pdf_bytes,
+        mimetype='application/pdf',
+        headers={'Content-Disposition': f'attachment; filename=facture-{order["order_number"]}.pdf'}
+    )
+
+
 # ============================================================
 #  COMPTES CLIENTS (Flask-Login)
 # ============================================================
@@ -1142,6 +1164,24 @@ def customer_order_detail(order_id):
         flash('Commande introuvable.', 'error')
         return redirect(url_for('customer_orders'))
     return render_template('public/account/order_detail.html', order=order, items=items)
+
+
+@app.route('/compte/commande/<order_id>/facture')
+@customer_login_required
+def customer_order_invoice(order_id):
+    order, items = get_order_with_items(order_id)
+    if not order or str(order.get('customer_id')) != str(current_user.id):
+        flash('Commande introuvable.', 'error')
+        return redirect(url_for('customer_orders'))
+
+    order['customer_name'] = current_user.full_name
+
+    pdf_bytes = generate_invoice_pdf(order, items, get_settings())
+    return Response(
+        pdf_bytes,
+        mimetype='application/pdf',
+        headers={'Content-Disposition': f'attachment; filename=facture-{order["order_number"]}.pdf'}
+    )
 
 
 @app.route('/compte/mot-de-passe-oublie', methods=['GET', 'POST'])
