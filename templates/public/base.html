@@ -5,8 +5,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description"
-        content="HDATTAHER MOBILE - Votre boutique de smartphones et accessoires au Niger. Les meilleurs prix et qualité.">
+        content="{% block meta_description %}HDATTAHER MOBILE - Votre boutique de smartphones et accessoires au Niger. Les meilleurs prix et qualité.{% endblock %}">
     <title>{% block title %}HDATTAHER MOBILE{% endblock %}</title>
+    <link rel="canonical" href="{% block canonical %}{{ config.SITE_URL }}{{ request.path }}{% endblock %}">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:site_name" content="HDATTAHER MOBILE">
+    <meta property="og:title" content="{% block og_title %}HDATTAHER MOBILE{% endblock %}">
+    <meta property="og:description"
+        content="{% block og_description %}HDATTAHER MOBILE - Votre boutique de smartphones et accessoires au Niger.{% endblock %}">
+    <meta property="og:url" content="{{ config.SITE_URL }}{{ request.path }}">
+    <meta property="og:image"
+        content="{% block og_image %}{{ config.SITE_URL }}{{ url_for('static', filename='favicon/apple-touch-icon.png') }}{% endblock %}">
+
+    {% block structured_data %}
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "HDATTAHER MOBILE",
+        "url": "{{ config.SITE_URL }}"
+    }
+    </script>
+    {% endblock %}
     <link rel="icon" href="{{ url_for('static', filename='favicon/favicon.ico') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon/favicon-32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon/favicon-16.png') }}">

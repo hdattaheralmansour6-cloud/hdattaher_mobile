@@ -1,5 +1,32 @@
 {% extends "public/base.html" %}
 {% block title %}{{ product.name }} - HDATTAHER MOBILE{% endblock %}
+{% block meta_description %}{{ (product.description or (product.name ~ ' disponible chez HDATTAHER MOBILE au Niger. Prix : ' ~ '{:,.0f}'.format(product.price) ~ ' FCFA.'))[:160] }}{% endblock %}
+{% block og_title %}{{ product.name }} - HDATTAHER MOBILE{% endblock %}
+{% block og_description %}{{ (product.description or (product.name ~ ' disponible chez HDATTAHER MOBILE au Niger.'))[:160] }}{% endblock %}
+{% block og_type %}product{% endblock %}
+{% block og_image %}{% if product.image and product.image != 'default.png' %}{{ product.image }}{% else %}{{ config.SITE_URL }}{{ url_for('static', filename='favicon/apple-touch-icon.png') }}{% endif %}{% endblock %}
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": {{ product.name|tojson }},
+    "image": {{ (product.image if product.image and product.image != 'default.png' else '')|tojson }},
+    "description": {{ (product.description or '')[:300]|tojson }},
+    "brand": {
+        "@type": "Brand",
+        "name": {{ (product.brand or 'HDATTAHER MOBILE')|tojson }}
+    },
+    "offers": {
+        "@type": "Offer",
+        "url": "{{ config.SITE_URL }}/product/{{ product.id }}",
+        "priceCurrency": "XOF",
+        "price": {{ product.price|tojson }},
+        "availability": "{% if product.stock and product.stock > 0 %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}"
+    }
+}
+</script>
+{% endblock %}
 
 {% block content %}
 <section class="product-detail">
