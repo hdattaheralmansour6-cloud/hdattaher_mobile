@@ -462,7 +462,7 @@ def api_products():
 
 @app.route('/azawad', methods=['GET', 'POST'])
 def admin_login():
-    if 'logged_in' in session:
+    if request.method == 'GET' and 'logged_in' in session:
         return redirect(url_for('admin_dashboard'))
 
     if request.method == 'POST':
@@ -1159,7 +1159,7 @@ def customer_register():
 
 @app.route('/compte/connexion', methods=['GET', 'POST'])
 def customer_login():
-    if current_user.is_authenticated:
+    if request.method == 'GET' and current_user.is_authenticated:
         return redirect(url_for('customer_profile'))
 
     if request.method == 'POST':
