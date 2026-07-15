@@ -843,10 +843,11 @@ def admin_add_banner():
     if request.method == 'POST':
         title = request.form.get('title', '').strip()
         subtitle = request.form.get('subtitle', '').strip()
-        title_en = request.form.get('title_en', '').strip()
-        title_ar = request.form.get('title_ar', '').strip()
-        subtitle_en = request.form.get('subtitle_en', '').strip()
-        subtitle_ar = request.form.get('subtitle_ar', '').strip()
+        # Traduction automatique FR -> EN/AR (comme pour les produits)
+        title_en = auto_translate(title, 'en')
+        title_ar = auto_translate(title, 'ar')
+        subtitle_en = auto_translate(subtitle, 'en')
+        subtitle_ar = auto_translate(subtitle, 'ar')
         sort_order = safe_int(request.form.get('sort_order'), 0)
         is_active = bool(request.form.get('is_active'))
 
@@ -900,10 +901,11 @@ def admin_edit_banner(banner_id):
     if request.method == 'POST':
         title = request.form.get('title', '').strip()
         subtitle = request.form.get('subtitle', '').strip()
-        title_en = request.form.get('title_en', '').strip()
-        title_ar = request.form.get('title_ar', '').strip()
-        subtitle_en = request.form.get('subtitle_en', '').strip()
-        subtitle_ar = request.form.get('subtitle_ar', '').strip()
+        # Traduction automatique FR -> EN/AR (comme pour les produits)
+        title_en = auto_translate(title, 'en')
+        title_ar = auto_translate(title, 'ar')
+        subtitle_en = auto_translate(subtitle, 'en')
+        subtitle_ar = auto_translate(subtitle, 'ar')
         sort_order = safe_int(request.form.get('sort_order'), 0)
         is_active = bool(request.form.get('is_active'))
 
