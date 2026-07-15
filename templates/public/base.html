@@ -203,13 +203,13 @@
             {% if current_user.is_authenticated %}
             <a href="{{ url_for('customer_profile') }}" class="mobile-menu-link">
                 <div class="mobile-link-icon"><i class="fas fa-user"></i></div>
-                <span>Mon compte</span>
+                <span data-i18n="my_account_nav">Mon compte</span>
                 <i class="fas fa-chevron-right mobile-link-arrow"></i>
             </a>
             {% else %}
             <a href="{{ url_for('customer_login') }}" class="mobile-menu-link">
                 <div class="mobile-link-icon"><i class="fas fa-user"></i></div>
-                <span>Connexion / Inscription</span>
+                <span data-i18n="login_signup_nav">Connexion / Inscription</span>
                 <i class="fas fa-chevron-right mobile-link-arrow"></i>
             </a>
             {% endif %}
