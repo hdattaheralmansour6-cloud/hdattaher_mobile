@@ -3,6 +3,42 @@
 {% block meta_description %}HDATTAHER MOBILE : achetez smartphones neufs (iPhone, Samsung, Xiaomi, Tecno...) et accessoires au meilleur prix, livraison au Niger.{% endblock %}
 
 {% block content %}
+{% if banners %}
+<!-- CARROUSEL BANNIÈRES -->
+<section class="banner-carousel" id="bannerCarousel">
+    <div class="banner-track" id="bannerTrack">
+        {% for b in banners %}
+        {% set slide %}
+        <div class="banner-slide">
+            <img src="{{ b.image }}" alt="{{ b.title or '' }}" loading="{{ 'eager' if loop.index0 == 0 else 'lazy' }}">
+            {% if b.title or b.subtitle %}
+            <div class="banner-caption">
+                {% if b.title %}<h3>{{ b.title }}</h3>{% endif %}
+                {% if b.subtitle %}<p>{{ b.subtitle }}</p>{% endif %}
+            </div>
+            {% endif %}
+        </div>
+        {% endset %}
+        {% if b.link_url %}<a href="{{ b.link_url }}">{{ slide }}</a>{% else %}{{ slide }}{% endif %}
+        {% endfor %}
+    </div>
+
+    {% if banners|length > 1 %}
+    <button class="banner-arrow banner-arrow-prev" onclick="bannerCarouselGo(-1)" aria-label="Précédent">
+        <i class="fas fa-chevron-left"></i>
+    </button>
+    <button class="banner-arrow banner-arrow-next" onclick="bannerCarouselGo(1)" aria-label="Suivant">
+        <i class="fas fa-chevron-right"></i>
+    </button>
+    <div class="banner-dots" id="bannerDots">
+        {% for b in banners %}
+        <button class="banner-dot{% if loop.index0 == 0 %} active{% endif %}" onclick="bannerCarouselGoTo({{ loop.index0 }})" aria-label="Aller à l'image {{ loop.index }}"></button>
+        {% endfor %}
+    </div>
+    {% endif %}
+</section>
+{% endif %}
+
 <!-- HERO -->
 <section class="hero">
     <div class="hero-content">
