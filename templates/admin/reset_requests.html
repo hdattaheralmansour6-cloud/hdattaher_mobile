@@ -1,0 +1,84 @@
+{% extends "admin/base.html" %}
+{% block title %}Réinitialisations{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <div>
+        <h1>Demandes de réinitialisation</h1>
+        <span class="breadcrumb">{{ requests|length }} demande(s) en attente</span>
+    </div>
+</div>
+
+<div class="admin-card" style="margin-bottom:1.5rem;">
+    <div class="admin-card-body" style="padding:1rem; color:var(--admin-text-sec); font-size:0.9rem;">
+        <i class="fas fa-circle-info"></i>
+        Un client vous contactera sur WhatsApp pour demander son code. Retrouvez-le ici, copiez-le,
+        et envoyez-le lui manuellement sur WhatsApp. Les codes expirent après 30 minutes.
+    </div>
+</div>
+
+<div class="admin-card">
+    <div class="admin-card-body" style="padding:0; overflow-x:auto;">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Client</th>
+                    <th>Téléphone</th>
+                    <th>Code</th>
+                    <th>Demandé le</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in requests %}
+                <tr>
+                    <td style="font-weight:600;">{{ r.customer_name }}<br>
+                        <span style="font-size:0.78rem; color:var(--admin-text-sec);">{{ r.customer_email }}</span>
+                    </td>
+                    <td>{{ r.customer_phone }}</td>
+                    <td>
+                        <code id="code-{{ r.id }}" style="font-size:1.1rem; font-weight:700; letter-spacing:2px; color:var(--admin-primary);">{{ r.code }}</code>
+                        <button type="button" class="btn-admin" style="padding:4px 10px; font-size:0.75rem; margin-left:6px;"
+                                onclick="copyResetCode('{{ r.id }}', this)">
+                            <i class="fas fa-copy"></i> Copier
+                        </button>
+                    </td>
+                    <td>{{ r.created_at[:16].replace('T',' ') if r.created_at else '' }}</td>
+                    <td>
+                        <a href="https://wa.me/{{ r.customer_phone }}?text=Voici votre code de réinitialisation : {{ r.code }}"
+                           target="_blank" class="btn-admin" style="padding:6px 12px; font-size:0.8rem; background:#25D366; color:#fff;">
+                            <i class="fab fa-whatsapp"></i> Envoyer
+                        </a>
+                        <form method="POST" action="{{ url_for('admin_resolve_reset_request', request_id=r.id) }}" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn-admin" style="padding:6px 12px; font-size:0.8rem;">
+                                <i class="fas fa-check"></i> Traité
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" style="text-align:center; padding:30px; color:var(--admin-text-sec);">
+                        Aucune demande en attente.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function copyResetCode(id, btn) {
+    const code = document.getElementById('code-' + id).textContent.trim();
+    navigator.clipboard.writeText(code).then(() => {
+        const original = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i> Copié';
+        setTimeout(() => { btn.innerHTML = original; }, 1500);
+    });
+}
+</script>
+{% endblock %}
