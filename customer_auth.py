@@ -132,8 +132,10 @@ def generate_reset_code(email):
             'expires_at': expires_at,
             'used': False,
         })
-    except Exception:
-        # Ne bloque jamais le client si la table n'est pas encore prête côté Supabase.
+    except Exception as e:
+        # Ne bloque jamais le client si la table n'est pas encore prête côté Supabase,
+        # mais on garde une trace de l'erreur exacte dans les logs Render pour diagnostiquer.
+        print(f"[generate_reset_code] Erreur insertion password_resets : {e}")
         return False
     return True
 
@@ -182,9 +184,10 @@ def get_pending_reset_requests():
             'password_resets', '*, customers(full_name, email, phone)',
             filters={'used': False}, order=('created_at', False),
         )
-    except Exception:
+    except Exception as e:
         # La table n'existe peut-être pas encore (migration SQL non exécutée) :
         # on ne casse jamais l'espace admin pour autant.
+        print(f"[get_pending_reset_requests] Erreur lecture password_resets : {e}")
         return []
     pending = []
     now = datetime.utcnow()
