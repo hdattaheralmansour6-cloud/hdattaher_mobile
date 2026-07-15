@@ -123,14 +123,18 @@ def generate_reset_code(email):
     if not customer:
         return False
 
-    code = f"{random.randint(0, 999999):06d}"
-    expires_at = (datetime.utcnow() + timedelta(minutes=30)).isoformat()
-    db.insert('password_resets', {
-        'customer_id': customer['id'],
-        'code': code,
-        'expires_at': expires_at,
-        'used': False,
-    })
+    try:
+        code = f"{random.randint(0, 999999):06d}"
+        expires_at = (datetime.utcnow() + timedelta(minutes=30)).isoformat()
+        db.insert('password_resets', {
+            'customer_id': customer['id'],
+            'code': code,
+            'expires_at': expires_at,
+            'used': False,
+        })
+    except Exception:
+        # Ne bloque jamais le client si la table n'est pas encore prête côté Supabase.
+        return False
     return True
 
 
@@ -140,9 +144,12 @@ def verify_reset_code(email, code):
     if not customer or not code:
         return None
 
-    rows = db.fetch_all('password_resets', filters={
-        'customer_id': customer['id'], 'code': code.strip(), 'used': False,
-    })
+    try:
+        rows = db.fetch_all('password_resets', filters={
+            'customer_id': customer['id'], 'code': code.strip(), 'used': False,
+        })
+    except Exception:
+        return None
     if not rows:
         return None
 
@@ -157,8 +164,11 @@ def consume_reset_code(email, code):
     customer = get_customer_by_email(email)
     if not customer:
         return
-    db.update('password_resets', {'used': True},
-              {'customer_id': customer['id'], 'code': code.strip()})
+    try:
+        db.update('password_resets', {'used': True},
+                  {'customer_id': customer['id'], 'code': code.strip()})
+    except Exception:
+        pass
 
 
 def get_pending_reset_requests():
@@ -167,10 +177,15 @@ def get_pending_reset_requests():
     avec les infos client, pour l'espace admin (l'admin y récupère le code à envoyer
     manuellement sur WhatsApp).
     """
-    rows = db.fetch_all(
-        'password_resets', '*, customers(full_name, email, phone)',
-        filters={'used': False}, order=('created_at', False),
-    )
+    try:
+        rows = db.fetch_all(
+            'password_resets', '*, customers(full_name, email, phone)',
+            filters={'used': False}, order=('created_at', False),
+        )
+    except Exception:
+        # La table n'existe peut-être pas encore (migration SQL non exécutée) :
+        # on ne casse jamais l'espace admin pour autant.
+        return []
     pending = []
     now = datetime.utcnow()
     for r in rows:
@@ -185,4 +200,7 @@ def get_pending_reset_requests():
 
 
 def count_pending_reset_requests():
-    return len(get_pending_reset_requests())
+    try:
+        return len(get_pending_reset_requests())
+    except Exception:
+        return 0

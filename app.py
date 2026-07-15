@@ -5,6 +5,7 @@ Propriétaire : Hdattaher | Localisation : Niger
 """
 import os
 import time
+from urllib.parse import quote
 from datetime import datetime, timedelta
 from functools import wraps
 from flask import (Flask, render_template, request, redirect, url_for,
@@ -1267,13 +1268,16 @@ def customer_order_invoice(order_id):
 def customer_forgot_password():
     if request.method == 'POST':
         email = request.form.get('email', '').strip()
-        generate_reset_code(email)
-        log_action('Demande de code de réinitialisation', f'Email: {email}')
-        # Même message que l'email existe ou non (sécurité : ne pas révéler
-        # quels emails sont enregistrés). Le code n'est jamais affiché ici :
-        # le client doit contacter la boutique sur WhatsApp pour l'obtenir.
-        return render_template('public/account/forgot_password.html',
-                                submitted=True, submitted_email=email)
+        try:
+            generate_reset_code(email)
+            log_action('Demande de code de réinitialisation', f'Email: {email}')
+        except Exception:
+            pass
+
+        settings = get_settings()
+        whatsapp_number = settings.get('whatsapp', '22791720755')
+        message = quote(f"Bonjour, je veux mon code pour réinitialiser mon mot de passe. Email : {email}")
+        return redirect(f"https://wa.me/{whatsapp_number}?text={message}")
 
     return render_template('public/account/forgot_password.html')
 
