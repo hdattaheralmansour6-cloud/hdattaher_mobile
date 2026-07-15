@@ -2,6 +2,7 @@
 HDATTAHER MOBILE - Authentification des comptes clients (Flask-Login)
 Séparé de l'authentification admin (qui reste inchangée dans app.py).
 """
+import random
 import secrets
 from datetime import datetime, timedelta
 
@@ -97,43 +98,91 @@ def change_customer_password(customer_id, new_password):
 
 
 # ============================================================
-#  RÉINITIALISATION DE MOT DE PASSE
+#  RÉINITIALISATION DE MOT DE PASSE PAR CODE (contact WhatsApp)
 # ============================================================
 
-def create_password_reset_token(email):
-    """Crée un jeton de réinitialisation valable 1 heure. Retourne None si l'email n'existe pas."""
+def _parse_expiry(expires_at):
+    """Convertit une date ISO Supabase en datetime naïf, ou une date déjà expirée si invalide."""
+    if not expires_at:
+        return datetime.utcnow() - timedelta(seconds=1)
+    try:
+        return datetime.fromisoformat(expires_at.replace('Z', '+00:00')).replace(tzinfo=None)
+    except Exception:
+        return datetime.utcnow() - timedelta(seconds=1)
+
+
+def generate_reset_code(email):
+    """
+    Crée un code de réinitialisation à 6 chiffres, valable 30 minutes.
+    Le code n'est JAMAIS renvoyé au client sur le site : il doit contacter
+    la boutique sur WhatsApp pour l'obtenir depuis l'espace admin.
+    Retourne True si un compte existe avec cet email, False sinon (usage interne,
+    la réponse affichée au client reste identique dans les deux cas pour la sécurité).
+    """
     customer = get_customer_by_email(email)
     if not customer:
-        return None
+        return False
 
-    token = secrets.token_urlsafe(32)
-    expires_at = (datetime.utcnow() + timedelta(hours=1)).isoformat()
+    code = f"{random.randint(0, 999999):06d}"
+    expires_at = (datetime.utcnow() + timedelta(minutes=30)).isoformat()
     db.insert('password_resets', {
         'customer_id': customer['id'],
-        'token': token,
+        'code': code,
         'expires_at': expires_at,
+        'used': False,
     })
-    return token
+    return True
 
 
-def verify_reset_token(token):
-    """Retourne le customer_id si le jeton est valide et non expiré, sinon None."""
-    rows = db.fetch_all('password_resets', filters={'token': token}, limit=1)
+def verify_reset_code(email, code):
+    """Retourne le customer_id si l'email + le code correspondent à une demande valide et non expirée."""
+    customer = get_customer_by_email(email)
+    if not customer or not code:
+        return None
+
+    rows = db.fetch_all('password_resets', filters={
+        'customer_id': customer['id'], 'code': code.strip(), 'used': False,
+    })
     if not rows:
         return None
-    reset = rows[0]
-    if reset.get('used'):
+
+    # En cas de plusieurs codes générés, on prend le plus récent
+    reset = sorted(rows, key=lambda r: r.get('created_at') or '', reverse=True)[0]
+    if _parse_expiry(reset.get('expires_at')) < datetime.utcnow():
         return None
-    expires_at = reset.get('expires_at')
-    if expires_at:
-        try:
-            exp = datetime.fromisoformat(expires_at.replace('Z', '+00:00')).replace(tzinfo=None)
-        except Exception:
-            exp = datetime.utcnow() - timedelta(seconds=1)
-        if exp < datetime.utcnow():
-            return None
     return reset['customer_id']
 
 
-def consume_reset_token(token):
-    db.update('password_resets', {'used': True}, {'token': token})
+def consume_reset_code(email, code):
+    customer = get_customer_by_email(email)
+    if not customer:
+        return
+    db.update('password_resets', {'used': True},
+              {'customer_id': customer['id'], 'code': code.strip()})
+
+
+def get_pending_reset_requests():
+    """
+    Liste des demandes de réinitialisation en attente (code non utilisé et non expiré),
+    avec les infos client, pour l'espace admin (l'admin y récupère le code à envoyer
+    manuellement sur WhatsApp).
+    """
+    rows = db.fetch_all(
+        'password_resets', '*, customers(full_name, email, phone)',
+        filters={'used': False}, order=('created_at', False),
+    )
+    pending = []
+    now = datetime.utcnow()
+    for r in rows:
+        if _parse_expiry(r.get('expires_at')) < now:
+            continue
+        customer = r.pop('customers', None)
+        r['customer_name'] = customer['full_name'] if customer else 'Client supprimé'
+        r['customer_email'] = customer['email'] if customer else ''
+        r['customer_phone'] = customer['phone'] if customer else ''
+        pending.append(r)
+    return pending
+
+
+def count_pending_reset_requests():
+    return len(get_pending_reset_requests())

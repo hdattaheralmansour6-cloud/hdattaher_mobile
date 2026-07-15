@@ -20,8 +20,9 @@ from database import db, verify_admin_password, get_settings_dict, get_supabase,
 from deep_translator import GoogleTranslator
 from customer_auth import (login_manager, create_customer, verify_customer_password,
                             update_customer_last_login, update_customer_profile,
-                            change_customer_password, create_password_reset_token,
-                            verify_reset_token, consume_reset_token, get_customer_by_email)
+                            change_customer_password, generate_reset_code,
+                            verify_reset_code, consume_reset_code, get_customer_by_email,
+                            get_pending_reset_requests, count_pending_reset_requests)
 from werkzeug.security import check_password_hash
 import cart as cart_module
 from order_manager import (create_order_from_cart, get_customer_orders, get_order_with_items,
@@ -169,7 +170,11 @@ def inject_globals():
     dynamic_css += f'  --accent: {settings.get("accent_color", "#00D9FF")};\n'
     dynamic_css += '}\n'
     cart_count = cart_module.cart_item_count()
-    return dict(settings=settings, categories=categories, dynamic_css=dynamic_css, cart_count=cart_count)
+    pending_reset_count = 0
+    if session.get('logged_in'):
+        pending_reset_count = count_pending_reset_requests()
+    return dict(settings=settings, categories=categories, dynamic_css=dynamic_css,
+                cart_count=cart_count, pending_reset_count=pending_reset_count)
 
 
 # ============================================================
@@ -860,6 +865,22 @@ def admin_delete_category(cat_id):
     return redirect(url_for('admin_categories'))
 
 
+@app.route('/azawad/reinitialisations')
+@login_required
+def admin_reset_requests():
+    requests_list = get_pending_reset_requests()
+    return render_template('admin/reset_requests.html', requests=requests_list)
+
+
+@app.route('/azawad/reinitialisations/traiter/<request_id>', methods=['POST'])
+@login_required
+def admin_resolve_reset_request(request_id):
+    db.update('password_resets', {'used': True}, {'id': request_id})
+    log_action('Code de réinitialisation marqué traité', f'ID: {request_id}')
+    flash('Demande marquée comme traitée.', 'success')
+    return redirect(url_for('admin_reset_requests'))
+
+
 @app.route('/azawad/settings', methods=['GET', 'POST'])
 @login_required
 def admin_settings():
@@ -1246,43 +1267,42 @@ def customer_order_invoice(order_id):
 def customer_forgot_password():
     if request.method == 'POST':
         email = request.form.get('email', '').strip()
-        token = create_password_reset_token(email)
-        # Message identique que l'email existe ou non (sécurité : ne pas révéler
-        # quels emails sont enregistrés).
-        flash("Si un compte existe avec cet email, un lien de réinitialisation a été généré.", 'info')
-        if token:
-            reset_link = url_for('customer_reset_password', token=token, _external=True)
-            log_action('Demande de réinitialisation mot de passe', f'Email: {email}')
-            # L'envoi d'email n'est pas encore configuré sur ce projet.
-            # En attendant, le lien est affiché ici pour test/démo.
-            flash(f"Lien de réinitialisation (temporaire, pas encore envoyé par email) : {reset_link}", 'info')
-        return redirect(url_for('customer_login'))
+        generate_reset_code(email)
+        log_action('Demande de code de réinitialisation', f'Email: {email}')
+        # Même message que l'email existe ou non (sécurité : ne pas révéler
+        # quels emails sont enregistrés). Le code n'est jamais affiché ici :
+        # le client doit contacter la boutique sur WhatsApp pour l'obtenir.
+        return render_template('public/account/forgot_password.html',
+                                submitted=True, submitted_email=email)
 
     return render_template('public/account/forgot_password.html')
 
 
-@app.route('/compte/reinitialiser/<token>', methods=['GET', 'POST'])
-def customer_reset_password(token):
-    customer_id = verify_reset_token(token)
-    if not customer_id:
-        flash('Ce lien de réinitialisation est invalide ou expiré.', 'error')
-        return redirect(url_for('customer_forgot_password'))
-
+@app.route('/compte/reinitialiser', methods=['GET', 'POST'])
+def customer_reset_password():
     if request.method == 'POST':
+        email = request.form.get('email', '').strip()
+        code = request.form.get('code', '').strip()
         new_password = request.form.get('new_password', '')
         confirm_password = request.form.get('confirm_password', '')
 
-        if len(new_password) < 6:
+        customer_id = verify_reset_code(email, code)
+        if not customer_id:
+            flash("Code invalide ou expiré. Vérifiez le code reçu sur WhatsApp.", 'error')
+        elif len(new_password) < 6:
             flash('Le mot de passe doit contenir au moins 6 caractères.', 'error')
         elif new_password != confirm_password:
             flash('Les mots de passe ne correspondent pas.', 'error')
         else:
             change_customer_password(customer_id, new_password)
-            consume_reset_token(token)
+            consume_reset_code(email, code)
+            log_action('Mot de passe réinitialisé via code', f'Email: {email}')
             flash('Mot de passe réinitialisé. Vous pouvez vous connecter.', 'success')
             return redirect(url_for('customer_login'))
 
-    return render_template('public/account/reset_password.html', token=token)
+        return render_template('public/account/reset_password.html', email=email)
+
+    return render_template('public/account/reset_password.html')
 
 
 # ============================================================
