@@ -37,6 +37,10 @@
                     class="{% if request.endpoint == 'admin_categories' %}active{% endif %}">
                     <i class="fas fa-layer-group"></i> Catégories
                 </a>
+                <a href="{{ url_for('admin_banners') }}"
+                    class="{% if request.endpoint in ['admin_banners','admin_add_banner','admin_edit_banner'] %}active{% endif %}">
+                    <i class="fas fa-images"></i> Bannières
+                </a>
                 <a href="{{ url_for('admin_reset_requests') }}"
                     class="{% if request.endpoint == 'admin_reset_requests' %}active{% endif %}"
                     style="display:flex; align-items:center; justify-content:space-between;">
