@@ -843,6 +843,10 @@ def admin_add_banner():
     if request.method == 'POST':
         title = request.form.get('title', '').strip()
         subtitle = request.form.get('subtitle', '').strip()
+        title_en = request.form.get('title_en', '').strip()
+        title_ar = request.form.get('title_ar', '').strip()
+        subtitle_en = request.form.get('subtitle_en', '').strip()
+        subtitle_ar = request.form.get('subtitle_ar', '').strip()
         sort_order = safe_int(request.form.get('sort_order'), 0)
         is_active = bool(request.form.get('is_active'))
 
@@ -869,6 +873,10 @@ def admin_add_banner():
         db.insert('banners', {
             'title': title,
             'subtitle': subtitle,
+            'title_en': title_en or None,
+            'title_ar': title_ar or None,
+            'subtitle_en': subtitle_en or None,
+            'subtitle_ar': subtitle_ar or None,
             'link_url': None,
             'image': image_filename,
             'sort_order': sort_order,
@@ -892,6 +900,10 @@ def admin_edit_banner(banner_id):
     if request.method == 'POST':
         title = request.form.get('title', '').strip()
         subtitle = request.form.get('subtitle', '').strip()
+        title_en = request.form.get('title_en', '').strip()
+        title_ar = request.form.get('title_ar', '').strip()
+        subtitle_en = request.form.get('subtitle_en', '').strip()
+        subtitle_ar = request.form.get('subtitle_ar', '').strip()
         sort_order = safe_int(request.form.get('sort_order'), 0)
         is_active = bool(request.form.get('is_active'))
 
@@ -914,6 +926,10 @@ def admin_edit_banner(banner_id):
         db.update('banners', {
             'title': title,
             'subtitle': subtitle,
+            'title_en': title_en or None,
+            'title_ar': title_ar or None,
+            'subtitle_en': subtitle_en or None,
+            'subtitle_ar': subtitle_ar or None,
             'link_url': None,
             'image': image_filename,
             'sort_order': sort_order,
