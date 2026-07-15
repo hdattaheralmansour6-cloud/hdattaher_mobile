@@ -126,14 +126,14 @@ def generate_reset_code(email):
 
     try:
         code = f"{random.randint(0, 999999):06d}"
-        expires_at = (datetime.utcnow() + timedelta(minutes=30)).isoformat()
+        expires_at = (datetime.utcnow() + timedelta(minutes=30)).isoformat() + 'Z'
         inserted = db.insert('password_resets', {
             'customer_id': customer['id'],
             'code': code,
             'expires_at': expires_at,
             'used': False,
         })
-        print(f"[generate_reset_code] Code {code} créé pour {email!r} (customer_id={customer['id']}) -> {inserted}", flush=True)
+        print(f"[generate_reset_code] Code {code} créé pour {email!r} (customer_id={customer['id']}, expires_at={expires_at}) -> {inserted}", flush=True)
     except Exception as e:
         # Ne bloque jamais le client si la table n'est pas encore prête côté Supabase,
         # mais on garde une trace de l'erreur exacte dans les logs Render pour diagnostiquer.
@@ -146,20 +146,26 @@ def verify_reset_code(email, code):
     """Retourne le customer_id si l'email + le code correspondent à une demande valide et non expirée."""
     customer = get_customer_by_email(email)
     if not customer or not code:
+        print(f"[verify_reset_code] Client introuvable ou code vide pour {email!r}", flush=True)
         return None
 
     try:
         rows = db.fetch_all('password_resets', filters={
             'customer_id': customer['id'], 'code': code.strip(), 'used': False,
         })
-    except Exception:
+    except Exception as e:
+        print(f"[verify_reset_code] Erreur lecture password_resets : {e}", flush=True)
         return None
+    print(f"[verify_reset_code] {email!r} + code {code.strip()!r} -> {len(rows)} ligne(s) trouvée(s) : {rows}", flush=True)
     if not rows:
         return None
 
     # En cas de plusieurs codes générés, on prend le plus récent
     reset = sorted(rows, key=lambda r: r.get('created_at') or '', reverse=True)[0]
-    if _parse_expiry(reset.get('expires_at')) < datetime.utcnow():
+    expiry = _parse_expiry(reset.get('expires_at'))
+    now = datetime.utcnow()
+    print(f"[verify_reset_code] expires_at brut={reset.get('expires_at')!r} -> parsed={expiry} / now={now} / expiré={expiry < now}", flush=True)
+    if expiry < now:
         return None
     return reset['customer_id']
 
@@ -184,7 +190,7 @@ def get_pending_reset_requests():
     try:
         rows = db.fetch_all(
             'password_resets', '*, customers(full_name, email, phone)',
-            filters={'used': False}, order=('created_at', False),
+            filters={'used': False, 'dismissed': False}, order=('created_at', False),
         )
         print(f"[get_pending_reset_requests] {len(rows)} ligne(s) non utilisée(s) trouvée(s) en base", flush=True)
     except Exception as e:

@@ -876,7 +876,7 @@ def admin_reset_requests():
 @app.route('/azawad/reinitialisations/traiter/<request_id>', methods=['POST'])
 @login_required
 def admin_resolve_reset_request(request_id):
-    db.update('password_resets', {'used': True}, {'id': request_id})
+    db.update('password_resets', {'dismissed': True}, {'id': request_id})
     log_action('Code de réinitialisation marqué traité', f'ID: {request_id}')
     flash('Demande marquée comme traitée.', 'success')
     return redirect(url_for('admin_reset_requests'))
