@@ -2310,6 +2310,9 @@ textarea {
   display: flex;
   height: 100%;
   transition: transform 0.5s ease;
+  /* Le carrousel utilise translateX négatif : on force le sens LTR
+     même en arabe (RTL), sinon les slides partent du mauvais côté. */
+  direction: ltr;
 }
 
 .banner-slide {
@@ -2323,13 +2326,6 @@ textarea {
   height: 100%;
   object-fit: contain;
   display: block;
-}
-
-.banner-track > a {
-  flex: 0 0 100%;
-  display: block;
-  height: 100%;
-  text-decoration: none;
 }
 
 .banner-caption {
