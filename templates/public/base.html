@@ -34,7 +34,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon/favicon-16.png') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon/apple-touch-icon.png') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2">
     <!-- CSS dynamique depuis les paramètres admin -->
     <style>
         {
@@ -120,6 +120,7 @@
             <li><a href="{{ url_for('products') }}" data-i18n="products">Produits</a></li>
             <li><a href="{{ url_for('featured_products') }}" data-i18n="featured_products">En Vedette</a></li>
             <li><a href="{{ url_for('new_arrivals') }}" data-i18n="new_arrivals">Nouveautés</a></li>
+            <li><a href="{{ url_for('about') }}" data-i18n="about">À propos</a></li>
             <li><a href="{{ url_for('contact') }}" data-i18n="contact">Contact</a></li>
         </ul>
 
@@ -203,6 +204,11 @@
             <a href="{{ url_for('new_arrivals') }}" class="mobile-menu-link">
                 <div class="mobile-link-icon"><i class="fas fa-bolt"></i></div>
                 <span data-i18n="new_arrivals">Nouvelles Arrivages</span>
+                <i class="fas fa-chevron-right mobile-link-arrow"></i>
+            </a>
+            <a href="{{ url_for('about') }}" class="mobile-menu-link">
+                <div class="mobile-link-icon"><i class="fas fa-store"></i></div>
+                <span data-i18n="about">À propos</span>
                 <i class="fas fa-chevron-right mobile-link-arrow"></i>
             </a>
             <a href="{{ url_for('contact') }}" class="mobile-menu-link">
@@ -305,6 +311,7 @@
                     <li><a href="{{ url_for('products') }}" data-i18n="products">Produits</a></li>
                     <li><a href="{{ url_for('featured_products') }}" data-i18n="featured_products">En Vedette</a></li>
                     <li><a href="{{ url_for('new_arrivals') }}" data-i18n="new_arrivals">Nouveautés</a></li>
+                    <li><a href="{{ url_for('about') }}" data-i18n="about">À propos</a></li>
                     <li><a href="{{ url_for('contact') }}" data-i18n="contact">Contact</a></li>
                 </ul>
             </div>
@@ -339,7 +346,7 @@
         <i class="fab fa-whatsapp"></i>
     </a>
 
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}?v=2"></script>
     <script>
         // ============ Mobile Menu ============
         function toggleMobileMenu() {

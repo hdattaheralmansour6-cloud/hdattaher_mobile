@@ -5,8 +5,8 @@
 <section class="section" style="padding-top:100px;">
     <div class="container">
         <div class="section-header">
-            <h2><i class="fas fa-envelope" style="color:var(--primary);"></i> Contactez-nous</h2>
-            <p>Nous sommes à votre écoute. N'hésitez pas à nous contacter pour toute question.</p>
+            <h2><i class="fas fa-envelope" style="color:var(--primary);"></i> <span data-i18n="contact_page_title">Contactez-nous</span></h2>
+            <p data-i18n="contact_page_subtitle">Nous sommes à votre écoute. N'hésitez pas à nous contacter pour toute question.</p>
         </div>
 
         <div class="contact-grid">
@@ -18,7 +18,7 @@
                 </div>
                 <h3>WhatsApp</h3>
                 <p>{{ settings.get('whatsapp', '+22791720755') }}</p>
-                <span class="contact-card-action">Envoyer un message <i class="fas fa-arrow-right"></i></span>
+                <span class="contact-card-action"><span data-i18n="send_message">Envoyer un message</span> <i class="fas fa-arrow-right"></i></span>
             </a>
 
             <!-- Carte Localisation -->
@@ -26,7 +26,7 @@
                 <div class="contact-card-icon">
                     <i class="fas fa-map-marker-alt"></i>
                 </div>
-                <h3>Notre Boutique</h3>
+                <h3 data-i18n="our_shop">Notre Boutique</h3>
                 <p>{{ settings.get('location', 'Niger') }}</p>
                 <span class="contact-card-action" style="opacity:0.6;">{{ settings.get('owner_name', 'HDATTAHER MOBILE')
                     }}</span>
@@ -37,17 +37,17 @@
                 <div class="contact-card-icon">
                     <i class="fas fa-clock"></i>
                 </div>
-                <h3>Horaires</h3>
-                <p>Lundi - Samedi<br>8h00 - 20h00</p>
+                <h3 data-i18n="hours_title">Horaires</h3>
+                <p><span data-i18n="hours_days">Lundi - Samedi</span><br>8h00 - 20h00</p>
                 <span class="contact-card-action" style="color:var(--success);">
-                    <i class="fas fa-circle" style="font-size:0.5rem;vertical-align:middle;"></i> Ouverts maintenant
+                    <i class="fas fa-circle" style="font-size:0.5rem;vertical-align:middle;"></i> <span data-i18n="open_now">Ouverts maintenant</span>
                 </span>
             </div>
         </div>
 
         <!-- Section réseaux sociaux -->
         <div class="contact-social-section">
-            <h3>Suivez-nous sur les réseaux sociaux</h3>
+            <h3 data-i18n="follow_social">Suivez-nous sur les réseaux sociaux</h3>
             <div class="contact-social-grid">
                 {% if settings.get('facebook', '') %}
                 <a href="{{ settings.get('facebook') }}" target="_blank" class="contact-social-card facebook">
@@ -78,11 +78,11 @@
         <!-- CTA final -->
         <div class="contact-cta">
             <div class="contact-cta-content">
-                <h2>Une question sur un produit ?</h2>
-                <p>Notre équipe est disponible pour vous conseiller et vous aider à trouver le smartphone parfait.</p>
+                <h2 data-i18n="product_question_title">Une question sur un produit ?</h2>
+                <p data-i18n="product_question_desc">Notre équipe est disponible pour vous conseiller et vous aider à trouver le smartphone parfait.</p>
                 <a href="https://wa.me/{{ settings.get('whatsapp','22791720755') }}?text=Bonjour, j'ai une question sur vos produits"
                     target="_blank" class="btn btn-whatsapp" style="font-size:1.1rem; padding:16px 36px;">
-                    <i class="fab fa-whatsapp"></i> Discuter maintenant
+                    <i class="fab fa-whatsapp"></i> <span data-i18n="chat_now">Discuter maintenant</span>
                 </a>
             </div>
         </div>

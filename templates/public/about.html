@@ -7,21 +7,29 @@
         <div class="about-grid">
             <div class="about-image animate-on-scroll">🏪</div>
             <div class="about-content animate-on-scroll">
-                <h2>{{ settings.get('about_title', 'À Propos de HDATTAHER MOBILE') }}</h2>
-                <p>{{ settings.get('about_text', '') }}</p>
+                <h2 data-i18n="about_page_title">À Propos de HDATTAHER MOBILE</h2>
+                <p data-i18n="about_page_text">HDATTAHER MOBILE est votre destination de confiance pour les smartphones
+                    et accessoires au Niger. Nous offrons les meilleurs produits aux prix les plus compétitifs, avec un
+                    service client exceptionnel.</p>
                 <div class="about-features">
-                    <div class="about-feature"><i class="fas fa-check-circle"></i> <span>Produits authentiques</span>
+                    <div class="about-feature"><i class="fas fa-check-circle"></i> <span
+                            data-i18n="feature_authentic">Produits authentiques</span>
                     </div>
-                    <div class="about-feature"><i class="fas fa-shipping-fast"></i> <span>Livraison rapide</span></div>
-                    <div class="about-feature"><i class="fas fa-shield-alt"></i> <span>Garantie assurée</span></div>
-                    <div class="about-feature"><i class="fas fa-headset"></i> <span>Support 24/7</span></div>
-                    <div class="about-feature"><i class="fas fa-money-bill-wave"></i> <span>Meilleurs prix</span></div>
-                    <div class="about-feature"><i class="fas fa-medal"></i> <span>Qualité premium</span></div>
+                    <div class="about-feature"><i class="fas fa-shipping-fast"></i> <span
+                            data-i18n="feature_delivery">Livraison rapide</span></div>
+                    <div class="about-feature"><i class="fas fa-shield-alt"></i> <span
+                            data-i18n="feature_warranty">Garantie assurée</span></div>
+                    <div class="about-feature"><i class="fas fa-headset"></i> <span
+                            data-i18n="feature_support">Support 24/7</span></div>
+                    <div class="about-feature"><i class="fas fa-money-bill-wave"></i> <span
+                            data-i18n="feature_prices">Meilleurs prix</span></div>
+                    <div class="about-feature"><i class="fas fa-medal"></i> <span
+                            data-i18n="feature_quality">Qualité premium</span></div>
                 </div>
                 <div style="margin-top:2rem;">
                     <a href="https://wa.me/{{ settings.get('whatsapp','22791720755') }}" target="_blank"
                         class="btn btn-whatsapp">
-                        <i class="fab fa-whatsapp"></i> Contactez-nous
+                        <i class="fab fa-whatsapp"></i> <span data-i18n="contact_us">Contactez-nous</span>
                     </a>
                 </div>
             </div>

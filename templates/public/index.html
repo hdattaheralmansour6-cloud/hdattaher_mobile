@@ -8,7 +8,6 @@
 <section class="banner-carousel" id="bannerCarousel">
     <div class="banner-track" id="bannerTrack">
         {% for b in banners %}
-        {% set slide %}
         <div class="banner-slide">
             <img src="{{ b.image }}" alt="{{ b.title or '' }}" loading="{{ 'eager' if loop.index0 == 0 else 'lazy' }}">
             {% if b.title or b.subtitle %}
@@ -18,8 +17,6 @@
             </div>
             {% endif %}
         </div>
-        {% endset %}
-        {% if b.link_url %}<a href="{{ b.link_url }}">{{ slide }}</a>{% else %}{{ slide }}{% endif %}
         {% endfor %}
     </div>
 
