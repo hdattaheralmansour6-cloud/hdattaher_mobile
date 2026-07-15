@@ -108,6 +108,7 @@ const translations = {
     product_question_title: 'Une question sur un produit ?',
     product_question_desc: 'Notre équipe est disponible pour vous conseiller et vous aider à trouver le smartphone parfait.',
     chat_now: 'Discuter maintenant',
+    open_whatsapp_code: 'Ouvrir WhatsApp pour demander mon code',
   },
   en: {
     home: 'Home', products: 'Products', about: 'About', contact: 'Contact', whatsapp_contact: 'Contact us via WhatsApp',
@@ -188,6 +189,7 @@ const translations = {
     product_question_title: 'A question about a product?',
     product_question_desc: 'Our team is available to advise you and help you find the perfect smartphone.',
     chat_now: 'Chat now',
+    open_whatsapp_code: 'Open WhatsApp to request my code',
   },
   ar: {
     home: 'الرئيسية', products: 'المنتجات', about: 'حولنا', contact: 'اتصل بنا', whatsapp_contact: 'تواصل معنا عبر واتساب',
@@ -268,6 +270,7 @@ const translations = {
     product_question_title: 'سؤال حول منتج؟',
     product_question_desc: 'فريقنا متاح لتقديم النصح ومساعدتك في العثور على الهاتف الذكي المثالي.',
     chat_now: 'تحدث الآن',
+    open_whatsapp_code: 'افتح واتساب لطلب الرمز',
   }
 };
 
