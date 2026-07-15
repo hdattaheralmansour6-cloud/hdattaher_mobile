@@ -23,7 +23,8 @@ from customer_auth import (login_manager, create_customer, verify_customer_passw
 from werkzeug.security import check_password_hash
 import cart as cart_module
 from order_manager import (create_order_from_cart, get_customer_orders, get_order_with_items,
-                            update_order_status, get_all_orders, ORDER_STATUSES)
+                            update_order_status, get_all_orders, ORDER_STATUSES,
+                            get_dashboard_stats)
 # test redeploiement storage 2
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -484,7 +485,11 @@ def admin_dashboard():
 
     top_viewed = db.fetch_all('products', '*', order=('views', False), limit=5)
 
-    return render_template('admin/dashboard.html', stats=stats, recent=recent, top_viewed=top_viewed)
+    periode = request.args.get('periode', 30, type=int)
+    order_stats = get_dashboard_stats(days=periode)
+
+    return render_template('admin/dashboard.html', stats=stats, recent=recent, top_viewed=top_viewed,
+                            order_stats=order_stats, periode=periode)
 
 
 @app.route('/azawad/profile', methods=['GET', 'POST'])

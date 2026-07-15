@@ -105,3 +105,75 @@ def get_all_orders(status_filter=None):
         o['customer_name'] = customer['full_name'] if customer else 'Client supprimé'
         o['customer_email'] = customer['email'] if customer else ''
     return orders
+
+
+# ============================================================
+#  STATISTIQUES POUR LE DASHBOARD ADMIN (Phase 3)
+# ============================================================
+
+# Statuts comptabilisés comme des ventes effectives (pour le CA)
+STATUTS_VENTE = ('Confirmée', 'Préparation', 'Expédiée', 'Livrée')
+
+
+def get_dashboard_stats(days=30):
+    """
+    Agrège les données nécessaires aux graphiques du dashboard admin :
+    - CA + nombre de commandes par jour (période demandée)
+    - Répartition des commandes par statut
+    - Top 5 produits les plus vendus (quantité)
+    - Produits en stock bas (<= 5)
+    """
+    from collections import defaultdict
+    from datetime import datetime, timedelta
+
+    sb = get_supabase()
+    since = (datetime.utcnow() - timedelta(days=days)).isoformat()
+
+    orders = db.fetch_all(
+        'orders', 'id, status, total, created_at',
+        filters=[('created_at', 'gte', since)],
+    )
+
+    # --- CA + nb commandes par jour ---
+    par_jour = defaultdict(lambda: {'total': 0, 'nb': 0})
+    par_statut = defaultdict(int)
+    order_ids_vente = set()
+
+    for o in orders:
+        jour = (o['created_at'] or '')[:10]
+        par_statut[o['status']] += 1
+        if o['status'] in STATUTS_VENTE:
+            par_jour[jour]['total'] += o['total'] or 0
+            par_jour[jour]['nb'] += 1
+            order_ids_vente.add(o['id'])
+
+    jours_tries = sorted(par_jour.keys())
+
+    # --- Top produits vendus (jointure order_items -> orders pour ne garder que les ventes) ---
+    top_produits = defaultdict(int)
+    items_result = sb.table('order_items').select('product_name, quantity, orders(status)').execute()
+    for it in (items_result.data or []):
+        order_info = it.get('orders')
+        if order_info and order_info.get('status') in STATUTS_VENTE:
+            top_produits[it['product_name']] += it['quantity']
+
+    top_5 = sorted(top_produits.items(), key=lambda x: x[1], reverse=True)[:5]
+
+    # --- Stock bas ---
+    stock_bas = db.fetch_all(
+        'products', 'name, stock',
+        filters=[('stock', 'lte', 5)],
+        order=('stock', True),
+    )
+
+    return {
+        'ca_labels': jours_tries,
+        'ca_values': [round(par_jour[j]['total']) for j in jours_tries],
+        'statuts_labels': list(par_statut.keys()),
+        'statuts_values': list(par_statut.values()),
+        'top_produits_labels': [t[0] for t in top_5],
+        'top_produits_values': [t[1] for t in top_5],
+        'stock_bas': stock_bas,
+        'ca_total_periode': sum(par_jour[j]['total'] for j in jours_tries),
+        'nb_commandes_periode': sum(par_jour[j]['nb'] for j in jours_tries),
+    }
