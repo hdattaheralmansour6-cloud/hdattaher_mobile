@@ -12,8 +12,10 @@
             <img src="{{ b.image }}" alt="{{ b.title or '' }}" loading="{{ 'eager' if loop.index0 == 0 else 'lazy' }}">
             {% if b.title or b.subtitle %}
             <div class="banner-caption">
-                {% if b.title %}<h3>{{ b.title }}</h3>{% endif %}
-                {% if b.subtitle %}<p>{{ b.subtitle }}</p>{% endif %}
+                {% if b.title %}<h3 data-name-fr="{{ b.title }}" data-name-en="{{ b.title_en or '' }}"
+                    data-name-ar="{{ b.title_ar or '' }}">{{ b.title }}</h3>{% endif %}
+                {% if b.subtitle %}<p data-name-fr="{{ b.subtitle }}" data-name-en="{{ b.subtitle_en or '' }}"
+                    data-name-ar="{{ b.subtitle_ar or '' }}">{{ b.subtitle }}</p>{% endif %}
             </div>
             {% endif %}
         </div>
