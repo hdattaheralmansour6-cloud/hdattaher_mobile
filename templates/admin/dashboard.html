@@ -7,9 +7,36 @@
         <h1>Tableau de Bord</h1>
         <span class="breadcrumb">Bienvenue, {{ session.username }} 👋</span>
     </div>
-    <a href="{{ url_for('admin_add_product') }}" class="btn-admin primary">
-        <i class="fas fa-plus"></i> Nouveau Produit
-    </a>
+    <div style="display:flex; gap:10px; align-items:center;">
+        <form method="GET" style="margin:0;">
+            <select name="periode" onchange="this.form.submit()" class="form-control" style="max-width:180px;">
+                <option value="7" {% if periode==7 %}selected{% endif %}>7 derniers jours</option>
+                <option value="30" {% if periode==30 %}selected{% endif %}>30 derniers jours</option>
+                <option value="90" {% if periode==90 %}selected{% endif %}>90 derniers jours</option>
+            </select>
+        </form>
+        <a href="{{ url_for('admin_add_product') }}" class="btn-admin primary">
+            <i class="fas fa-plus"></i> Nouveau Produit
+        </a>
+    </div>
+</div>
+
+<!-- Stats commandes -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon green"><i class="fas fa-coins"></i></div>
+        <div class="stat-info">
+            <h3>{{ "{:,.0f}".format(order_stats.ca_total_periode) }} FCFA</h3>
+            <p>CA ({{ periode }} jours)</p>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon purple"><i class="fas fa-receipt"></i></div>
+        <div class="stat-info">
+            <h3>{{ order_stats.nb_commandes_periode }}</h3>
+            <p>Commandes vendues</p>
+        </div>
+    </div>
 </div>
 
 <!-- Stats -->
@@ -57,6 +84,71 @@
         </div>
     </div>
 </div>
+
+<!-- Graphique CA -->
+<div class="admin-card" style="margin-bottom:1.5rem;">
+    <div class="admin-card-header">
+        <h3><i class="fas fa-chart-line"></i> Chiffre d'affaires par jour</h3>
+    </div>
+    <div class="admin-card-body">
+        <canvas id="chartCA" height="90"></canvas>
+    </div>
+</div>
+
+<div class="dashboard-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
+    <!-- Répartition par statut -->
+    <div class="admin-card">
+        <div class="admin-card-header">
+            <h3><i class="fas fa-chart-pie"></i> Commandes par statut</h3>
+        </div>
+        <div class="admin-card-body">
+            <canvas id="chartStatuts" height="220"></canvas>
+        </div>
+    </div>
+
+    <!-- Top produits -->
+    <div class="admin-card">
+        <div class="admin-card-header">
+            <h3><i class="fas fa-fire"></i> Top 5 produits vendus</h3>
+        </div>
+        <div class="admin-card-body">
+            {% if order_stats.top_produits_labels %}
+            <canvas id="chartTopProduits" height="220"></canvas>
+            {% else %}
+            <p style="color:var(--admin-text-sec); text-align:center; padding:20px;">Aucune vente sur la période.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if order_stats.stock_bas %}
+<div class="admin-card" style="margin-bottom:1.5rem;">
+    <div class="admin-card-header">
+        <h3><i class="fas fa-exclamation-triangle"></i> Alertes stock bas</h3>
+    </div>
+    <div class="admin-card-body" style="padding:0; overflow-x:auto;">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Produit</th>
+                    <th>Stock restant</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in order_stats.stock_bas %}
+                <tr>
+                    <td style="font-weight:600;">{{ p.name }}</td>
+                    <td>
+                        {% if p.stock == 0 %}<span style="color:var(--admin-danger);">Rupture</span>
+                        {% else %}<span style="color:var(--admin-warning);">{{ p.stock }}</span>{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
 
 <div class="dashboard-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
     <!-- Produits récents -->
@@ -127,4 +219,92 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script>
+(function () {
+    const textColor = '#9CA3AF';
+    const gridColor = '#2D2D44';
+    Chart.defaults.color = textColor;
+    Chart.defaults.borderColor = gridColor;
+
+    // --- CA par jour ---
+    new Chart(document.getElementById('chartCA'), {
+        type: 'line',
+        data: {
+            labels: {{ order_stats.ca_labels|tojson }},
+            datasets: [{
+                label: 'CA (FCFA)',
+                data: {{ order_stats.ca_values|tojson }},
+                borderColor: '#6C63FF',
+                backgroundColor: 'rgba(108,99,255,0.15)',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 3,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { color: gridColor } },
+                y: { grid: { color: gridColor }, beginAtZero: true }
+            }
+        }
+    });
+
+    // --- Commandes par statut ---
+    const statutColors = {
+        'En attente': '#F59E0B',
+        'Confirmée': '#6C63FF',
+        'Préparation': '#3B82F6',
+        'Expédiée': '#06B6D4',
+        'Livrée': '#10B981',
+        'Annulée': '#EF4444',
+    };
+    const statutsLabels = {{ order_stats.statuts_labels|tojson }};
+    new Chart(document.getElementById('chartStatuts'), {
+        type: 'doughnut',
+        data: {
+            labels: statutsLabels,
+            datasets: [{
+                data: {{ order_stats.statuts_values|tojson }},
+                backgroundColor: statutsLabels.map(s => statutColors[s] || '#9CA3AF'),
+                borderWidth: 0,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
+
+    // --- Top produits vendus ---
+    {% if order_stats.top_produits_labels %}
+    new Chart(document.getElementById('chartTopProduits'), {
+        type: 'bar',
+        data: {
+            labels: {{ order_stats.top_produits_labels|tojson }},
+            datasets: [{
+                label: 'Quantité vendue',
+                data: {{ order_stats.top_produits_values|tojson }},
+                backgroundColor: '#FF6584',
+                borderRadius: 6,
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { color: gridColor }, beginAtZero: true },
+                y: { grid: { display: false } }
+            }
+        }
+    });
+    {% endif %}
+})();
+</script>
 {% endblock %}
