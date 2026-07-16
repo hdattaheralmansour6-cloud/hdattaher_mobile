@@ -109,6 +109,8 @@ const translations = {
     product_question_desc: 'Notre équipe est disponible pour vous conseiller et vous aider à trouver le smartphone parfait.',
     chat_now: 'Discuter maintenant',
     email_not_found: "Cet email n'a pas de compte. Vérifiez l'adresse ou créez un compte.",
+    account_blocked: 'Votre compte a été bloqué. Contactez-nous sur WhatsApp pour obtenir de l\'aide.',
+    ask_help_whatsapp: "Demander de l'aide sur WhatsApp",
     open_whatsapp_code: 'Ouvrir WhatsApp pour demander mon code',
   },
   en: {
@@ -191,6 +193,8 @@ const translations = {
     product_question_desc: 'Our team is available to advise you and help you find the perfect smartphone.',
     chat_now: 'Chat now',
     email_not_found: 'This email has no account. Check the address or create an account.',
+    account_blocked: 'Your account has been blocked. Contact us on WhatsApp for help.',
+    ask_help_whatsapp: 'Ask for help on WhatsApp',
     open_whatsapp_code: 'Open WhatsApp to request my code',
   },
   ar: {
@@ -273,6 +277,8 @@ const translations = {
     product_question_desc: 'فريقنا متاح لتقديم النصح ومساعدتك في العثور على الهاتف الذكي المثالي.',
     chat_now: 'تحدث الآن',
     email_not_found: 'هذا البريد الإلكتروني ليس له حساب. تحقق من العنوان أو أنشئ حساباً.',
+    account_blocked: 'تم حظر حسابك. تواصل معنا عبر واتساب للحصول على المساعدة.',
+    ask_help_whatsapp: 'اطلب المساعدة عبر واتساب',
     open_whatsapp_code: 'افتح واتساب لطلب الرمز',
   }
 };
