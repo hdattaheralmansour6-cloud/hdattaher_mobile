@@ -25,9 +25,44 @@
                     </small>
                 </div>
                 <div class="form-group">
-                    <label>Icône FontAwesome</label>
-                    <input type="text" name="icon" class="form-control" value="fas fa-box"
-                        placeholder="fas fa-tablet-alt">
+                    <label>Icône</label>
+                    <div class="icon-picker">
+                        <label title="Boîte"><input type="radio" name="icon" value="fas fa-box" checked><i
+                                class="fas fa-box"></i></label>
+                        <label title="Smartphone"><input type="radio" name="icon" value="fas fa-mobile-alt"><i
+                                class="fas fa-mobile-alt"></i></label>
+                        <label title="Tablette"><input type="radio" name="icon" value="fas fa-tablet-alt"><i
+                                class="fas fa-tablet-alt"></i></label>
+                        <label title="Montre"><input type="radio" name="icon" value="fas fa-clock"><i
+                                class="fas fa-clock"></i></label>
+                        <label title="Casque / Écouteurs"><input type="radio" name="icon" value="fas fa-headphones"><i
+                                class="fas fa-headphones"></i></label>
+                        <label title="Enceinte"><input type="radio" name="icon" value="fas fa-volume-up"><i
+                                class="fas fa-volume-up"></i></label>
+                        <label title="Chargeur / Câble"><input type="radio" name="icon" value="fas fa-plug"><i
+                                class="fas fa-plug"></i></label>
+                        <label title="Batterie / Power bank"><input type="radio" name="icon"
+                                value="fas fa-battery-full"><i class="fas fa-battery-full"></i></label>
+                        <label title="Caméra"><input type="radio" name="icon" value="fas fa-camera"><i
+                                class="fas fa-camera"></i></label>
+                        <label title="Gaming"><input type="radio" name="icon" value="fas fa-gamepad"><i
+                                class="fas fa-gamepad"></i></label>
+                        <label title="Ordinateur"><input type="radio" name="icon" value="fas fa-laptop"><i
+                                class="fas fa-laptop"></i></label>
+                        <label title="Télévision"><input type="radio" name="icon" value="fas fa-tv"><i
+                                class="fas fa-tv"></i></label>
+                        <label title="Carte SIM"><input type="radio" name="icon" value="fas fa-sim-card"><i
+                                class="fas fa-sim-card"></i></label>
+                        <label title="Carte mémoire"><input type="radio" name="icon" value="fas fa-sd-card"><i
+                                class="fas fa-sd-card"></i></label>
+                        <label title="Coque / Protection"><input type="radio" name="icon" value="fas fa-shield-alt"><i
+                                class="fas fa-shield-alt"></i></label>
+                        <label title="Promotions"><input type="radio" name="icon" value="fas fa-tags"><i
+                                class="fas fa-tags"></i></label>
+                    </div>
+                    <small style="color:var(--admin-text-sec); display:block; margin-top:6px;">
+                        Touche l'icône qui représente le mieux la catégorie.
+                    </small>
                 </div>
                 <button type="submit" class="btn-admin primary"><i class="fas fa-plus"></i> Ajouter</button>
             </form>
@@ -68,4 +103,43 @@
         </div>
     </div>
 </div>
+
+<style>
+    .icon-picker {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+        gap: 8px;
+        margin-top: 6px;
+    }
+
+    .icon-picker label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 52px;
+        border: 2px solid var(--admin-border);
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 1.25rem;
+        color: var(--admin-text-sec);
+        transition: all 0.15s ease;
+    }
+
+    .icon-picker label:hover {
+        border-color: var(--admin-primary);
+        color: var(--admin-primary);
+    }
+
+    .icon-picker input {
+        display: none;
+    }
+
+    /* Icône sélectionnée */
+    .icon-picker label:has(input:checked) {
+        border-color: var(--admin-primary);
+        background: rgba(108, 99, 255, 0.15);
+        color: var(--admin-primary);
+        box-shadow: 0 0 0 1px var(--admin-primary);
+    }
+</style>
 {% endblock %}
