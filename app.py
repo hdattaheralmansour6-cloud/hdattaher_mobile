@@ -1027,28 +1027,23 @@ def admin_customers():
     return render_template('admin/customers.html', customers=customers, order_counts=order_counts)
 
 
-@app.route('/azawad/client/supprimer/<customer_id>', methods=['POST'])
+@app.route('/azawad/client/bloquer/<customer_id>', methods=['POST'])
 @login_required
-def admin_delete_customer(customer_id):
-    customer = db.fetch_one('customers', 'full_name, email', {'id': customer_id})
+def admin_toggle_customer_block(customer_id):
+    customer = db.fetch_one('customers', 'full_name, email, is_blocked', {'id': customer_id})
     if not customer:
         flash('Client introuvable.', 'error')
         return redirect(url_for('admin_customers'))
 
-    # On préserve l'historique des commandes : elles sont détachées du compte,
-    # pas supprimées (les infos de livraison restent dans la commande).
-    try:
-        db.update('orders', {'customer_id': None}, {'customer_id': customer_id})
-    except Exception:
-        pass
-    try:
-        db.delete('password_resets', {'customer_id': customer_id})
-    except Exception:
-        pass
+    new_state = not customer.get('is_blocked')
+    db.update('customers', {'is_blocked': new_state}, {'id': customer_id})
 
-    db.delete('customers', {'id': customer_id})
-    log_action('Suppression client', f"{customer.get('full_name')} ({customer.get('email')})")
-    flash('Compte client supprimé.', 'success')
+    if new_state:
+        log_action('Blocage client', f"{customer.get('full_name')} ({customer.get('email')})")
+        flash(f"Compte de {customer.get('full_name')} bloqué. Il ne peut plus se connecter.", 'success')
+    else:
+        log_action('Déblocage client', f"{customer.get('full_name')} ({customer.get('email')})")
+        flash(f"Compte de {customer.get('full_name')} débloqué. Il peut de nouveau se connecter.", 'success')
     return redirect(url_for('admin_customers'))
 
 
@@ -1357,6 +1352,18 @@ def customer_login():
 
         row = verify_customer_password(email, password)
         if row:
+            if row.get('is_blocked'):
+                # Compte bloqué par l'admin : pas de connexion, on propose
+                # de demander de l'aide sur WhatsApp avec un message pré-rempli.
+                settings = get_settings()
+                whatsapp_number = settings.get('whatsapp', '22791720755')
+                message = quote(
+                    f"Bonjour, je n'arrive pas à me connecter à mon compte HDATTAHER MOBILE. "
+                    f"Nom : {row.get('full_name', '')}, Email : {email}. Pouvez-vous m'aider ?"
+                )
+                wa_help_link = f"https://wa.me/{whatsapp_number}?text={message}"
+                return render_template('public/account/login.html', blocked=True,
+                                       wa_help_link=wa_help_link)
             from customer_auth import Customer
             login_user(Customer(row), remember=True)
             update_customer_last_login(row['id'])
