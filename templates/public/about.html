@@ -13,10 +13,14 @@
             <div class="about-image animate-on-scroll">🏪</div>
             {% endif %}
             <div class="about-content animate-on-scroll">
-                <h2 data-i18n="about_page_title">À Propos de HDATTAHER MOBILE</h2>
-                <p data-i18n="about_page_text">HDATTAHER MOBILE est votre destination de confiance pour les smartphones
-                    et accessoires au Niger. Nous offrons les meilleurs produits aux prix les plus compétitifs, avec un
-                    service client exceptionnel.</p>
+                <h2 data-name-fr="{{ settings.get('about_title', 'À Propos de HDATTAHER MOBILE') }}"
+                    data-name-en="{{ settings.get('about_title_en', '') }}"
+                    data-name-ar="{{ settings.get('about_title_ar', '') }}">
+                    {{ settings.get('about_title', 'À Propos de HDATTAHER MOBILE') }}</h2>
+                <p data-name-fr="{{ settings.get('about_text', 'HDATTAHER MOBILE est votre destination de confiance pour les smartphones et accessoires au Niger.') }}"
+                    data-name-en="{{ settings.get('about_text_en', '') }}"
+                    data-name-ar="{{ settings.get('about_text_ar', '') }}">
+                    {{ settings.get('about_text', 'HDATTAHER MOBILE est votre destination de confiance pour les smartphones et accessoires au Niger.') }}</p>
                 <div class="about-features">
                     <div class="about-feature"><i class="fas fa-check-circle"></i> <span
                             data-i18n="feature_authentic">Produits authentiques</span>
