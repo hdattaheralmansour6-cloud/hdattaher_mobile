@@ -991,15 +991,16 @@ textarea {
   box-shadow: var(--shadow-lg);
 }
 
-/* Variante photo : image réelle définie dans l'admin (Paramètres > Section À Propos) */
-.about-image-photo {
+/* Variante photo : image réelle définie dans l'admin (Paramètres > Section À Propos).
+   Double classe pour gagner sur la règle .about-image des media queries mobiles. */
+.about-image.about-image-photo {
   height: auto;
   background: none;
   font-size: 0;
   overflow: hidden;
 }
 
-.about-image-photo img {
+.about-image.about-image-photo img {
   display: block;
   width: 100%;
   height: auto;
