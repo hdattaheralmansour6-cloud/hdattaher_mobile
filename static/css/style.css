@@ -355,24 +355,111 @@ textarea {
   width: 320px;
   height: 440px;
   border-radius: 40px;
-  background: var(--gradient);
+  background: #0f172a;
+  border: 3px solid rgba(255, 205, 90, 0.55);
+  padding: 12px;
   position: relative;
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-lg), 0 0 55px rgba(255, 185, 45, 0.45);
   transform: perspective(800px) rotateY(-8deg);
   transition: var(--transition);
+  animation: heroGoldGlow 3s ease-in-out infinite;
+}
+
+/* Halo doré qui pulse en continu */
+@keyframes heroGoldGlow {
+
+  0%,
+  100% {
+    box-shadow: var(--shadow-lg), 0 0 45px rgba(255, 185, 45, 0.35);
+    border-color: rgba(255, 205, 90, 0.45);
+  }
+
+  50% {
+    box-shadow: var(--shadow-lg), 0 0 90px rgba(255, 200, 60, 0.7);
+    border-color: rgba(255, 225, 130, 0.9);
+  }
 }
 
 .hero-phone-mockup:hover {
   transform: perspective(800px) rotateY(0deg) scale(1.03);
 }
 
-.hero-phone-mockup::before {
-  content: '📱';
+.hero-phone-notch {
   position: absolute;
-  top: 50%;
+  top: 22px;
   left: 50%;
-  transform: translate(-50%, -50%);
-  font-size: 6rem;
+  transform: translateX(-50%);
+  width: 34%;
+  height: 16px;
+  background: #0f172a;
+  border-radius: 12px;
+  z-index: 3;
+}
+
+.hero-phone-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 30px;
+  overflow: hidden;
+  background: var(--gradient);
+}
+
+.hero-phone-screen .hero-slide {
+  position: absolute;
+  inset: 0;
+  display: block;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  pointer-events: none;
+}
+
+.hero-phone-screen .hero-slide.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.hero-phone-screen .hero-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-slide-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4.5rem;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.hero-slide-info {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 2.2rem 1rem 1rem;
+  background: linear-gradient(to top, rgba(15, 23, 42, 0.9) 0%, transparent 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hero-slide-name {
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hero-slide-price {
+  color: #ffd97a;
+  font-weight: 800;
+  font-size: 0.9rem;
 }
 
 .hero-phone-mockup .phone-shine {
@@ -382,7 +469,28 @@ textarea {
   right: 0;
   bottom: 0;
   border-radius: 40px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, transparent 50%);
+  background: linear-gradient(115deg,
+      transparent 35%,
+      rgba(255, 220, 130, 0.35) 47%,
+      rgba(255, 255, 255, 0.3) 50%,
+      rgba(255, 220, 130, 0.35) 53%,
+      transparent 65%);
+  background-size: 300% 100%;
+  background-repeat: no-repeat;
+  animation: heroShimmer 2.6s linear infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Balayage lumineux doré permanent */
+@keyframes heroShimmer {
+  0% {
+    background-position: 130% 0;
+  }
+
+  100% {
+    background-position: -30% 0;
+  }
 }
 
 .hero-stats {
@@ -1754,8 +1862,21 @@ textarea {
     height: 260px;
   }
 
-  .hero-phone-mockup::before {
-    font-size: 3.5rem;
+  .hero-phone-notch {
+    top: 16px;
+    height: 12px;
+  }
+
+  .hero-phone-mockup {
+    padding: 9px;
+  }
+
+  .hero-slide-name {
+    font-size: 0.8rem;
+  }
+
+  .hero-slide-price {
+    font-size: 0.78rem;
   }
 
   .hero-stats {
@@ -2097,8 +2218,20 @@ textarea {
     height: 220px;
   }
 
-  .hero-phone-mockup::before {
-    font-size: 2.8rem;
+  .hero-phone-mockup {
+    padding: 8px;
+  }
+
+  .hero-slide-info {
+    padding: 1.6rem 0.7rem 0.7rem;
+  }
+
+  .hero-slide-name {
+    font-size: 0.72rem;
+  }
+
+  .hero-slide-price {
+    font-size: 0.7rem;
   }
 
   .hero-stats {
