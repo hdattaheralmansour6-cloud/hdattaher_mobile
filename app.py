@@ -976,8 +976,8 @@ def admin_add_category():
     try:
         db.insert('categories', {
             'name': name,
-            'name_en': request.form.get('name_en', ''),
-            'name_ar': request.form.get('name_ar', ''),
+            'name_en': auto_translate(name, 'en'),
+            'name_ar': auto_translate(name, 'ar'),
             'icon': request.form.get('icon', 'fas fa-box'),
         })
         log_action('Ajout catégorie', f'Catégorie: {name}')
@@ -1022,13 +1022,18 @@ def admin_settings():
     if request.method == 'POST':
         fields = ['site_name', 'owner_name', 'whatsapp', 'location',
                   'primary_color', 'secondary_color', 'accent_color',
-                  'about_title', 'about_title_en', 'about_title_ar',
-                  'about_text', 'about_text_en', 'about_text_ar',
+                  'about_title', 'about_text',
                   'facebook', 'instagram', 'tiktok', 'promotions_active']
 
         for field in fields:
             value = request.form.get(field, '')
             db.upsert('settings', {'key': field, 'value': value}, on_conflict='key')
+
+        # Traduction automatique FR -> EN/AR du titre et du texte À propos
+        for field in ['about_title', 'about_text']:
+            value = request.form.get(field, '').strip()
+            db.upsert('settings', {'key': f'{field}_en', 'value': auto_translate(value, 'en')}, on_conflict='key')
+            db.upsert('settings', {'key': f'{field}_ar', 'value': auto_translate(value, 'ar')}, on_conflict='key')
 
         dark_mode = '1' if request.form.get('dark_mode') else '0'
         db.upsert('settings', {'key': 'dark_mode', 'value': dark_mode}, on_conflict='key')
