@@ -108,6 +108,7 @@ const translations = {
     product_question_title: 'Une question sur un produit ?',
     product_question_desc: 'Notre équipe est disponible pour vous conseiller et vous aider à trouver le smartphone parfait.',
     chat_now: 'Discuter maintenant',
+    email_not_found: "Cet email n'a pas de compte. Vérifiez l'adresse ou créez un compte.",
     open_whatsapp_code: 'Ouvrir WhatsApp pour demander mon code',
   },
   en: {
@@ -189,6 +190,7 @@ const translations = {
     product_question_title: 'A question about a product?',
     product_question_desc: 'Our team is available to advise you and help you find the perfect smartphone.',
     chat_now: 'Chat now',
+    email_not_found: 'This email has no account. Check the address or create an account.',
     open_whatsapp_code: 'Open WhatsApp to request my code',
   },
   ar: {
@@ -270,6 +272,7 @@ const translations = {
     product_question_title: 'سؤال حول منتج؟',
     product_question_desc: 'فريقنا متاح لتقديم النصح ومساعدتك في العثور على الهاتف الذكي المثالي.',
     chat_now: 'تحدث الآن',
+    email_not_found: 'هذا البريد الإلكتروني ليس له حساب. تحقق من العنوان أو أنشئ حساباً.',
     open_whatsapp_code: 'افتح واتساب لطلب الرمز',
   }
 };
