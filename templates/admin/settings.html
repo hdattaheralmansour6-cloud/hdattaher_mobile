@@ -116,37 +116,19 @@
                     <input type="file" name="about_image" class="form-control" accept="image/*" style="padding:8px;">
                     <small style="color:var(--admin-text-sec); display:block; margin-top:4px;">
                         Cette image s'affiche en haut de la page À propos. Laisse vide pour garder l'image actuelle.
+                        Écris le titre et le texte en français : les traductions anglaise et arabe sont générées
+                        automatiquement à l'enregistrement.
                     </small>
                 </div>
                 <div class="form-group">
-                    <label>Titre (Français)</label>
+                    <label>Titre</label>
                     <input type="text" name="about_title" class="form-control"
                         value="{{ settings.get('about_title','') }}">
                 </div>
-                <div class="form-group">
-                    <label>Title (English)</label>
-                    <input type="text" name="about_title_en" class="form-control"
-                        value="{{ settings.get('about_title_en','') }}">
-                </div>
                 <div class="form-group full-width">
-                    <label>العنوان (عربي)</label>
-                    <input type="text" name="about_title_ar" class="form-control"
-                        value="{{ settings.get('about_title_ar','') }}" dir="rtl">
-                </div>
-                <div class="form-group full-width">
-                    <label>Texte (Français)</label>
+                    <label>Texte</label>
                     <textarea name="about_text" class="form-control"
                         rows="4">{{ settings.get('about_text','') }}</textarea>
-                </div>
-                <div class="form-group full-width">
-                    <label>Text (English)</label>
-                    <textarea name="about_text_en" class="form-control"
-                        rows="4">{{ settings.get('about_text_en','') }}</textarea>
-                </div>
-                <div class="form-group full-width">
-                    <label>النص (عربي)</label>
-                    <textarea name="about_text_ar" class="form-control" rows="4"
-                        dir="rtl">{{ settings.get('about_text_ar','') }}</textarea>
                 </div>
             </div>
         </div>
