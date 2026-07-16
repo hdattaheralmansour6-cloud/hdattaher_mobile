@@ -991,6 +991,21 @@ textarea {
   box-shadow: var(--shadow-lg);
 }
 
+/* Variante photo : image réelle définie dans l'admin (Paramètres > Section À Propos) */
+.about-image-photo {
+  height: auto;
+  background: none;
+  font-size: 0;
+  overflow: hidden;
+}
+
+.about-image-photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius);
+}
+
 .about-content h2 {
   font-size: 2rem;
   font-weight: 800;
