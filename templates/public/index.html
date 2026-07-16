@@ -77,12 +77,11 @@
                 </div>
             </div>
         </div>
+        {% set hero_items = featured[:4] if featured else [] %}
+        {% if hero_items %}
         <div class="hero-visual">
             <div class="hero-phone-mockup">
-                <div class="hero-phone-notch"></div>
                 <div class="hero-phone-screen">
-                    {% set hero_items = featured[:4] if featured else [] %}
-                    {% if hero_items %}
                     {% for p in hero_items %}
                     <a href="{{ url_for('product_detail', product_id=p.id) }}"
                         class="hero-slide{{ ' active' if loop.first else '' }}">
@@ -97,15 +96,11 @@
                         </div>
                     </a>
                     {% endfor %}
-                    {% else %}
-                    <div class="hero-slide active">
-                        <div class="hero-slide-fallback"><i class="fas fa-mobile-alt"></i></div>
-                    </div>
-                    {% endif %}
                 </div>
                 <div class="phone-shine"></div>
             </div>
         </div>
+        {% endif %}
     </div>
 </section>
 
