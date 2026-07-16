@@ -105,6 +105,19 @@
         </div>
         <div class="admin-card-body">
             <div class="form-grid">
+                <div class="form-group full-width">
+                    <label>Image de la page À propos</label>
+                    {% if settings.get('about_image', '') %}
+                    <div style="margin-bottom:8px;">
+                        <img src="{{ settings.get('about_image') }}" alt="Image À propos actuelle"
+                            style="max-width:320px; width:100%; border-radius:8px; display:block;">
+                    </div>
+                    {% endif %}
+                    <input type="file" name="about_image" class="form-control" accept="image/*" style="padding:8px;">
+                    <small style="color:var(--admin-text-sec); display:block; margin-top:4px;">
+                        Cette image s'affiche en haut de la page À propos. Laisse vide pour garder l'image actuelle.
+                    </small>
+                </div>
                 <div class="form-group">
                     <label>Titre (Français)</label>
                     <input type="text" name="about_title" class="form-control"
