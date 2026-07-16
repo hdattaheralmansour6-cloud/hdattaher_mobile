@@ -1044,6 +1044,22 @@ def admin_settings():
                     logo_file.save(os.path.join(Config.UPLOAD_FOLDER, logo_filename))
                     db.upsert('settings', {'key': 'logo_path', 'value': logo_filename}, on_conflict='key')
 
+        # Upload image de la page À propos (stockée sur Supabase Storage)
+        if 'about_image' in request.files:
+            about_file = request.files['about_image']
+            if about_file and about_file.filename and allowed_file(about_file.filename):
+                filename = secure_filename(about_file.filename)
+                if filename:
+                    storage_filename = f"about_{int(time.time())}_{filename}"
+                    file_bytes = about_file.read()
+                    sb = get_supabase()
+                    sb.storage.from_('product-images').upload(
+                        storage_filename, file_bytes,
+                        {'content-type': about_file.content_type, 'upsert': 'true'}
+                    )
+                    about_url = sb.storage.from_('product-images').get_public_url(storage_filename)
+                    db.upsert('settings', {'key': 'about_image', 'value': about_url}, on_conflict='key')
+
         log_action('Modification paramètres', 'Paramètres mis à jour')
         cache.delete_memoized(get_settings)
         flash('Paramètres sauvegardés!', 'success')
