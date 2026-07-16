@@ -12,52 +12,47 @@
 <div class="admin-card" style="margin-bottom:1.5rem;">
     <div class="admin-card-body" style="padding:1rem; color:var(--admin-text-sec); font-size:0.9rem;">
         <i class="fas fa-circle-info"></i>
-        Un client vous contactera sur WhatsApp pour demander son code. Retrouvez-le ici et copiez-le :
-        la demande disparaît automatiquement dès que vous copiez le code. Envoyez-le ensuite au client
-        sur WhatsApp. Les codes expirent après 30 minutes.
+        Un client vous contactera sur WhatsApp pour demander son code. Retrouvez-le ici et appuyez sur
+        "Copier le message" : un message complet (avec le code et l'avertissement d'expiration) est copié,
+        prêt à coller dans WhatsApp. La demande disparaît automatiquement dès la copie.
+        Les codes expirent après 30 minutes.
     </div>
 </div>
 
-<div class="admin-card">
-    <div class="admin-card-body" style="padding:0; overflow-x:auto;">
-        <table class="admin-table" id="resetTable">
-            <thead>
-                <tr>
-                    <th>Client</th>
-                    <th>Téléphone</th>
-                    <th>Code</th>
-                    <th>Demandé le</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for r in requests %}
-                <tr id="row-{{ r.id }}">
-                    <td style="font-weight:600;">{{ r.customer_name }}<br>
-                        <span style="font-size:0.78rem; color:var(--admin-text-sec);">{{ r.customer_email }}</span>
-                    </td>
-                    <td>{{ r.customer_phone }}</td>
-                    <td>
-                        <code id="code-{{ r.id }}" style="font-size:1.1rem; font-weight:700; letter-spacing:2px; color:var(--admin-primary);">{{ r.code }}</code>
-                    </td>
-                    <td>{{ r.created_at[:16].replace('T',' ') if r.created_at else '' }}</td>
-                    <td>
-                        <button type="button" class="btn-admin primary" style="padding:6px 14px; font-size:0.8rem;"
-                                onclick="copyResetCode('{{ r.id }}', this)">
-                            <i class="fas fa-copy"></i> Copier le code
-                        </button>
-                    </td>
-                </tr>
-                {% else %}
-                <tr id="emptyRow">
-                    <td colspan="5" style="text-align:center; padding:30px; color:var(--admin-text-sec);">
-                        Aucune demande en attente.
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<div id="resetList">
+    {% for r in requests %}
+    <div class="admin-card" id="row-{{ r.id }}" style="margin-bottom:1rem;">
+        <div class="admin-card-body" style="padding:1rem;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap;">
+                <div style="min-width:0;">
+                    <div style="font-weight:700;">{{ r.customer_name }}</div>
+                    <div style="font-size:0.78rem; color:var(--admin-text-sec); word-break:break-all;">
+                        {{ r.customer_email }}</div>
+                    <div style="font-size:0.85rem; color:var(--admin-text-sec); margin-top:4px;">
+                        <i class="fas fa-phone"></i> {{ r.customer_phone }}
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                    <code id="code-{{ r.id }}"
+                        style="font-size:1.5rem; font-weight:800; letter-spacing:3px; color:var(--admin-primary); display:block;">{{ r.code }}</code>
+                    <div style="font-size:0.75rem; color:var(--admin-text-sec); margin-top:4px;">
+                        {{ r.created_at[:16].replace('T',' ') if r.created_at else '' }}</div>
+                </div>
+            </div>
+            <button type="button" class="btn-admin primary"
+                style="width:100%; margin-top:12px; padding:10px; font-size:0.9rem;"
+                data-name="{{ r.customer_name }}" onclick="copyResetCode('{{ r.id }}', this)">
+                <i class="fas fa-copy"></i> Copier le message avec le code
+            </button>
+        </div>
     </div>
+    {% else %}
+    <div class="admin-card" id="emptyState">
+        <div class="admin-card-body" style="text-align:center; padding:30px; color:var(--admin-text-sec);">
+            Aucune demande en attente.
+        </div>
+    </div>
+    {% endfor %}
 </div>
 {% endblock %}
 
@@ -67,8 +62,14 @@ const CSRF_TOKEN = "{{ csrf_token() }}";
 
 function copyResetCode(id, btn) {
     const code = document.getElementById('code-' + id).textContent.trim();
-    navigator.clipboard.writeText(code).then(() => {
-        btn.innerHTML = '<i class="fas fa-check"></i> Copié';
+    const name = btn.dataset.name || '';
+    const message = "Bonjour " + name + " 👋\n\n" +
+        "Voici votre code de réinitialisation HDATTAHER MOBILE : " + code + "\n\n" +
+        "⚠️ Ce code expire dans 30 minutes.\n" +
+        "Entrez-le sur la page « Nouveau mot de passe » du site avec votre nouveau mot de passe.";
+
+    navigator.clipboard.writeText(message).then(() => {
+        btn.innerHTML = '<i class="fas fa-check"></i> Message copié — collez-le dans WhatsApp';
         btn.disabled = true;
 
         fetch(`/azawad/reinitialisations/traiter/${id}`, {
@@ -82,11 +83,11 @@ function copyResetCode(id, btn) {
                 row.style.opacity = '0';
                 setTimeout(() => {
                     row.remove();
-                    const remaining = document.querySelectorAll('#resetTable tbody tr').length;
+                    const remaining = document.querySelectorAll('#resetList > .admin-card:not(#emptyState)').length;
                     document.getElementById('pendingCount').textContent = remaining + ' demande(s) en attente';
                     if (remaining === 0) {
-                        document.querySelector('#resetTable tbody').innerHTML =
-                            '<tr><td colspan="5" style="text-align:center; padding:30px; color:var(--admin-text-sec);">Aucune demande en attente.</td></tr>';
+                        document.getElementById('resetList').innerHTML =
+                            '<div class="admin-card"><div class="admin-card-body" style="text-align:center; padding:30px; color:var(--admin-text-sec);">Aucune demande en attente.</div></div>';
                     }
                 }, 300);
             }
