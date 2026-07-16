@@ -1007,6 +1007,51 @@ def admin_reset_requests():
     return render_template('admin/reset_requests.html', requests=requests_list)
 
 
+# ============================================================
+#  ADMINISTRATION DES CLIENTS
+# ============================================================
+
+@app.route('/azawad/clients')
+@login_required
+def admin_customers():
+    customers = db.fetch_all('customers', order=('created_at', False)) or []
+    # Nombre de commandes par client
+    order_counts = {}
+    try:
+        for o in (db.fetch_all('orders', columns='customer_id') or []):
+            cid = o.get('customer_id')
+            if cid:
+                order_counts[str(cid)] = order_counts.get(str(cid), 0) + 1
+    except Exception:
+        pass
+    return render_template('admin/customers.html', customers=customers, order_counts=order_counts)
+
+
+@app.route('/azawad/client/supprimer/<customer_id>', methods=['POST'])
+@login_required
+def admin_delete_customer(customer_id):
+    customer = db.fetch_one('customers', 'full_name, email', {'id': customer_id})
+    if not customer:
+        flash('Client introuvable.', 'error')
+        return redirect(url_for('admin_customers'))
+
+    # On préserve l'historique des commandes : elles sont détachées du compte,
+    # pas supprimées (les infos de livraison restent dans la commande).
+    try:
+        db.update('orders', {'customer_id': None}, {'customer_id': customer_id})
+    except Exception:
+        pass
+    try:
+        db.delete('password_resets', {'customer_id': customer_id})
+    except Exception:
+        pass
+
+    db.delete('customers', {'id': customer_id})
+    log_action('Suppression client', f"{customer.get('full_name')} ({customer.get('email')})")
+    flash('Compte client supprimé.', 'success')
+    return redirect(url_for('admin_customers'))
+
+
 @app.route('/azawad/reinitialisations/traiter/<request_id>', methods=['POST'])
 @login_required
 def admin_resolve_reset_request(request_id):
