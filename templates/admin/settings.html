@@ -18,10 +18,6 @@
         <div class="admin-card-body">
             <div class="form-grid">
                 <div class="form-group">
-                    <label>Nom du site</label>
-                    <input type="text" name="site_name" class="form-control" value="{{ settings.get('site_name','') }}">
-                </div>
-                <div class="form-group">
                     <label>Propriétaire</label>
                     <input type="text" name="owner_name" class="form-control"
                         value="{{ settings.get('owner_name','') }}">
@@ -68,31 +64,12 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Promotions Actives</label>
-                    <label class="toggle-switch" style="display:block; margin-top:8px;">
-                        <input type="checkbox" name="promotions_active" value="1" {% if
-                            settings.get('promotions_active','1')=='1' %}checked{% endif %}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-                <div class="form-group">
                     <label>Mode Sombre (Public)</label>
                     <label class="toggle-switch" style="display:block; margin-top:8px;">
                         <input type="checkbox" name="dark_mode" value="1" {% if settings.get('dark_mode','0')=='1'
                             %}checked{% endif %}>
                         <span class="toggle-slider"></span>
                     </label>
-                </div>
-                <div class="form-group full-width">
-                    <label><i class="fas fa-image"></i> Logo du Site</label>
-                    {% if settings.get('logo_path', '') %}
-                    <div style="margin:8px 0;">
-                        <img src="{{ url_for('uploaded_file', filename=settings.get('logo_path')) }}" alt="Logo actuel"
-                            style="height:50px; border-radius:10px; border:2px solid var(--admin-border);">
-                        <span style="color:var(--admin-text-sec); font-size:0.8rem; margin-left:8px;">Logo actuel</span>
-                    </div>
-                    {% endif %}
-                    <input type="file" name="logo" class="form-control" accept="image/*" style="padding:8px;">
                 </div>
             </div>
         </div>
