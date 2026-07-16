@@ -79,11 +79,49 @@
         </div>
         <div class="hero-visual">
             <div class="hero-phone-mockup">
+                <div class="hero-phone-notch"></div>
+                <div class="hero-phone-screen">
+                    {% set hero_items = featured[:4] if featured else [] %}
+                    {% if hero_items %}
+                    {% for p in hero_items %}
+                    <a href="{{ url_for('product_detail', product_id=p.id) }}"
+                        class="hero-slide{{ ' active' if loop.first else '' }}">
+                        {% if p.image and p.image != 'default.png' %}
+                        <img src="{{ p.image }}" alt="{{ p.name }}" loading="{{ 'eager' if loop.first else 'lazy' }}">
+                        {% else %}
+                        <div class="hero-slide-fallback"><i class="fas fa-mobile-alt"></i></div>
+                        {% endif %}
+                        <div class="hero-slide-info">
+                            <span class="hero-slide-name">{{ p.name }}</span>
+                            <span class="hero-slide-price">{{ "{:,.0f}".format(p.price) }} FCFA</span>
+                        </div>
+                    </a>
+                    {% endfor %}
+                    {% else %}
+                    <div class="hero-slide active">
+                        <div class="hero-slide-fallback"><i class="fas fa-mobile-alt"></i></div>
+                    </div>
+                    {% endif %}
+                </div>
                 <div class="phone-shine"></div>
             </div>
         </div>
     </div>
 </section>
+
+<script>
+    // Mini-carrousel de l'écran du téléphone (hero) : fondu entre les produits vedettes
+    (function () {
+        var slides = document.querySelectorAll('.hero-phone-screen .hero-slide');
+        if (slides.length < 2) return;
+        var i = 0;
+        setInterval(function () {
+            slides[i].classList.remove('active');
+            i = (i + 1) % slides.length;
+            slides[i].classList.add('active');
+        }, 3000);
+    })();
+</script>
 
 <!-- CATEGORIES -->
 <section class="section" style="background:var(--bg-secondary);">
