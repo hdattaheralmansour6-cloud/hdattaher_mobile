@@ -1412,18 +1412,35 @@ def customer_order_invoice(order_id):
 def customer_forgot_password():
     if request.method == 'POST':
         email = request.form.get('email', '').strip()
+
+        account_exists = False
         try:
-            generate_reset_code(email)
-            log_action('Demande de code de réinitialisation', f'Email: {email}')
+            account_exists = generate_reset_code(email)
+            if account_exists:
+                log_action('Demande de code de réinitialisation', f'Email: {email}')
         except Exception:
             pass
+
+        if not account_exists:
+            flash("Cet email n'a pas de compte. Vérifiez l'adresse ou créez un compte.", 'error')
+            return redirect(url_for('customer_forgot_password', email=email))
 
         # L'application WhatsApp est ouverte par le JS du formulaire (lien natif,
         # sans nouvel onglet) ; ici on amène ce même onglet sur la page de saisie du code.
         flash("Envoyez le message WhatsApp pré-rempli, puis collez ici le code reçu.", 'success')
         return redirect(url_for('customer_reset_password', email=email))
 
-    return render_template('public/account/forgot_password.html')
+    return render_template('public/account/forgot_password.html',
+                           email=request.args.get('email', '').strip())
+
+
+@app.route('/compte/verifier-email', methods=['POST'])
+def customer_check_email():
+    """Vérifie si un email a un compte (utilisé par le JS du formulaire
+    mot de passe oublié, avant d'ouvrir WhatsApp)."""
+    email = request.form.get('email', '').strip()
+    exists = bool(get_customer_by_email(email)) if email else False
+    return {'exists': exists}
 
 
 @app.route('/compte/reinitialiser', methods=['GET', 'POST'])
