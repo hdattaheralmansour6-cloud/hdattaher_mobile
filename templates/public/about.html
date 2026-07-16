@@ -5,7 +5,13 @@
 <section class="section about-section" style="padding-top:100px;">
     <div class="container">
         <div class="about-grid">
+            {% if settings.get('about_image', '') %}
+            <div class="about-image about-image-photo animate-on-scroll">
+                <img src="{{ settings.get('about_image') }}" alt="HDATTAHER MOBILE">
+            </div>
+            {% else %}
             <div class="about-image animate-on-scroll">🏪</div>
+            {% endif %}
             <div class="about-content animate-on-scroll">
                 <h2 data-i18n="about_page_title">À Propos de HDATTAHER MOBILE</h2>
                 <p data-i18n="about_page_text">HDATTAHER MOBILE est votre destination de confiance pour les smartphones
