@@ -1020,10 +1020,10 @@ def admin_resolve_reset_request(request_id):
 @login_required
 def admin_settings():
     if request.method == 'POST':
-        fields = ['site_name', 'owner_name', 'whatsapp', 'location',
+        fields = ['owner_name', 'whatsapp', 'location',
                   'primary_color', 'secondary_color', 'accent_color',
                   'about_title', 'about_text',
-                  'facebook', 'instagram', 'tiktok', 'promotions_active']
+                  'facebook', 'instagram', 'tiktok']
 
         for field in fields:
             value = request.form.get(field, '')
@@ -1037,17 +1037,6 @@ def admin_settings():
 
         dark_mode = '1' if request.form.get('dark_mode') else '0'
         db.upsert('settings', {'key': 'dark_mode', 'value': dark_mode}, on_conflict='key')
-
-        # Upload logo
-        if 'logo' in request.files:
-            logo_file = request.files['logo']
-            if logo_file and logo_file.filename and allowed_file(logo_file.filename):
-                filename = secure_filename(logo_file.filename)
-                if filename:
-                    logo_filename = f'logo_{int(time.time())}_{filename}'
-                    os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)
-                    logo_file.save(os.path.join(Config.UPLOAD_FOLDER, logo_filename))
-                    db.upsert('settings', {'key': 'logo_path', 'value': logo_filename}, on_conflict='key')
 
         # Upload image de la page À propos (stockée sur Supabase Storage)
         if 'about_image' in request.files:
