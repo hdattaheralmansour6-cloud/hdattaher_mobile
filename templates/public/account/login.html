@@ -10,6 +10,20 @@
         <h1 data-i18n="login_title">Connexion</h1>
         <p class="account-subtitle" data-i18n="login_subtitle">Content de vous revoir !</p>
 
+        {% if blocked %}
+        <div
+            style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.4); border-radius:12px; padding:14px; margin-bottom:1.2rem;">
+            <div style="color:#ef4444; font-weight:600; margin-bottom:10px;">
+                <i class="fas fa-ban"></i> <span data-i18n="account_blocked">Votre compte a été bloqué. Contactez-nous
+                    sur WhatsApp pour obtenir de l'aide.</span>
+            </div>
+            <a href="{{ wa_help_link }}" target="_blank" class="btn btn-whatsapp btn-block">
+                <i class="fab fa-whatsapp"></i> <span data-i18n="ask_help_whatsapp">Demander de l'aide sur
+                    WhatsApp</span>
+            </a>
+        </div>
+        {% endif %}
+
         <form method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
