@@ -63,11 +63,11 @@
                     <i class="fas fa-boxes-stacked"></i>
                     <span data-i18n="stock">Stock</span>:
                     {% if product.stock == 0 %}
-                    <span style="color:var(--danger); font-weight:600;">Rupture</span>
+                    <span style="color:var(--danger); font-weight:600;" data-i18n="out_of_stock">Rupture</span>
                     {% elif product.stock <= 5 %} <span style="color:var(--warning); font-weight:600;">{{ product.stock
-                        }} (Stock faible)</span>
+                        }} (<span data-i18n="low_stock">Stock faible</span>)</span>
                         {% else %}
-                        <span style="color:var(--success); font-weight:600;">{{ product.stock }} en stock</span>
+                        <span style="color:var(--success); font-weight:600;">{{ product.stock }} <span data-i18n="in_stock_count">en stock</span></span>
                         {% endif %}
                 </div>
                 <div class="meta-item">
@@ -85,7 +85,7 @@
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="hidden" name="quantity" value="1">
                     <button type="submit" class="btn btn-primary" style="width:100%;">
-                        <i class="fas fa-cart-plus"></i> Ajouter au panier
+                        <i class="fas fa-cart-plus"></i> <span data-i18n="add_to_cart">Ajouter au panier</span>
                     </button>
                 </form>
                 {% endif %}
@@ -95,7 +95,7 @@
                     <i class="fab fa-whatsapp"></i> <span data-i18n="buy_whatsapp">Commander via WhatsApp</span>
                 </a>
                 <a href="{{ url_for('products') }}" class="btn btn-outline">
-                    <i class="fas fa-arrow-left"></i> Retour
+                    <i class="fas fa-arrow-left"></i> <span data-i18n="back">Retour</span>
                 </a>
             </div>
         </div>
