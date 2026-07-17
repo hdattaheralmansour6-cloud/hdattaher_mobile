@@ -34,7 +34,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon/favicon-16.png') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon/apple-touch-icon.png') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=13">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=14">
     <!-- CSS dynamique depuis les paramètres admin -->
     <style>
         {
@@ -330,7 +330,9 @@
             <div>
                 <h4 data-i18n="contact_us">Contactez-nous</h4>
                 <ul class="footer-links">
-                    <li><i class="fab fa-whatsapp"></i> {{ settings.get('whatsapp', '+22791720755') }}</li>
+                    <li><a href="https://wa.me/{{ settings.get('whatsapp','22791720755') }}" target="_blank"><i
+                                class="fab fa-whatsapp" style="color:#25D366;"></i>
+                            {{ settings.get('whatsapp', '+22791720755') }}</a></li>
                     <li><i class="fas fa-map-marker-alt"></i> {{ settings.get('location', 'Niger') }}</li>
                 </ul>
             </div>
@@ -346,7 +348,7 @@
         <i class="fab fa-whatsapp"></i>
     </a>
 
-    <script src="{{ url_for('static', filename='js/main.js') }}?v=13"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}?v=14"></script>
     <script>
         // ============ Mobile Menu ============
         function toggleMobileMenu() {
