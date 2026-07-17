@@ -147,7 +147,7 @@
         </div>
         <div class="products-grid">
             {% for p in featured %}
-            <div class="product-card animate-on-scroll">
+            <div class="product-card featured-gold animate-on-scroll">
                 <a href="{{ url_for('product_detail', product_id=p.id) }}">
                     <div class="product-image">
                         {% if p.image and p.image != 'default.png' %}
