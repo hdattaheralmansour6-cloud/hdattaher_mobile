@@ -1043,7 +1043,7 @@ def admin_toggle_customer_block(customer_id):
         flash(f"Compte de {customer.get('full_name')} bloqué. Il ne peut plus se connecter.", 'success')
     else:
         log_action('Déblocage client', f"{customer.get('full_name')} ({customer.get('email')})")
-        flash(f"Compte de {customer.get('full_name')} débloqué. Il peut de nouveau se connecter.", 'success')
+        flash(f"Compte de {customer.get('full_name')} débloqué. Le message pour le client est copié — collez-le dans WhatsApp.", 'success')
     return redirect(url_for('admin_customers'))
 
 
