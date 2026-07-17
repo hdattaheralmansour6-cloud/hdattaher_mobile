@@ -2540,3 +2540,43 @@ textarea {
   width: 22px;
   border-radius: 4px;
 }
+/* ============================================================
+   Cartes des Produits Vedettes : brillance dorée
+   (même effet que le téléphone du hero)
+   ============================================================ */
+.product-card.featured-gold {
+  border: 2px solid rgba(255, 205, 90, 0.55);
+  animation: featuredGoldGlow 3s ease-in-out infinite;
+}
+
+@keyframes featuredGoldGlow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 18px rgba(255, 185, 45, 0.3);
+    border-color: rgba(255, 205, 90, 0.45);
+  }
+
+  50% {
+    box-shadow: 0 0 38px rgba(255, 200, 60, 0.6);
+    border-color: rgba(255, 225, 130, 0.9);
+  }
+}
+
+/* Balayage lumineux doré permanent */
+.product-card.featured-gold::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg,
+      transparent 35%,
+      rgba(255, 220, 130, 0.25) 47%,
+      rgba(255, 255, 255, 0.2) 50%,
+      rgba(255, 220, 130, 0.25) 53%,
+      transparent 65%);
+  background-size: 300% 100%;
+  background-repeat: no-repeat;
+  animation: heroShimmer 2.6s linear infinite;
+  pointer-events: none;
+  z-index: 2;
+}
