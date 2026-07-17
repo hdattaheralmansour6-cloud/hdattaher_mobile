@@ -392,8 +392,8 @@ def product_detail(product_id):
     for p in related:
         c = p.pop('categories', None)
         p['category_name'] = c['name'] if c else None
-    if p.get('image') and not p['image'].startswith('http'):
-        p['image'] = sb.storage.from_('product-images').get_public_url(p['image'])
+        if p.get('image') and not p['image'].startswith('http'):
+            p['image'] = sb.storage.from_('product-images').get_public_url(p['image'])
     return render_template('public/product_detail.html', product=product, related=related)
 
 
