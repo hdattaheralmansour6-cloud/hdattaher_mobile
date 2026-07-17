@@ -751,25 +751,34 @@ textarea {
   position: absolute;
   top: 12px;
   right: 12px;
-  padding: 4px 10px;
-  border-radius: 8px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  color: #fff;
+  z-index: 2;
+  white-space: nowrap;
+}
+
+[dir="rtl"] .badge-stock {
+  right: auto;
+  left: 12px;
 }
 
 .badge-stock.in-stock {
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--success);
+  background: var(--success);
+  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.45);
 }
 
 .badge-stock.low-stock {
-  background: rgba(245, 158, 11, 0.15);
-  color: var(--warning);
+  background: var(--warning);
+  box-shadow: 0 3px 10px rgba(245, 158, 11, 0.45);
 }
 
 .badge-stock.out-of-stock {
-  background: rgba(239, 68, 68, 0.15);
-  color: var(--danger);
+  background: var(--danger);
+  box-shadow: 0 3px 10px rgba(239, 68, 68, 0.5);
 }
 
 .product-info {
@@ -1050,12 +1059,21 @@ textarea {
 .footer {
   position: relative;
   background:
+    radial-gradient(ellipse at 15% 0%, rgba(108, 99, 255, 0.08), transparent 55%),
+    radial-gradient(ellipse at 85% 100%, rgba(255, 101, 132, 0.07), transparent 55%),
+    var(--bg-secondary);
+  padding: 60px 2rem 30px;
+  color: var(--text);
+  overflow: hidden;
+}
+
+/* Mode nuit : version navy premium */
+[data-theme="dark"] .footer {
+  background:
     radial-gradient(ellipse at 15% 0%, rgba(108, 99, 255, 0.18), transparent 55%),
     radial-gradient(ellipse at 85% 100%, rgba(255, 101, 132, 0.14), transparent 55%),
     #0f172a;
-  padding: 60px 2rem 30px;
   color: #e2e8f0;
-  overflow: hidden;
 }
 
 /* Liseré dégradé signature en haut du footer */
@@ -1094,13 +1112,17 @@ textarea {
 }
 
 .footer-brand p {
-  color: #94a3b8;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   line-height: 1.7;
 }
 
+[data-theme="dark"] .footer-brand p {
+  color: #94a3b8;
+}
+
 .footer h4 {
-  color: #fff;
+  color: var(--text);
   font-weight: 800;
   margin-bottom: 1.2rem;
   font-size: 1rem;
@@ -1126,28 +1148,41 @@ textarea {
   right: 0;
 }
 
+[data-theme="dark"] .footer h4 {
+  color: #fff;
+}
+
 .footer-links {
   list-style: none;
 }
 
 .footer-links li {
   margin-bottom: 10px;
-  color: #94a3b8;
+  color: var(--text-secondary);
   font-size: 0.9rem;
 }
 
 .footer-links li>i {
-  color: #ffcd5a;
+  color: #d97706;
   width: 18px;
 }
 
 .footer-links a {
-  color: #94a3b8;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   transition: var(--transition);
+}
+
+[data-theme="dark"] .footer-links li,
+[data-theme="dark"] .footer-links a {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .footer-links li>i {
+  color: #ffcd5a;
 }
 
 /* Chevron doré devant chaque lien */
@@ -1156,8 +1191,12 @@ textarea {
   font-family: 'Font Awesome 6 Free';
   font-weight: 900;
   font-size: 0.6rem;
-  color: #ffcd5a;
+  color: #d97706;
   transition: var(--transition);
+}
+
+[data-theme="dark"] .footer-links a::before {
+  color: #ffcd5a;
 }
 
 [dir="rtl"] .footer-links a::before {
@@ -1165,8 +1204,12 @@ textarea {
 }
 
 .footer-links a:hover {
-  color: #ffcd5a;
+  color: #d97706;
   transform: translateX(4px);
+}
+
+[data-theme="dark"] .footer-links a:hover {
+  color: #ffcd5a;
 }
 
 [dir="rtl"] .footer-links a:hover {
@@ -1183,9 +1226,9 @@ textarea {
   width: 44px;
   height: 44px;
   border-radius: 13px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: #e2e8f0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1201,13 +1244,24 @@ textarea {
   box-shadow: 0 8px 20px rgba(108, 99, 255, 0.45);
 }
 
+[data-theme="dark"] .social-links a {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #e2e8f0;
+}
+
 .footer-bottom {
   text-align: center;
   padding-top: 2rem;
   margin-top: 2.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  color: #94a3b8;
+  border-top: 1px solid var(--border);
+  color: var(--text-secondary);
   font-size: 0.85rem;
+}
+
+[data-theme="dark"] .footer-bottom {
+  border-top-color: rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
 }
 
 /* ============================================================
