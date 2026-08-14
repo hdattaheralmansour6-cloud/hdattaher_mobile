@@ -412,6 +412,18 @@ textarea {
   overflow: hidden;
 }
 
+/* Quand le hero suit directement le carrousel de bannières, celui-ci a déjà
+   été décalé sous le header : on évite un double espace en haut. */
+.banner-carousel+.hero {
+  padding-top: 56px;
+}
+
+@media (max-width: 768px) {
+  .banner-carousel+.hero {
+    padding-top: 36px;
+  }
+}
+
 .hero::before {
   content: '';
   position: absolute;
@@ -767,6 +779,7 @@ textarea {
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border);
   padding: 1.1rem 0;
+  overflow: hidden;
 }
 
 .trust-bar-track {
@@ -1404,6 +1417,46 @@ textarea {
   color: var(--text-secondary);
 }
 
+.search-results-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  max-height: 340px;
+  overflow-y: auto;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  z-index: 50;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+  transition: var(--transition);
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.search-result-item:hover {
+  background: var(--bg-secondary);
+}
+
+.search-result-item .search-price {
+  color: var(--primary);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 /* ============================================================
    ABOUT SECTION
    ============================================================ */
@@ -1779,7 +1832,7 @@ textarea {
    ============================================================ */
 .whatsapp-float {
   position: fixed;
-  bottom: 24px;
+  bottom: max(24px, env(safe-area-inset-bottom));
   right: 24px;
   z-index: 999;
   width: 60px;
@@ -2804,7 +2857,7 @@ textarea {
     width: 50px;
     height: 50px;
     font-size: 1.4rem;
-    bottom: 16px;
+    bottom: max(16px, env(safe-area-inset-bottom));
     right: 16px;
   }
 
@@ -3053,8 +3106,8 @@ textarea {
     width: 46px;
     height: 46px;
     font-size: 1.3rem;
-    bottom: 12px;
-    right: 12px;
+    bottom: max(14px, env(safe-area-inset-bottom));
+    right: 14px;
   }
 }
 
@@ -3064,6 +3117,7 @@ textarea {
 .banner-carousel {
   position: relative;
   width: 100%;
+  margin-top: 72px;
   aspect-ratio: 16 / 7;
   max-height: 480px;
   overflow: hidden;
@@ -3072,6 +3126,7 @@ textarea {
 
 @media (max-width: 768px) {
   .banner-carousel {
+    margin-top: 64px;
     aspect-ratio: 4 / 3;
     max-height: 320px;
   }
@@ -3104,20 +3159,37 @@ textarea {
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 24px 28px;
+  padding: 24px 60px 38px 28px;
   background: linear-gradient(0deg, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0) 100%);
   color: #fff;
+  overflow: hidden;
 }
 
 .banner-caption h3 {
-  font-size: 1.4rem;
+  font-size: clamp(1.05rem, 3vw, 1.4rem);
   margin: 0 0 4px;
+  overflow-wrap: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .banner-caption p {
-  font-size: 0.95rem;
+  font-size: clamp(0.8rem, 2.2vw, 0.95rem);
   margin: 0;
   opacity: 0.9;
+  overflow-wrap: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@media (max-width: 480px) {
+  .banner-caption {
+    padding: 16px 46px 32px 16px;
+  }
 }
 
 .banner-arrow {
@@ -3142,8 +3214,13 @@ textarea {
   background: rgba(0, 0, 0, 0.6);
 }
 
-.banner-arrow-prev { left: 14px; }
-.banner-arrow-next { right: 14px; }
+.banner-arrow-prev {
+  left: 14px;
+}
+
+.banner-arrow-next {
+  right: 14px;
+}
 
 @media (max-width: 768px) {
   .banner-arrow {
@@ -3151,16 +3228,26 @@ textarea {
     height: 32px;
     font-size: 0.85rem;
   }
+
+  .banner-arrow-prev {
+    left: 10px;
+  }
+
+  .banner-arrow-next {
+    right: 10px;
+  }
 }
 
 .banner-dots {
   position: absolute;
-  bottom: 14px;
+  bottom: 12px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   gap: 8px;
   z-index: 5;
+  max-width: calc(100% - 100px);
+  overflow: hidden;
 }
 
 .banner-dot {
