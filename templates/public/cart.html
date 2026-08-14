@@ -1,7 +1,7 @@
 {% extends "public/base.html" %}
 {% block title %}Mon panier - HDATTAHER MOBILE{% endblock %}
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}?v=2">
 {% endblock %}
 
 {% block content %}
@@ -17,8 +17,7 @@
             <div class="account-order-row">
                 <div style="display:flex; align-items:center; gap:14px; flex:1;">
                     {% if item.product.image and item.product.image != 'default.png' %}
-                    <img src="{{ item.product.image }}" alt=""
-                         style="width:56px; height:56px; border-radius:10px; object-fit:cover;">
+                    <img src="{{ item.product.image }}" alt="" class="cart-item-img">
                     {% endif %}
                     <div>
                         <strong>{{ item.product.name }}</strong><br>
@@ -32,8 +31,7 @@
                       style="display:flex; align-items:center; gap:8px;">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="number" name="quantity" value="{{ item.quantity }}" min="1"
-                           max="{{ item.product.stock }}" style="width:60px; padding:6px; border-radius:8px;
-                           border:1px solid var(--border); background:var(--bg); color:var(--text);">
+                           max="{{ item.product.stock }}" class="cart-qty-input">
                     <button type="submit" class="btn btn-outline btn-sm" data-i18n="update_btn">Mettre à jour</button>
                 </form>
 
@@ -41,15 +39,15 @@
 
                 <form method="POST" action="{{ url_for('cart_remove', product_id=item.product.id) }}">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn btn-danger btn-sm">
+                    <button type="submit" class="cart-remove-btn" aria-label="Retirer">
                         <i class="fas fa-trash"></i>
                     </button>
                 </form>
             </div>
             {% endfor %}
 
-            <div style="display:flex; justify-content:space-between; align-items:center; padding-top:20px;">
-                <h3><span data-i18n="cart_total">Total</span> : {{ "{:,.0f}".format(total) }} FCFA</h3>
+            <div class="cart-total-bar">
+                <h3><span data-i18n="cart_total">Total</span> : <span class="cart-total-amount">{{ "{:,.0f}".format(total) }} FCFA</span></h3>
                 <a href="{{ url_for('checkout') }}" class="btn btn-primary" data-i18n="validate_order_btn">Valider la commande</a>
             </div>
         </div>
