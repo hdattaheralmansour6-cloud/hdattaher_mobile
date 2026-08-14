@@ -44,16 +44,7 @@ const translations = {
     trust_verified: 'Produits vérifiés', trust_support: 'Support WhatsApp',
     favorites: 'Mes Favoris', favorites_title: 'Mes Favoris', favorites_empty: 'Aucun favori pour le moment.',
     all_brands: 'Toutes les marques', reset_filters: 'Réinitialiser',
-    footer_desc: 'Smartphones & accessoires premium au Niger.',
-    footer_trust_badge: '🇳🇪 Votre boutique tech de confiance au Niger',
-    footer_shop: 'Boutique', footer_help: 'Aide',
-    footer_help_title: "Besoin d'aide ?", footer_help_desc: 'Nous sommes disponibles sur WhatsApp.',
-    footer_whatsapp_btn: 'Parler sur WhatsApp',
-    footer_newsletter_title: 'Restez informé des nouveautés 📱',
-    footer_newsletter_desc: 'Recevez nos nouveaux produits et promotions.',
-    footer_newsletter_placeholder: 'Votre adresse e-mail', footer_newsletter_btn: "S'inscrire",
-    footer_legal_mentions: 'Mentions légales', footer_legal_privacy: 'Confidentialité', footer_legal_terms: 'Conditions',
-    footer_made: 'Fait avec ❤️ au Niger 🇳🇪',
+    footer_desc: 'Votre destination de confiance pour les smartphones et accessoires au Niger.',
     featured: 'Produits Vedettes', new_arrivals: 'Nouveautés',
     featured_products: 'Produits en Vedette',
     categories_desc: 'Trouvez exactement ce que vous cherchez',
@@ -142,16 +133,7 @@ const translations = {
     trust_verified: 'Verified products', trust_support: 'WhatsApp support',
     favorites: 'My Favorites', favorites_title: 'My Favorites', favorites_empty: 'No favorites yet.',
     all_brands: 'All brands', reset_filters: 'Reset',
-    footer_desc: 'Premium smartphones & accessories in Niger.',
-    footer_trust_badge: '🇳🇪 Your trusted tech shop in Niger',
-    footer_shop: 'Shop', footer_help: 'Help',
-    footer_help_title: 'Need help?', footer_help_desc: 'We are available on WhatsApp.',
-    footer_whatsapp_btn: 'Chat on WhatsApp',
-    footer_newsletter_title: 'Stay updated 📱',
-    footer_newsletter_desc: 'Get our new products and promotions.',
-    footer_newsletter_placeholder: 'Your email address', footer_newsletter_btn: 'Subscribe',
-    footer_legal_mentions: 'Legal notice', footer_legal_privacy: 'Privacy', footer_legal_terms: 'Terms',
-    footer_made: 'Made with ❤️ in Niger 🇳🇪',
+    footer_desc: 'Your trusted destination for smartphones and accessories in Niger.',
     featured: 'Featured Products', new_arrivals: 'New Arrivals',
     featured_products: 'Featured Products',
     categories_desc: 'Find exactly what you are looking for',
@@ -240,16 +222,7 @@ const translations = {
     trust_verified: 'منتجات موثوقة', trust_support: 'دعم عبر واتساب',
     favorites: 'المفضلة', favorites_title: 'المفضلة', favorites_empty: 'لا توجد عناصر مفضلة بعد.',
     all_brands: 'كل الماركات', reset_filters: 'إعادة تعيين',
-    footer_desc: 'هواتف ذكية وإكسسوارات فاخرة في النيجر.',
-    footer_trust_badge: '🇳🇪 متجرك التقني الموثوق في النيجر',
-    footer_shop: 'المتجر', footer_help: 'المساعدة',
-    footer_help_title: 'تحتاج مساعدة؟', footer_help_desc: 'نحن متوفرون عبر واتساب.',
-    footer_whatsapp_btn: 'تحدث عبر واتساب',
-    footer_newsletter_title: 'ابق على اطلاع 📱',
-    footer_newsletter_desc: 'احصل على منتجاتنا الجديدة وعروضنا.',
-    footer_newsletter_placeholder: 'بريدك الإلكتروني', footer_newsletter_btn: 'اشترك',
-    footer_legal_mentions: 'الإشعار القانوني', footer_legal_privacy: 'الخصوصية', footer_legal_terms: 'الشروط',
-    footer_made: 'صنع بحب ❤️ في النيجر 🇳🇪',
+    footer_desc: 'وجهتك الموثوقة للهواتف الذكية والإكسسوارات في النيجر.',
     featured: 'منتجات مميزة', new_arrivals: 'وصل حديثاً',
     featured_products: 'منتجات مميزة',
     categories_desc: 'اعثر على ما تبحث عنه تمامًا',
@@ -608,7 +581,7 @@ function renderFavoritesPage() {
 }
 
 // ============================================================
-//  FOOTER — accordéon mobile + newsletter (design only)
+//  FOOTER — accordéon mobile
 // ============================================================
 function toggleFooterAccordion(btn) {
   if (window.innerWidth > 900) return;
@@ -617,19 +590,6 @@ function toggleFooterAccordion(btn) {
   const wasOpen = col.classList.contains('open');
   document.querySelectorAll('.footer-col.open').forEach((c) => c.classList.remove('open'));
   if (!wasOpen) col.classList.add('open');
-}
-
-function handleFooterNewsletter(event) {
-  event.preventDefault();
-  const form = event.target;
-  const input = form.querySelector('input[type="email"]');
-  const btn = form.querySelector('button');
-  if (!input || !input.value) return false;
-  const originalText = btn.textContent;
-  btn.textContent = '✓';
-  input.value = '';
-  setTimeout(() => { btn.textContent = originalText; }, 2000);
-  return false;
 }
 
 // ============================================================
