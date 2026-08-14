@@ -299,6 +299,94 @@ textarea {
   transition: var(--transition);
 }
 
+.fav-count-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border-radius: 999px;
+  min-width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+.mobile-menu-link .fav-count-badge {
+  position: static;
+  margin-left: -4px;
+}
+
+@media (max-width: 900px) {
+  .nav-fav-icon {
+    display: none;
+  }
+}
+
+/* Bouton favori sur les cartes produits */
+.product-fav-btn {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  border: none;
+  cursor: pointer;
+  z-index: 2;
+  transition: var(--transition);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+}
+
+[dir="rtl"] .product-fav-btn {
+  right: auto;
+  left: 12px;
+}
+
+.product-fav-btn:hover {
+  transform: scale(1.1);
+}
+
+.product-fav-btn.active {
+  color: #fff;
+  background: linear-gradient(135deg, #ff6584, #ff4d6d);
+}
+
+.product-fav-btn.pop {
+  animation: cartBadgePop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.detail-fav-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.detail-fav-btn.active {
+  color: #fff;
+  background: linear-gradient(135deg, #ff6584, #ff4d6d);
+  border-color: transparent;
+}
+
 .mobile-toggle:active {
   background: var(--bg-secondary);
 }
@@ -1254,6 +1342,15 @@ textarea {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   margin-bottom: 2rem;
+  box-shadow: var(--shadow);
+}
+
+.filters-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
 }
 
 .filter-group {
@@ -1264,11 +1361,17 @@ textarea {
 
 .filter-input {
   padding: 10px 16px;
-  border-radius: 10px;
+  border-radius: 999px;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   color: var(--text);
   min-width: 140px;
+  transition: var(--transition);
+}
+
+.filter-input:focus {
+  outline: none;
+  border-color: var(--primary);
 }
 
 .search-box {
@@ -1280,11 +1383,17 @@ textarea {
 .search-box input {
   width: 100%;
   padding: 12px 16px 12px 44px;
-  border-radius: 12px;
+  border-radius: 999px;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   color: var(--text);
   font-size: 0.95rem;
+  transition: var(--transition);
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: var(--primary);
 }
 
 .search-box i {
