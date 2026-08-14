@@ -34,7 +34,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon/favicon-16.png') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon/apple-touch-icon.png') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=22">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=23">
     <!-- CSS dynamique depuis les paramètres admin -->
     <style>
         {
@@ -295,14 +295,81 @@
 
     <!-- FOOTER -->
     <footer class="footer">
-        <div class="footer-grid container">
-            <div class="footer-brand">
+        <div class="footer-glow-a"></div>
+        <div class="footer-glow-b"></div>
+
+        <!-- Zone brand -->
+        <div class="footer-top">
+            <div class="footer-brand-v2">
                 <div class="nav-logo" style="margin-bottom:1rem;">
                     <div class="logo-icon">HM</div>
                     <span>HDATTAHER MOBILE</span>
                 </div>
-                <p data-i18n="footer_desc">Votre destination de confiance pour les smartphones et accessoires au Niger.
+                <p class="footer-tagline">
+                    <span data-i18n="hero_title">La technologie</span>
+                    <span class="gradient-text" data-i18n="hero_title2">que vous méritez.</span>
                 </p>
+                <p class="footer-desc" data-i18n="footer_desc">Smartphones &amp; accessoires premium au Niger.</p>
+                <span class="footer-country-badge">
+                    <i class="fas fa-shield-halved"></i>
+                    <span data-i18n="footer_trust_badge">🇳🇪 Votre boutique tech de confiance au Niger</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- Colonnes -->
+        <div class="footer-columns">
+            <div class="footer-col">
+                <button type="button" class="footer-col-toggle" onclick="toggleFooterAccordion(this)">
+                    <h4 data-i18n="footer_shop">Boutique</h4>
+                    <i class="fas fa-chevron-down footer-col-arrow"></i>
+                </button>
+                <ul class="footer-links footer-accordion-content">
+                    <li><a href="{{ url_for('index') }}" data-i18n="home">Accueil</a></li>
+                    <li><a href="{{ url_for('products') }}" data-i18n="products">Produits</a></li>
+                    <li><a href="{{ url_for('new_arrivals') }}" data-i18n="new_arrivals">Nouveautés</a></li>
+                    <li><a href="{{ url_for('featured_products') }}" data-i18n="featured_products">Produits en Vedette</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <button type="button" class="footer-col-toggle" onclick="toggleFooterAccordion(this)">
+                    <h4 data-i18n="our_categories">Catégories</h4>
+                    <i class="fas fa-chevron-down footer-col-arrow"></i>
+                </button>
+                <ul class="footer-links footer-accordion-content">
+                    {% for cat in categories %}
+                    <li>
+                        <a href="{{ url_for('products', category=cat.id) }}">
+                            <span data-name-fr="{{ cat.name }}" data-name-en="{{ cat.name_en or cat.name }}" data-name-ar="{{ cat.name_ar or cat.name }}">{{ cat.name }}</span>
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="footer-col">
+                <button type="button" class="footer-col-toggle" onclick="toggleFooterAccordion(this)">
+                    <h4 data-i18n="footer_help">Aide</h4>
+                    <i class="fas fa-chevron-down footer-col-arrow"></i>
+                </button>
+                <ul class="footer-links footer-accordion-content">
+                    <li><a href="{{ url_for('about') }}" data-i18n="about">À propos</a></li>
+                    <li><a href="{{ url_for('contact') }}" data-i18n="contact">Contact</a></li>
+                    <li><a href="{{ url_for('favorites_page') }}" data-i18n="favorites">Mes Favoris</a></li>
+                </ul>
+            </div>
+
+            <!-- Carte contact premium -->
+            <div class="footer-contact-card">
+                <h4 data-i18n="footer_help_title">Besoin d'aide ?</h4>
+                <p data-i18n="footer_help_desc">Nous sommes disponibles sur WhatsApp.</p>
+                <a href="https://wa.me/{{ settings.get('whatsapp','22791720755') }}" target="_blank"
+                    class="btn btn-primary footer-whatsapp-btn">
+                    <i class="fab fa-whatsapp"></i> <span data-i18n="footer_whatsapp_btn">Parler sur WhatsApp</span>
+                </a>
+                <div class="footer-contact-info">
+                    <span><i class="fas fa-map-marker-alt"></i> {{ settings.get('location', 'Abalak, Niger') }}</span>
+                    <span><i class="fab fa-whatsapp"></i> {{ settings.get('whatsapp', '+22791720755') }}</span>
+                </div>
                 <div class="social-links">
                     <a href="{{ settings.get('facebook','#') }}" target="_blank" aria-label="Facebook"><i
                             class="fab fa-facebook-f"></i></a>
@@ -314,41 +381,32 @@
                         aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
                 </div>
             </div>
-            <div>
-                <h4 data-i18n="quick_links">Liens Rapides</h4>
-                <ul class="footer-links">
-                    <li><a href="{{ url_for('index') }}" data-i18n="home">Accueil</a></li>
-                    <li><a href="{{ url_for('products') }}" data-i18n="products">Produits</a></li>
-                    <li><a href="{{ url_for('featured_products') }}" data-i18n="featured_products">En Vedette</a></li>
-                    <li><a href="{{ url_for('new_arrivals') }}" data-i18n="new_arrivals">Nouveautés</a></li>
-                    <li><a href="{{ url_for('about') }}" data-i18n="about">À propos</a></li>
-                    <li><a href="{{ url_for('contact') }}" data-i18n="contact">Contact</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4 data-i18n="our_categories">Nos Catégories</h4>
-                <ul class="footer-links">
-                    {% for cat in categories %}
-                    <li>
-                        <a href="{{ url_for('products', category=cat.id) }}">
-                            <span data-name-fr="{{ cat.name }}" data-name-en="{{ cat.name_en or cat.name }}" data-name-ar="{{ cat.name_ar or cat.name }}">{{ cat.name }}</span>
-                        </a>
-                    </li>
-                    {% endfor %}
-                </ul>
-            </div>
-            <div>
-                <h4 data-i18n="contact_us">Contactez-nous</h4>
-                <ul class="footer-links">
-                    <li><a href="https://wa.me/{{ settings.get('whatsapp','22791720755') }}" target="_blank"><i
-                                class="fab fa-whatsapp" style="color:#25D366;"></i>
-                            {{ settings.get('whatsapp', '+22791720755') }}</a></li>
-                    <li><i class="fas fa-map-marker-alt"></i> {{ settings.get('location', 'Niger') }}</li>
-                </ul>
+        </div>
+
+        <!-- Newsletter (design uniquement, aucun backend) -->
+        <div class="footer-newsletter">
+            <div class="footer-newsletter-inner">
+                <div>
+                    <h4 data-i18n="footer_newsletter_title">Restez informé des nouveautés 📱</h4>
+                    <p data-i18n="footer_newsletter_desc">Recevez nos nouveaux produits et promotions.</p>
+                </div>
+                <form class="footer-newsletter-form" onsubmit="return handleFooterNewsletter(event)">
+                    <input type="email" required data-i18n-placeholder="footer_newsletter_placeholder"
+                        placeholder="Votre adresse e-mail">
+                    <button type="submit" class="btn btn-primary" data-i18n="footer_newsletter_btn">S'inscrire</button>
+                </form>
             </div>
         </div>
+
+        <!-- Barre finale -->
         <div class="footer-bottom">
-            &copy; 2026 HDATTAHER MOBILE. <span data-i18n="all_rights">Tous droits réservés</span>.
+            <span>&copy; 2026 HDATTAHER MOBILE. <span data-i18n="all_rights">Tous droits réservés</span>.</span>
+            <span class="footer-legal-links">
+                <span data-i18n="footer_legal_mentions">Mentions légales</span>
+                <span data-i18n="footer_legal_privacy">Confidentialité</span>
+                <span data-i18n="footer_legal_terms">Conditions</span>
+            </span>
+            <span class="footer-made" data-i18n="footer_made">Fait avec ❤️ au Niger 🇳🇪</span>
         </div>
     </footer>
 
@@ -358,7 +416,7 @@
         <i class="fab fa-whatsapp"></i>
     </a>
 
-    <script src="{{ url_for('static', filename='js/main.js') }}?v=22"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}?v=23"></script>
     <script>
         // ============ Mobile Menu ============
         function toggleMobileMenu() {
