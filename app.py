@@ -300,6 +300,7 @@ def products():
     search = request.args.get('search', default='', type=str).strip()
     min_price = request.args.get('min_price', default=None, type=float)
     max_price = request.args.get('max_price', default=None, type=float)
+    brand = request.args.get('brand', default='', type=str).strip()
     sort = request.args.get('sort', default='newest', type=str)
 
     allowed_sorts = {'newest', 'price_asc', 'price_desc', 'popular'}
@@ -327,6 +328,8 @@ def products():
         query = query.gte('price', min_price)
     if max_price is not None:
         query = query.lte('price', max_price)
+    if brand:
+        query = query.eq('brand', brand)
 
     sort_map = {
         'price_asc': ('price', False),
@@ -347,11 +350,15 @@ def products():
         if p.get('image') and not p['image'].startswith('http'):
             p['image'] = sb.storage.from_('product-images').get_public_url(p['image'])
     all_categories = db.fetch_all('categories', '*', {'is_active': True}, order=('sort_order', True))
+    all_brands_rows = db.fetch_all('products', 'brand', {'is_active': True})
+    all_brands = sorted({row['brand'] for row in all_brands_rows if row.get('brand')})
 
     return render_template('public/products.html',
                            products=products_list,
                            all_categories=all_categories,
+                           all_brands=all_brands,
                            current_category=category_id,
+                           current_brand=brand,
                            search=search, sort=sort,
                            min_price=min_price, max_price=max_price)
 
@@ -400,6 +407,12 @@ def product_detail(product_id):
 @app.route('/about')
 def about():
     return render_template('public/about.html')
+
+
+@app.route('/favoris')
+def favorites_page():
+    """Page Favoris - rendu 100% côté client depuis localStorage (aucune donnée serveur)."""
+    return render_template('public/favorites.html')
 
 
 @app.route('/featured')
