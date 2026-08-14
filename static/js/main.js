@@ -42,6 +42,8 @@ const translations = {
     shop_now: 'Découvrir les produits', order_whatsapp: 'Commander sur WhatsApp', our_products: 'Nos Produits',
     trust_payment: 'Paiement sécurisé', trust_delivery: 'Livraison rapide',
     trust_verified: 'Produits vérifiés', trust_support: 'Support WhatsApp',
+    favorites: 'Mes Favoris', favorites_title: 'Mes Favoris', favorites_empty: 'Aucun favori pour le moment.',
+    all_brands: 'Toutes les marques', reset_filters: 'Réinitialiser',
     featured: 'Produits Vedettes', new_arrivals: 'Nouveautés',
     featured_products: 'Produits en Vedette',
     categories_desc: 'Trouvez exactement ce que vous cherchez',
@@ -129,6 +131,8 @@ const translations = {
     shop_now: 'Discover products', order_whatsapp: 'Order on WhatsApp', our_products: 'Our Products',
     trust_payment: 'Secure payment', trust_delivery: 'Fast delivery',
     trust_verified: 'Verified products', trust_support: 'WhatsApp support',
+    favorites: 'My Favorites', favorites_title: 'My Favorites', favorites_empty: 'No favorites yet.',
+    all_brands: 'All brands', reset_filters: 'Reset',
     featured: 'Featured Products', new_arrivals: 'New Arrivals',
     featured_products: 'Featured Products',
     categories_desc: 'Find exactly what you are looking for',
@@ -216,6 +220,8 @@ const translations = {
     shop_now: 'اكتشف المنتجات', order_whatsapp: 'اطلب عبر واتساب', our_products: 'منتجاتنا',
     trust_payment: 'دفع آمن', trust_delivery: 'توصيل سريع',
     trust_verified: 'منتجات موثوقة', trust_support: 'دعم عبر واتساب',
+    favorites: 'المفضلة', favorites_title: 'المفضلة', favorites_empty: 'لا توجد عناصر مفضلة بعد.',
+    all_brands: 'كل الماركات', reset_filters: 'إعادة تعيين',
     featured: 'منتجات مميزة', new_arrivals: 'وصل حديثاً',
     featured_products: 'منتجات مميزة',
     categories_desc: 'اعثر على ما تبحث عنه تمامًا',
@@ -482,6 +488,99 @@ function initBannerCarousel() {
 }
 
 // ============================================================
+//  FAVORIS (localStorage, aucune donnée envoyée au serveur)
+// ============================================================
+const FAV_KEY = 'hm_favorites';
+
+function getFavorites() {
+  try {
+    return JSON.parse(localStorage.getItem(FAV_KEY) || '{}');
+  } catch (e) {
+    return {};
+  }
+}
+
+function saveFavorites(favs) {
+  localStorage.setItem(FAV_KEY, JSON.stringify(favs));
+  updateFavCountBadges();
+}
+
+function isFavorite(id) {
+  return !!getFavorites()[id];
+}
+
+function toggleFavorite(event, id, name, price, image) {
+  if (event) { event.preventDefault(); event.stopPropagation(); }
+  const favs = getFavorites();
+  if (favs[id]) {
+    delete favs[id];
+  } else {
+    favs[id] = { id: id, name: name, price: price, image: image };
+  }
+  saveFavorites(favs);
+  document.querySelectorAll('[data-fav-id="' + id + '"]').forEach((btn) => {
+    btn.classList.toggle('active', !!favs[id]);
+    if (favs[id]) {
+      btn.classList.add('pop');
+      setTimeout(() => btn.classList.remove('pop'), 450);
+    }
+  });
+}
+
+function updateFavCountBadges() {
+  const count = Object.keys(getFavorites()).length;
+  document.querySelectorAll('.fav-count-badge').forEach((el) => {
+    el.textContent = count;
+    el.style.display = count > 0 ? 'flex' : 'none';
+  });
+}
+
+function initFavoriteButtons() {
+  const favs = getFavorites();
+  document.querySelectorAll('[data-fav-id]').forEach((btn) => {
+    const id = btn.getAttribute('data-fav-id');
+    btn.classList.toggle('active', !!favs[id]);
+  });
+  updateFavCountBadges();
+}
+
+// Rendu de la page /favoris (100% côté client depuis localStorage)
+function renderFavoritesPage() {
+  const container = document.getElementById('favoritesGrid');
+  const emptyState = document.getElementById('favoritesEmpty');
+  if (!container) return;
+  const favs = Object.values(getFavorites());
+  if (favs.length === 0) {
+    container.style.display = 'none';
+    if (emptyState) emptyState.style.display = 'block';
+    return;
+  }
+  if (emptyState) emptyState.style.display = 'none';
+  container.style.display = 'grid';
+  container.innerHTML = favs.map((p) => `
+    <div class="product-card animate-on-scroll">
+      <a href="/product/${p.id}">
+        <div class="product-image">
+          ${p.image ? `<img src="${p.image}" alt="${p.name}" loading="lazy">` : `<div class="placeholder-icon">📱</div>`}
+        </div>
+      </a>
+      <div class="product-info">
+        <h3 class="product-name">${p.name}</h3>
+        <div class="product-price-row">
+          <span class="product-price">${formatPrice(p.price)}</span>
+        </div>
+        <div class="product-actions" style="margin-top:10px;">
+          <a href="/product/${p.id}" class="btn btn-outline btn-sm">Voir détails</a>
+          <button class="btn btn-danger btn-sm" onclick="toggleFavorite(event, '${p.id}'); renderFavoritesPage();">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ============================================================
 //  INITIALISATION
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
@@ -496,4 +595,6 @@ document.addEventListener('DOMContentLoaded', () => {
   applyDataNameTranslations();
 
   initCounters();
+  initFavoriteButtons();
+  renderFavoritesPage();
 });
