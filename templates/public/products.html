@@ -10,8 +10,7 @@
 
         <!-- Filtres -->
         <div class="filters-bar">
-            <form method="GET" action="{{ url_for('products') }}"
-                style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; width:100%;">
+            <form method="GET" action="{{ url_for('products') }}" class="filters-form">
                 <div class="search-box" style="position:relative;">
                     <i class="fas fa-search"></i>
                     <input type="text" name="search" class="live-search-input" data-i18n-placeholder="search"
@@ -25,6 +24,14 @@
                     </option>
                     {% endfor %}
                 </select>
+                {% if all_brands %}
+                <select name="brand" class="filter-input">
+                    <option value="" data-i18n="all_brands">Toutes les marques</option>
+                    {% for b in all_brands %}
+                    <option value="{{ b }}" {% if current_brand==b %}selected{% endif %}>{{ b }}</option>
+                    {% endfor %}
+                </select>
+                {% endif %}
                 <input type="number" name="min_price" class="filter-input" placeholder="Prix min" style="width:110px;"
                     value="{{ min_price if min_price is not none else '' }}">
                 <input type="number" name="max_price" class="filter-input" placeholder="Prix max" style="width:110px;"
@@ -42,6 +49,11 @@
                 <button type="submit" class="btn btn-primary btn-sm" data-i18n="filter">
                     <i class="fas fa-filter"></i> Filtrer
                 </button>
+                {% if search or current_category or current_brand or min_price is not none or max_price is not none %}
+                <a href="{{ url_for('products') }}" class="btn btn-outline btn-sm" data-i18n="reset_filters">
+                    <i class="fas fa-xmark"></i> Réinitialiser
+                </a>
+                {% endif %}
             </form>
         </div>
 
@@ -52,6 +64,9 @@
             <div class="product-card animate-on-scroll">
                 <a href="{{ url_for('product_detail', product_id=p.id) }}">
                     <div class="product-image">
+                        <button type="button" class="product-fav-btn" data-fav-id="{{ p.id }}" onclick="toggleFavorite(event, '{{ p.id }}', {{ p.name|tojson }}, {{ p.price }}, {{ (p.image if p.image and p.image != 'default.png' else '')|tojson }})" aria-label="Favoris">
+                            <i class="fas fa-heart"></i>
+                        </button>
                         {% if p.image and p.image != 'default.png' %}
                         <img src="{{ p.image }}"
                              alt="{{ p.name }}"

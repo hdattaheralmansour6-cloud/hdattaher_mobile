@@ -96,6 +96,11 @@
                 <a href="{{ url_for('products') }}" class="btn btn-outline">
                     <i class="fas fa-arrow-left"></i> <span data-i18n="back">Retour</span>
                 </a>
+                <button type="button" class="detail-fav-btn" data-fav-id="{{ product.id }}"
+                    onclick="toggleFavorite(event, '{{ product.id }}', {{ product.name|tojson }}, {{ product.price }}, {{ (product.image if product.image and product.image != 'default.png' else '')|tojson }})"
+                    aria-label="Favoris">
+                    <i class="fas fa-heart"></i>
+                </button>
             </div>
         </div>
     </div>
@@ -109,6 +114,9 @@
             <div class="product-card">
                 <a href="{{ url_for('product_detail', product_id=p.id) }}">
                     <div class="product-image">
+                        <button type="button" class="product-fav-btn" data-fav-id="{{ p.id }}" onclick="toggleFavorite(event, '{{ p.id }}', {{ p.name|tojson }}, {{ p.price }}, {{ (p.image if p.image and p.image != 'default.png' else '')|tojson }})" aria-label="Favoris">
+                            <i class="fas fa-heart"></i>
+                        </button>
                         {% if p.image and p.image != 'default.png' %}
                         <img src="{{ p.image }}">
                         {% else %}

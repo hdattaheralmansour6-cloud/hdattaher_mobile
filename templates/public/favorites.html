@@ -1,0 +1,20 @@
+{% extends "public/base.html" %}
+{% block title %}Mes Favoris - HDATTAHER MOBILE{% endblock %}
+
+{% block content %}
+<section class="section" style="padding-top:100px;">
+    <div class="container">
+        <div class="section-header">
+            <h2 data-i18n="favorites_title">Mes Favoris</h2>
+        </div>
+
+        <div class="products-grid" id="favoritesGrid" style="display:none;"></div>
+
+        <div class="account-empty" id="favoritesEmpty" style="display:none;">
+            <i class="fas fa-heart"></i>
+            <p><span data-i18n="favorites_empty">Aucun favori pour le moment.</span><br>
+                <a href="{{ url_for('products') }}" data-i18n="discover_products">Découvrir nos produits</a></p>
+        </div>
+    </div>
+</section>
+{% endblock %}
