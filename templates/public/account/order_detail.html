@@ -41,7 +41,7 @@
             {{ order.shipping_name }}<br>
             {{ order.shipping_phone }}<br>
             {{ order.shipping_address }}
-            {% if order.payment_method %}<br><strong data-i18n="pay_title">Paiement</strong> : {{ order.payment_method }}{% endif %}
+            {% if order.payment_method %}<br><strong data-i18n="pay_title">Paiement</strong> : <img src="{{ url_for('static', filename='img/' ~ order.payment_method|lower ~ '.png') }}" alt="" style="height:22px;vertical-align:middle;border-radius:5px;background:#fff;"> {{ order.payment_method }}{% endif %}
         </div>
     </div>
 </div>
