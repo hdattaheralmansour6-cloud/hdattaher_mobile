@@ -41,6 +41,7 @@
             {{ order.shipping_name }}<br>
             {{ order.shipping_phone }}<br>
             {{ order.shipping_address }}
+            {% if order.payment_method %}<br><strong data-i18n="pay_title">Paiement</strong> : {{ order.payment_method }}{% endif %}
         </div>
     </div>
 </div>
