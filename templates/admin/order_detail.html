@@ -45,6 +45,25 @@
 
 <div class="admin-card">
     <div class="admin-card-header">
+        <h3>Paiement</h3>
+    </div>
+    <div class="admin-card-body">
+        <p><strong>Moyen :</strong> {{ order.payment_method or 'Non renseigné' }}</p>
+        <p><strong>Montant attendu :</strong> {{ "{:,.0f}".format(order.total) }} FCFA</p>
+        {% if order.payment_proof %}
+        <p><strong>Reçu envoyé par le client :</strong></p>
+        <a href="{{ order.payment_proof }}" target="_blank" rel="noopener">
+            <img src="{{ order.payment_proof }}" alt="Reçu de paiement" style="max-width:100%; max-height:420px; border-radius:12px; border:1px solid var(--border);">
+        </a>
+        <p style="margin-top:8px;"><a href="{{ order.payment_proof }}" target="_blank" rel="noopener" class="btn-admin"><i class="fas fa-up-right-from-square"></i> Ouvrir en grand</a></p>
+        {% else %}
+        <p style="color:#f59e0b;">Aucun reçu joint (commande passée avant l'ajout du paiement).</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="admin-card">
+    <div class="admin-card-header">
         <h3>Produits commandés</h3>
     </div>
     <div class="admin-card-body" style="padding:0; overflow-x:auto;">
