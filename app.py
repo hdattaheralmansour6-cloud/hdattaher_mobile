@@ -4,7 +4,9 @@ Site e-commerce de vente de téléphones et accessoires
 Propriétaire : Hdattaher | Localisation : Niger
 """
 import os
+import io
 import time
+import secrets
 from urllib.parse import quote, urlparse
 from datetime import datetime, timedelta
 from functools import wraps
@@ -1203,6 +1205,40 @@ def cart_remove(product_id):
 #  VALIDATION DE COMMANDE
 # ============================================================
 
+def _save_payment_proof(file, customer_id):
+    """
+    Vérifie que le fichier est bien une image puis la range sur Supabase Storage.
+    Retourne (url, erreur).
+    """
+    if not file or not file.filename:
+        return None, "Veuillez joindre la capture d'écran du reçu de paiement."
+    if not allowed_file(file.filename):
+        return None, "Le reçu doit être une image (png, jpg, jpeg, webp)."
+    data = file.read()
+    if not data:
+        return None, "Le fichier du reçu est vide."
+    try:
+        from PIL import Image
+        img = Image.open(io.BytesIO(data))
+        fmt = (img.format or '').lower()
+        img.verify()
+    except Exception:
+        return None, "Le fichier du reçu n'est pas une image valide."
+    ext = {'jpeg': 'jpg', 'png': 'png', 'webp': 'webp', 'gif': 'gif'}.get(fmt)
+    if not ext:
+        return None, "Format d'image non accepté (png, jpg, jpeg, webp)."
+    storage_filename = f"receipts/{int(time.time())}_{secrets.token_hex(8)}.{ext}"
+    try:
+        sb = get_supabase()
+        sb.storage.from_('product-images').upload(
+            storage_filename, data,
+            {'content-type': f'image/{"jpeg" if ext == "jpg" else ext}'}
+        )
+        return sb.storage.from_('product-images').get_public_url(storage_filename), None
+    except Exception:
+        return None, "Impossible d'envoyer le reçu pour le moment. Veuillez réessayer."
+
+
 @app.route('/commande/valider', methods=['GET', 'POST'])
 @customer_login_required
 def checkout():
@@ -1211,33 +1247,53 @@ def checkout():
         flash('Votre panier est vide.', 'error')
         return redirect(url_for('cart_view'))
 
+    rows = db.fetch_all('customers', filters={'id': current_user.id}, limit=1)
+    customer = rows[0] if rows else {}
+
+    def _render(**extra):
+        return render_template('public/checkout.html', items=items, total=total, customer=customer,
+                               payment_number=Config.PAYMENT_NUMBER,
+                               payment_methods=Config.PAYMENT_METHODS, **extra)
+
     if request.method == 'POST':
         shipping_name = request.form.get('shipping_name', '').strip()
         shipping_phone = request.form.get('shipping_phone', '').strip()
         shipping_address = request.form.get('shipping_address', '').strip()
         notes = request.form.get('notes', '').strip()
+        payment_method = request.form.get('payment_method', '').strip()
+
+        # On garde ce que le client a saisi si une erreur survient
+        customer = dict(customer or {})
+        customer.update({'full_name': shipping_name, 'phone': shipping_phone, 'address': shipping_address})
 
         if not shipping_name or not shipping_phone or not shipping_address:
             flash('Veuillez remplir toutes les informations de livraison.', 'error')
-            return render_template('public/checkout.html', items=items, total=total)
+            return _render(selected_method=payment_method, notes=notes)
+
+        if payment_method not in Config.PAYMENT_METHODS:
+            flash('Veuillez choisir un moyen de paiement (Amanata ou Nita).', 'error')
+            return _render(notes=notes)
+
+        proof_url, proof_error = _save_payment_proof(request.files.get('payment_proof'), current_user.id)
+        if proof_error:
+            flash(proof_error, 'error')
+            return _render(selected_method=payment_method, notes=notes)
 
         order, error = create_order_from_cart(
-            current_user.id, items, shipping_name, shipping_phone, shipping_address, notes
+            current_user.id, items, shipping_name, shipping_phone, shipping_address, notes,
+            payment_method=payment_method, payment_proof=proof_url
         )
 
         if error:
             flash(error, 'error')
-            return render_template('public/checkout.html', items=items, total=total)
+            return _render(selected_method=payment_method, notes=notes)
 
         cart_module.clear_cart()
-        log_action('Nouvelle commande', f'N° {order["order_number"]} - Client: {current_user.email}')
+        log_action('Nouvelle commande', f'N° {order["order_number"]} - Client: {current_user.email} - Paiement {payment_method}')
         flash(f'Commande {order["order_number"]} enregistrée avec succès !', 'success')
         return redirect(url_for('order_confirmation', order_id=order['id']))
 
-    # Pré-remplissage avec les infos du profil
-    rows = db.fetch_all('customers', filters={'id': current_user.id}, limit=1)
-    customer = rows[0] if rows else {}
-    return render_template('public/checkout.html', items=items, total=total, customer=customer)
+    return _render()
 
 
 @app.route('/commande/confirmation/<order_id>')

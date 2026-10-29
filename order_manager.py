@@ -15,7 +15,8 @@ def generate_order_number():
     return f"CMD{date_part}{random_part}"
 
 
-def create_order_from_cart(customer_id, cart_items, shipping_name, shipping_phone, shipping_address, notes=''):
+def create_order_from_cart(customer_id, cart_items, shipping_name, shipping_phone, shipping_address, notes='',
+                           payment_method=None, payment_proof=None):
     """
     Crée une commande à partir des articles du panier (déjà validés/enrichis
     par cart.get_cart_details). Diminue le stock de chaque produit commandé.
@@ -45,6 +46,8 @@ def create_order_from_cart(customer_id, cart_items, shipping_name, shipping_phon
         'shipping_phone': shipping_phone,
         'shipping_address': shipping_address,
         'notes': notes,
+        'payment_method': payment_method,
+        'payment_proof': payment_proof,
     })
 
     if not order:

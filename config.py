@@ -64,6 +64,10 @@ class Config:
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB max upload
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
 
+    # Paiement par transfert d'argent mobile (le client envoie le reçu en capture d'écran)
+    PAYMENT_NUMBER = '91720755'
+    PAYMENT_METHODS = ('Amanata', 'Nita')
+
     # --- Sessions sécurisées ---
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'

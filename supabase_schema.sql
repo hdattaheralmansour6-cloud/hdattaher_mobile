@@ -255,9 +255,14 @@ CREATE TABLE IF NOT EXISTS orders (
     shipping_phone TEXT,
     shipping_address TEXT,
     notes TEXT,
+    payment_method TEXT,
+    payment_proof TEXT,
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
 );
+-- Bases déjà existantes
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_proof TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_id);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
