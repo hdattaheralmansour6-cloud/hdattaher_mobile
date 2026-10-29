@@ -1,72 +1,142 @@
 {% extends "public/base.html" %}
 {% block title %}Mon compte{% endblock %}
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}?v=2">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}?v=3">
 {% endblock %}
 
 {% block content %}
-<div class="account-wrapper account-wide">
-    <div class="account-nav-tabs">
-        <a href="{{ url_for('customer_profile') }}" class="active" data-i18n="my_profile_tab">Mon profil</a>
-        <a href="{{ url_for('customer_orders') }}" data-i18n="my_orders_tab">Mes commandes</a>
-        <a href="{{ url_for('customer_logout') }}" data-i18n="logout_tab">Déconnexion</a>
+<div class="acc-page">
+    {% set active = 'profile' %}
+    {% include "public/account/_header.html" %}
+
+    <!-- Photo de profil (formulaire caché, envoyé dès qu'une photo est choisie) -->
+    <form id="avatarForm" method="POST" action="{{ url_for('customer_avatar') }}" enctype="multipart/form-data" hidden>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="file" id="avatarInput" name="avatar" accept="image/*">
+    </form>
+    <div class="acc-avatar-actions">
+        <label for="avatarInput" class="acc-link-btn"><i class="fas fa-camera"></i>
+            {% if current_user.avatar_url %}<span data-i18n="avatar_change">Changer la photo</span>{% else %}<span data-i18n="avatar_add">Ajouter une photo</span>{% endif %}</label>
+        {% if current_user.avatar_url %}
+        <form method="POST" action="{{ url_for('customer_avatar') }}" style="display:inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="action" value="remove">
+            <button type="submit" class="acc-link-btn acc-link-danger"><i class="fas fa-trash"></i>
+                <span data-i18n="avatar_remove">Supprimer</span></button>
+        </form>
+        {% endif %}
     </div>
 
-    <div class="account-card account-section">
-        <h2 data-i18n="personal_info">Informations personnelles</h2>
+    <div class="acc-stats">
+        <a href="{{ url_for('customer_orders') }}" class="acc-stat">
+            <i class="fas fa-bag-shopping"></i>
+            <strong>{{ stats.total if stats else 0 }}</strong>
+            <span data-i18n="stat_orders">Commandes</span>
+        </a>
+        <a href="{{ url_for('customer_orders') }}" class="acc-stat">
+            <i class="fas fa-truck-fast"></i>
+            <strong>{{ stats.in_progress if stats else 0 }}</strong>
+            <span data-i18n="stat_in_progress">En cours</span>
+        </a>
+        <a href="{{ url_for('customer_orders') }}" class="acc-stat">
+            <i class="fas fa-circle-check"></i>
+            <strong>{{ stats.delivered if stats else 0 }}</strong>
+            <span data-i18n="stat_delivered">Livrées</span>
+        </a>
+    </div>
+
+    <section class="acc-card">
+        <div class="acc-card-title">
+            <span class="acc-card-icon"><i class="fas fa-id-card"></i></span>
+            <h2 data-i18n="personal_info">Informations personnelles</h2>
+        </div>
         <form method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="form_type" value="profile">
 
-            <div class="account-field">
+            <div class="acc-field">
                 <label for="full_name" data-i18n="fullname_label">Nom complet</label>
-                <input type="text" id="full_name" name="full_name" required
-                       value="{{ customer.full_name if customer else '' }}">
+                <div class="acc-input"><i class="fas fa-user"></i>
+                    <input type="text" id="full_name" name="full_name" required
+                           value="{{ (customer.full_name if customer else '') or '' }}"></div>
             </div>
 
-            <div class="account-field">
+            <div class="acc-field">
                 <label data-i18n="email_label">Email</label>
-                <input type="email" value="{{ customer.email if customer else '' }}" disabled>
+                <div class="acc-input acc-input-disabled"><i class="fas fa-envelope"></i>
+                    <input type="email" value="{{ (customer.email if customer else '') or '' }}" disabled>
+                    <i class="fas fa-lock acc-input-end"></i></div>
             </div>
 
-            <div class="account-field">
+            <div class="acc-field">
                 <label for="phone" data-i18n="phone_label">Téléphone</label>
-                <input type="tel" id="phone" name="phone"
-                       value="{{ customer.phone if customer else '' }}">
+                <div class="acc-input"><i class="fas fa-phone"></i>
+                    <input type="tel" id="phone" name="phone" inputmode="tel"
+                           value="{{ (customer.phone if customer else '') or '' }}"></div>
             </div>
 
-            <div class="account-field">
+            <div class="acc-field">
                 <label for="address" data-i18n="address_label">Adresse</label>
-                <textarea id="address" name="address" rows="3">{{ customer.address if customer else '' }}</textarea>
+                <div class="acc-input acc-input-area"><i class="fas fa-location-dot"></i>
+                    <textarea id="address" name="address" rows="3">{{ (customer.address if customer else '') or '' }}</textarea></div>
             </div>
 
-            <button type="submit" class="btn btn-primary" data-i18n="save_btn">Enregistrer</button>
+            <button type="submit" class="acc-btn"><i class="fas fa-check"></i> <span data-i18n="save_btn">Enregistrer</span></button>
         </form>
-    </div>
+    </section>
 
-    <div class="account-card account-section">
-        <h2 data-i18n="change_password_title">Changer le mot de passe</h2>
+    <section class="acc-card">
+        <div class="acc-card-title">
+            <span class="acc-card-icon"><i class="fas fa-shield-halved"></i></span>
+            <h2 data-i18n="change_password_title">Changer le mot de passe</h2>
+        </div>
         <form method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="form_type" value="password">
 
-            <div class="account-field">
-                <label for="current_password" data-i18n="current_password_label">Mot de passe actuel</label>
-                <input type="password" id="current_password" name="current_password" required>
+            {% for fid, key, label, ac in [
+                ('current_password', 'current_password_label', 'Mot de passe actuel', 'current-password'),
+                ('new_password', 'new_password_label', 'Nouveau mot de passe', 'new-password'),
+                ('confirm_new_password', 'confirm_password_label', 'Confirmer le nouveau mot de passe', 'new-password')] %}
+            <div class="acc-field">
+                <label for="{{ fid }}" data-i18n="{{ key }}">{{ label }}</label>
+                <div class="acc-input"><i class="fas fa-key"></i>
+                    <input type="password" id="{{ fid }}" name="{{ fid }}" required autocomplete="{{ ac }}"
+                           {% if fid != 'current_password' %}minlength="6"{% endif %}>
+                    <button type="button" class="acc-eye" data-target="{{ fid }}" aria-label="Afficher"><i class="fas fa-eye"></i></button>
+                </div>
             </div>
+            {% endfor %}
 
-            <div class="account-field">
-                <label for="new_password" data-i18n="new_password_label">Nouveau mot de passe</label>
-                <input type="password" id="new_password" name="new_password" required minlength="6">
-            </div>
-
-            <div class="account-field">
-                <label for="confirm_new_password" data-i18n="confirm_password_label">Confirmer le nouveau mot de passe</label>
-                <input type="password" id="confirm_new_password" name="confirm_new_password" required minlength="6">
-            </div>
-
-            <button type="submit" class="btn btn-outline" data-i18n="change_password_btn">Changer le mot de passe</button>
+            <button type="submit" class="acc-btn acc-btn-outline"><i class="fas fa-lock"></i> <span data-i18n="change_password_btn">Changer le mot de passe</span></button>
         </form>
-    </div>
+    </section>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    var input = document.getElementById('avatarInput');
+    if (input) input.addEventListener('change', function () {
+        if (!input.files || !input.files[0]) return;
+        var img = document.querySelector('.acc-avatar');
+        var wrap = document.querySelector('.acc-avatar-wrap');
+        if (wrap) wrap.classList.add('is-loading');
+        try {
+            var url = URL.createObjectURL(input.files[0]);
+            if (img && img.tagName === 'IMG') img.src = url;
+        } catch (e) {}
+        document.getElementById('avatarForm').submit();
+    });
+    document.querySelectorAll('.acc-eye').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var f = document.getElementById(btn.getAttribute('data-target'));
+            var show = f.type === 'password';
+            f.type = show ? 'text' : 'password';
+            btn.innerHTML = show ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+        });
+    });
+})();
+</script>
 {% endblock %}

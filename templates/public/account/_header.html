@@ -1,0 +1,39 @@
+{# En-tête commun de l'espace client : photo, nom, onglets. Variable attendue : active = 'profile' | 'orders' #}
+{% set initials = ((current_user.full_name or current_user.email or '?')|trim)[:1]|upper %}
+<div class="acc-hero">
+    <div class="acc-hero-bg"></div>
+    <div class="acc-hero-body">
+        <div class="acc-avatar-wrap">
+            {% if current_user.avatar_url %}
+            <img class="acc-avatar" src="{{ current_user.avatar_url }}" alt="">
+            {% else %}
+            <div class="acc-avatar acc-avatar-empty">{{ initials }}</div>
+            {% endif %}
+            {% if active == 'profile' %}
+            <label for="avatarInput" class="acc-avatar-btn" aria-label="Changer la photo">
+                <i class="fas fa-camera"></i>
+            </label>
+            {% endif %}
+        </div>
+        <div class="acc-hero-text">
+            <h1>{{ current_user.full_name or '' }}</h1>
+            <p dir="ltr">{{ current_user.email }}</p>
+            {% if current_user.created_at %}
+            <span class="acc-chip"><i class="fas fa-calendar-check"></i>
+                <span data-i18n="member_since">Membre depuis</span>&nbsp;{{ current_user.created_at[:4] }}</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<nav class="acc-tabs">
+    <a href="{{ url_for('customer_profile') }}" class="{{ 'active' if active == 'profile' }}">
+        <i class="fas fa-user"></i><span data-i18n="my_profile_tab">Mon profil</span>
+    </a>
+    <a href="{{ url_for('customer_orders') }}" class="{{ 'active' if active == 'orders' }}">
+        <i class="fas fa-box"></i><span data-i18n="my_orders_tab">Mes commandes</span>
+    </a>
+    <a href="{{ url_for('customer_logout') }}" class="acc-tab-logout">
+        <i class="fas fa-right-from-bracket"></i><span data-i18n="logout_tab">Déconnexion</span>
+    </a>
+</nav>

@@ -1,41 +1,49 @@
 {% extends "public/base.html" %}
 {% block title %}Mes commandes{% endblock %}
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}?v=2">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}?v=3">
 {% endblock %}
 
 {% block content %}
-<div class="account-wrapper account-wide">
-    <div class="account-nav-tabs">
-        <a href="{{ url_for('customer_profile') }}" data-i18n="my_profile_tab">Mon profil</a>
-        <a href="{{ url_for('customer_orders') }}" class="active" data-i18n="my_orders_tab">Mes commandes</a>
-        <a href="{{ url_for('customer_logout') }}" data-i18n="logout_tab">Déconnexion</a>
-    </div>
+<div class="acc-page">
+    {% set active = 'orders' %}
+    {% include "public/account/_header.html" %}
 
-    <div class="account-card account-section">
-        <h2 data-i18n="orders_history_title">Historique de mes commandes</h2>
+    {% set status_keys = {'En attente':'status_pending','Confirmée':'status_confirmed','Préparation':'status_preparing','Expédiée':'status_shipped','Livrée':'status_delivered','Annulée':'status_cancelled'} %}
+    {% set status_css = {'En attente':'st-pending','Confirmée':'st-confirmed','Préparation':'st-confirmed','Expédiée':'st-shipped','Livrée':'st-delivered','Annulée':'st-cancelled'} %}
 
-        {% set status_keys = {'En attente':'status_pending','Confirmée':'status_confirmed','Préparation':'status_preparing','Expédiée':'status_shipped','Livrée':'status_delivered','Annulée':'status_cancelled'} %}
+    <section class="acc-card">
+        <div class="acc-card-title">
+            <span class="acc-card-icon"><i class="fas fa-receipt"></i></span>
+            <h2 data-i18n="orders_history_title">Historique de mes commandes</h2>
+        </div>
+
         {% if orders %}
+        <div class="acc-orders">
             {% for order in orders %}
-            <a href="{{ url_for('customer_order_detail', order_id=order.id) }}"
-               class="account-order-row" style="text-decoration:none; color:inherit;">
-                <div>
-                    <strong><span data-i18n="order_prefix">Commande #</span>{{ order.order_number }}</strong><br>
-                    <span style="color:var(--text-secondary); font-size:0.85rem;">{{ order.created_at[:10] if order.created_at else '' }}</span>
+            <a href="{{ url_for('customer_order_detail', order_id=order.id) }}" class="acc-order">
+                <span class="acc-order-icon"><i class="fas fa-box"></i></span>
+                <div class="acc-order-main">
+                    <strong>#{{ order.order_number }}</strong>
+                    <small>{{ order.created_at[:10] if order.created_at else '' }}
+                        {% if order.payment_method %}· {{ order.payment_method }}{% endif %}</small>
                 </div>
-                <div data-i18n="{{ status_keys.get(order.status, '') }}">{{ order.status }}</div>
-                <div>{{ "{:,.0f}".format(order.total) }} FCFA</div>
+                <div class="acc-order-side">
+                    <strong>{{ order.total|fcfa }}</strong>
+                    <span class="acc-status {{ status_css.get(order.status, '') }}"
+                          data-i18n="{{ status_keys.get(order.status, '') }}">{{ order.status }}</span>
+                </div>
+                <i class="fas fa-chevron-right acc-order-arrow"></i>
             </a>
             {% endfor %}
+        </div>
         {% else %}
-            <div class="account-empty">
-                <i class="fas fa-box-open"></i>
-                <p><span data-i18n="no_orders">Vous n'avez pas encore de commande.</span><br>
-                    <a href="{{ url_for('products') }}" data-i18n="discover_products">Découvrir nos produits</a>
-                </p>
-            </div>
+        <div class="acc-empty">
+            <span><i class="fas fa-box-open"></i></span>
+            <p data-i18n="no_orders">Vous n'avez pas encore de commande.</p>
+            <a href="{{ url_for('products') }}" class="acc-btn"><i class="fas fa-store"></i> <span data-i18n="discover_products">Découvrir nos produits</span></a>
+        </div>
         {% endif %}
-    </div>
+    </section>
 </div>
 {% endblock %}
