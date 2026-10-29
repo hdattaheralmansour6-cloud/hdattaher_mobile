@@ -48,7 +48,7 @@
         <h3>Paiement</h3>
     </div>
     <div class="admin-card-body">
-        <p><strong>Moyen :</strong> {{ order.payment_method or 'Non renseigné' }}</p>
+        <p><strong>Moyen :</strong> {% if order.payment_method %}<img src="{{ url_for('static', filename='img/' ~ order.payment_method|lower ~ '.png') }}" alt="" style="height:26px;vertical-align:middle;border-radius:6px;background:#fff;margin-right:6px;">{% endif %}{{ order.payment_method or 'Non renseigné' }}</p>
         <p><strong>Montant attendu :</strong> {{ "{:,.0f}".format(order.total) }} FCFA</p>
         {% if order.payment_proof %}
         <p><strong>Reçu envoyé par le client :</strong></p>
