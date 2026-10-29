@@ -26,6 +26,7 @@
                     <th>N° Commande</th>
                     <th>Client</th>
                     <th>Total</th>
+                    <th>Paiement</th>
                     <th>Statut</th>
                     <th>Date</th>
                     <th>Actions</th>
@@ -39,6 +40,7 @@
                         <span style="font-size:0.78rem; color:var(--admin-text-sec);">{{ order.customer_email }}</span>
                     </td>
                     <td>{{ "{:,.0f}".format(order.total) }} FCFA</td>
+                    <td>{% if order.payment_proof %}<span style="color:#10b981; font-weight:600;"><i class="fas fa-receipt"></i> {{ order.payment_method or 'Reçu' }}</span>{% else %}<span style="color:var(--admin-text-sec);">—</span>{% endif %}</td>
                     <td>{{ order.status }}</td>
                     <td>{{ order.created_at[:10] if order.created_at else '' }}</td>
                     <td>
@@ -50,7 +52,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="6" style="text-align:center; padding:30px; color:var(--admin-text-sec);">
+                    <td colspan="7" style="text-align:center; padding:30px; color:var(--admin-text-sec);">
                         Aucune commande pour le moment.
                     </td>
                 </tr>
