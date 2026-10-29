@@ -1507,6 +1507,9 @@ def customer_order_detail(order_id):
     return render_template('public/account/order_detail.html', order=order, items=items)
 
 
+INVOICE_STATUSES = ('Confirmée', 'Préparation', 'Expédiée', 'Livrée')
+
+
 @app.route('/compte/commande/<order_id>/facture')
 @customer_login_required
 def customer_order_invoice(order_id):
@@ -1514,6 +1517,11 @@ def customer_order_invoice(order_id):
     if not order or str(order.get('customer_id')) != str(current_user.id):
         flash('Commande introuvable.', 'error')
         return redirect(url_for('customer_orders'))
+
+    # Facture seulement pour les commandes confirmées (pas en attente ni annulées)
+    if order.get('status') not in INVOICE_STATUSES:
+        flash('La facture n\'est pas disponible pour cette commande.', 'error')
+        return redirect(url_for('customer_order_detail', order_id=order_id))
 
     order['customer_name'] = current_user.full_name
 
