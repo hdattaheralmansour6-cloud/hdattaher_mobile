@@ -1328,7 +1328,12 @@ def admin_order_detail(order_id):
     if not order:
         flash('Commande introuvable.', 'error')
         return redirect(url_for('admin_orders'))
-    return render_template('admin/order_detail.html', order=order, items=items, statuses=ORDER_STATUSES)
+    customer = None
+    if order.get('customer_id'):
+        rows = db.fetch_all('customers', filters={'id': order['customer_id']}, limit=1)
+        customer = rows[0] if rows else None
+    return render_template('admin/order_detail.html', order=order, items=items,
+                           statuses=ORDER_STATUSES, customer=customer)
 
 
 @app.route('/azawad/commande/statut/<order_id>', methods=['POST'])
@@ -1487,13 +1492,96 @@ def customer_profile():
 
     rows = db.fetch_all('customers', filters={'id': current_user.id}, limit=1)
     customer = rows[0] if rows else None
-    return render_template('public/account/profile.html', customer=customer)
+    orders = get_customer_orders(current_user.id)
+    stats = {
+        'total': len(orders),
+        'in_progress': sum(1 for o in orders if o.get('status') in ('En attente', 'Confirmée', 'Préparation', 'Expédiée')),
+        'delivered': sum(1 for o in orders if o.get('status') == 'Livrée'),
+    }
+    return render_template('public/account/profile.html', customer=customer, stats=stats)
+
+
+AVATAR_SIZE = 400
+
+
+def _process_avatar(file):
+    """Vérifie l'image, la redresse, la recadre en carré et la compresse en JPEG. Retourne (bytes, erreur)."""
+    if not file or not file.filename:
+        return None, "Veuillez choisir une photo."
+    data = file.read()
+    if not data:
+        return None, "Le fichier est vide."
+    try:
+        from PIL import Image, ImageOps
+        img = Image.open(io.BytesIO(data))
+        img.verify()
+        img = Image.open(io.BytesIO(data))
+        img = ImageOps.exif_transpose(img)
+        img = ImageOps.fit(img.convert('RGB'), (AVATAR_SIZE, AVATAR_SIZE), Image.LANCZOS)
+        out = io.BytesIO()
+        img.save(out, 'JPEG', quality=86, optimize=True)
+        return out.getvalue(), None
+    except Exception:
+        return None, "Ce fichier n'est pas une image valide (jpg, png, webp)."
+
+
+def _storage_path_from_url(url):
+    marker = '/product-images/'
+    if url and marker in url and '/avatars/' in url:
+        return url.split(marker, 1)[1].split('?', 1)[0]
+    return None
+
+
+@app.route('/compte/photo', methods=['POST'])
+@customer_login_required
+def customer_avatar():
+    sb = get_supabase()
+    old_path = _storage_path_from_url(getattr(current_user, 'avatar_url', ''))
+
+    if request.form.get('action') == 'remove':
+        new_url = None
+    else:
+        data, error = _process_avatar(request.files.get('avatar'))
+        if error:
+            flash(error, 'error')
+            return redirect(url_for('customer_profile'))
+        path = f"avatars/{current_user.id}_{secrets.token_hex(6)}.jpg"
+        try:
+            sb.storage.from_('product-images').upload(path, data, {'content-type': 'image/jpeg'})
+            new_url = sb.storage.from_('product-images').get_public_url(path)
+        except Exception:
+            flash("Impossible d'envoyer la photo pour le moment. Réessayez.", 'error')
+            return redirect(url_for('customer_profile'))
+
+    try:
+        db.update('customers', {'avatar_url': new_url}, {'id': current_user.id})
+    except Exception:
+        app.logger.exception("Mise à jour avatar_url impossible (colonne manquante ?)")
+        flash("La photo n'a pas pu être enregistrée. Réessayez plus tard.", 'error')
+        return redirect(url_for('customer_profile'))
+
+    if old_path:
+        try:
+            sb.storage.from_('product-images').remove([old_path])
+        except Exception:
+            pass
+    flash('Photo de profil supprimée.' if new_url is None else 'Photo de profil mise à jour.', 'success')
+    return redirect(url_for('customer_profile'))
+
+
+@app.template_filter('fcfa')
+def fcfa_filter(value):
+    try:
+        return f"{float(value or 0):,.0f}".replace(',', '\xa0') + ' FCFA'
+    except (TypeError, ValueError):
+        return f"{value} FCFA"
 
 
 @app.route('/compte/commandes')
 @customer_login_required
 def customer_orders():
-    orders = get_customer_orders(current_user.id)
+    orders = sorted(get_customer_orders(current_user.id),
+                    key=lambda o: o.get('created_at') or '', reverse=True)
     return render_template('public/account/orders.html', orders=orders)
 
 

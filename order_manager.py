@@ -98,15 +98,23 @@ def update_order_status(order_id, new_status):
 
 def get_all_orders(status_filter=None):
     sb = get_supabase()
-    query = sb.table('orders').select('*, customers(full_name, email, phone)').order('created_at', desc=True)
-    if status_filter:
-        query = query.eq('status', status_filter)
-    result = query.execute()
-    orders = result.data or []
+
+    def _run(cols):
+        query = sb.table('orders').select(f'*, customers({cols})').order('created_at', desc=True)
+        if status_filter:
+            query = query.eq('status', status_filter)
+        return query.execute().data or []
+
+    try:
+        orders = _run('full_name, email, phone, avatar_url')
+    except Exception:
+        # Colonne avatar_url pas encore créée dans Supabase
+        orders = _run('full_name, email, phone')
     for o in orders:
         customer = o.pop('customers', None)
         o['customer_name'] = customer['full_name'] if customer else 'Client supprimé'
         o['customer_email'] = customer['email'] if customer else ''
+        o['customer_avatar'] = (customer or {}).get('avatar_url') or ''
     return orders
 
 

@@ -26,6 +26,8 @@ class Customer(UserMixin):
         self.email = row.get('email', '')
         self.phone = row.get('phone', '')
         self.address = row.get('address', '')
+        self.avatar_url = row.get('avatar_url') or ''
+        self.created_at = row.get('created_at') or ''
         self.is_active_account = row.get('is_active', True)
 
     def get_id(self):
