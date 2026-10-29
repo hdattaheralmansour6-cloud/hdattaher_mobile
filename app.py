@@ -5,7 +5,7 @@ Propriétaire : Hdattaher | Localisation : Niger
 """
 import os
 import time
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 from datetime import datetime, timedelta
 from functools import wraps
 from flask import (Flask, render_template, request, redirect, url_for,
@@ -13,7 +13,7 @@ from flask import (Flask, render_template, request, redirect, url_for,
 from flask_caching import Cache
 from flask_compress import Compress
 from werkzeug.utils import secure_filename
-from flask_wtf.csrf import CSRFProtect
+from flask_wtf.csrf import CSRFProtect, CSRFError
 from flask_login import (login_user, logout_user, login_required as customer_login_required,
                           current_user)
 from config import Config
@@ -181,6 +181,26 @@ def inject_globals():
 # ============================================================
 #  SÉCURITÉ - En-têtes
 # ============================================================
+
+@app.errorhandler(CSRFError)
+def handle_csrf_error(e):
+    """
+    Formulaire périmé (ex. ancienne page de connexion restée ouverte dans un autre onglet
+    alors qu'une connexion a déjà réussi) : on revient proprement au lieu d'afficher
+    une page blanche "Bad Request".
+    """
+    if request.endpoint == 'admin_login':
+        if 'logged_in' in session:
+            return redirect(url_for('admin_dashboard'))
+        flash('Votre session a expiré. Veuillez réessayer.', 'warning')
+        return redirect(url_for('admin_login'))
+
+    flash('Votre session a expiré. Veuillez réessayer.', 'warning')
+    ref = request.referrer
+    if ref and urlparse(ref).netloc == request.host:
+        return redirect(ref)
+    return redirect(url_for('index'))
+
 
 @app.after_request
 def add_security_headers(response):
