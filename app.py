@@ -13,6 +13,7 @@ from flask import (Flask, render_template, request, redirect, url_for,
 from flask_caching import Cache
 from flask_compress import Compress
 from werkzeug.utils import secure_filename
+from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from flask_login import (login_user, logout_user, login_required as customer_login_required,
                           current_user)
@@ -33,6 +34,10 @@ from invoice_generator import generate_invoice_pdf
 # test redeploiement storage 2
 app = Flask(__name__)
 app.config.from_object(Config)
+
+# Render place un relais devant le serveur : on lit la vraie adresse IP du visiteur
+# (en-tête X-Forwarded-For, un seul relais de confiance)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
 # --- Performance : cache mémoire + compression des réponses (Phase 6) ---
 app.config['CACHE_TYPE'] = 'SimpleCache'
