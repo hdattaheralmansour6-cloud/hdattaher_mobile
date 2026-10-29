@@ -46,6 +46,8 @@ class Config:
     # --- Sessions sécurisées ---
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
+    # Cookie envoyé uniquement en HTTPS (désactivé en développement local en http)
+    SESSION_COOKIE_SECURE = os.environ.get('FLASK_ENV', 'production') != 'development'
     PERMANENT_SESSION_LIFETIME = 3600  # 1 heure
 
     # --- Protection CSRF (Flask-WTF) ---

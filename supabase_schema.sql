@@ -222,6 +222,130 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- ============================================================
+-- TABLE : customers (comptes clients)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS customers (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    full_name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    phone TEXT,
+    address TEXT,
+    password_hash TEXT NOT NULL,
+    is_blocked BOOLEAN DEFAULT false,
+    last_login TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+-- Bases déjà existantes : ajoute la colonne si elle manque
+ALTER TABLE customers ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN DEFAULT false;
+
+CREATE INDEX IF NOT EXISTS idx_customers_email ON customers(email);
+
+-- ============================================================
+-- TABLE : orders (commandes)
+-- Statuts : En attente, Confirmée, Préparation, Expédiée, Livrée, Annulée
+-- ============================================================
+CREATE TABLE IF NOT EXISTS orders (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    order_number TEXT UNIQUE NOT NULL,
+    customer_id UUID REFERENCES customers(id) ON DELETE SET NULL,
+    status TEXT NOT NULL DEFAULT 'En attente',
+    total NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (total >= 0),
+    shipping_name TEXT,
+    shipping_phone TEXT,
+    shipping_address TEXT,
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_id);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
+CREATE INDEX IF NOT EXISTS idx_orders_created ON orders(created_at DESC);
+
+-- ============================================================
+-- TABLE : order_items (lignes de commande)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS order_items (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    product_id UUID REFERENCES products(id) ON DELETE SET NULL,
+    product_name TEXT NOT NULL,
+    quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),
+    unit_price NUMERIC(12,2) NOT NULL DEFAULT 0,
+    subtotal NUMERIC(12,2) NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items(order_id);
+
+-- ============================================================
+-- TABLE : password_resets (codes à 6 chiffres, valables 30 min)
+-- "used"      : code consommé par le client
+-- "dismissed" : demande masquée dans l'admin (n'invalide pas le code)
+-- La colonne "token" est un reste de l'ancien système par lien : nullable.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS password_resets (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+    code TEXT NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    used BOOLEAN DEFAULT false,
+    dismissed BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+-- Bases déjà existantes
+ALTER TABLE password_resets ADD COLUMN IF NOT EXISTS dismissed BOOLEAN DEFAULT false;
+
+CREATE INDEX IF NOT EXISTS idx_resets_customer ON password_resets(customer_id);
+CREATE INDEX IF NOT EXISTS idx_resets_created ON password_resets(created_at DESC);
+
+-- ============================================================
+-- TABLE : banners (carrousel de la page d'accueil)
+-- title_en/ar et subtitle_en/ar sont générés automatiquement à l'enregistrement
+-- ============================================================
+CREATE TABLE IF NOT EXISTS banners (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    title TEXT,
+    subtitle TEXT,
+    title_en TEXT,
+    title_ar TEXT,
+    subtitle_en TEXT,
+    subtitle_ar TEXT,
+    link_url TEXT,
+    image TEXT NOT NULL,
+    sort_order INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+-- Bases déjà existantes
+ALTER TABLE banners ADD COLUMN IF NOT EXISTS title_en TEXT;
+ALTER TABLE banners ADD COLUMN IF NOT EXISTS title_ar TEXT;
+ALTER TABLE banners ADD COLUMN IF NOT EXISTS subtitle_en TEXT;
+ALTER TABLE banners ADD COLUMN IF NOT EXISTS subtitle_ar TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_banners_sort ON banners(sort_order);
+CREATE INDEX IF NOT EXISTS idx_banners_active ON banners(is_active);
+
+-- updated_at automatique pour les nouvelles tables
+DROP TRIGGER IF EXISTS tr_customers_updated ON customers;
+CREATE TRIGGER tr_customers_updated
+    BEFORE UPDATE ON customers
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+DROP TRIGGER IF EXISTS tr_orders_updated ON orders;
+CREATE TRIGGER tr_orders_updated
+    BEFORE UPDATE ON orders
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- RLS activé sans policy publique : seules les clés serveur (service_role) y accèdent
+ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE password_resets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE banners ENABLE ROW LEVEL SECURITY;
+
+-- ============================================================
 -- ROW LEVEL SECURITY (RLS)
 -- ============================================================
 
