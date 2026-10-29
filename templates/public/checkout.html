@@ -2,6 +2,19 @@
 {% block title %}Valider ma commande - HDATTAHER MOBILE{% endblock %}
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}?v=2">
+<style>
+.pay-help{color:var(--text-secondary);font-size:.9rem;line-height:1.5;margin:0 0 14px;display:block;}
+.pay-amount{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px;border-radius:14px;background:rgba(108,99,255,.08);margin-bottom:16px;}
+.pay-methods{display:flex;gap:10px;flex-wrap:wrap;}
+.pay-method{flex:1;min-width:120px;cursor:pointer;margin:0;}
+.pay-method input{position:absolute;opacity:0;pointer-events:none;}
+.pay-method span{display:block;text-align:center;padding:14px;border-radius:14px;border:2px solid var(--border);font-weight:700;transition:.2s;}
+.pay-method input:checked + span{border-color:#6c63ff;background:rgba(108,99,255,.12);color:#6c63ff;}
+.pay-number{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 16px;border-radius:14px;border:1px dashed #d4a017;background:rgba(212,160,23,.08);margin-bottom:16px;}
+.pay-number span{flex:1 1 100%;font-size:.85rem;color:var(--text-secondary);}
+.pay-number strong{font-size:1.5rem;letter-spacing:1px;flex:1;}
+.pay-copy{border:none;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;background:#6c63ff;color:#fff;}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -26,37 +39,89 @@
                 </div>
             </div>
 
-            <div class="account-card account-section">
-                <h2 data-i18n="shipping_info_title">Informations de livraison</h2>
-                <form method="POST">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <form method="POST" enctype="multipart/form-data" style="display:contents;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="account-card account-section">
+                    <h2 data-i18n="pay_title">Paiement</h2>
+                    <p class="pay-help" data-i18n="pay_intro">Avant de valider, envoyez le montant de votre commande par Amanata ou Nita, puis joignez la capture d'écran du reçu.</p>
+
+                    <div class="pay-amount">
+                        <span data-i18n="pay_amount_label">Montant à envoyer</span>
+                        <strong>{{ "{:,.0f}".format(total) }} FCFA</strong>
+                    </div>
+
+                    <div class="account-field">
+                        <label data-i18n="pay_method_label">Moyen de paiement *</label>
+                        <div class="pay-methods">
+                            {% for m in payment_methods %}
+                            <label class="pay-method">
+                                <input type="radio" name="payment_method" value="{{ m }}" required
+                                       {% if selected_method == m %}checked{% endif %}>
+                                <span>{{ m }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="pay-number">
+                        <span data-i18n="pay_send_to">Numéro Amanata / Nita</span>
+                        <strong id="payNumber" dir="ltr">{{ payment_number }}</strong>
+                        <button type="button" class="pay-copy" id="payCopyBtn" data-i18n="pay_copy">Copier</button>
+                    </div>
+
+                    <div class="account-field">
+                        <label for="payment_proof" data-i18n="pay_proof_label">Capture d'écran du reçu *</label>
+                        <input type="file" id="payment_proof" name="payment_proof" accept="image/*" required>
+                        <small class="pay-help" data-i18n="pay_proof_hint">Image du reçu d'envoi (png, jpg, webp).</small>
+                        <img id="payProofPreview" alt="" style="display:none; max-width:100%; max-height:260px; margin-top:10px; border-radius:12px; border:1px solid var(--border);">
+                    </div>
+                </div>
+
+                <div class="account-card account-section">
+                    <h2 data-i18n="shipping_info_title">Informations de livraison</h2>
 
                     <div class="account-field">
                         <label for="shipping_name" data-i18n="shipping_name_label">Nom complet *</label>
                         <input type="text" id="shipping_name" name="shipping_name" required
-                               value="{{ customer.full_name if customer else '' }}">
+                               value="{{ (customer.full_name if customer else '') or '' }}">
                     </div>
 
                     <div class="account-field">
                         <label for="shipping_phone" data-i18n="shipping_phone_label">Téléphone *</label>
                         <input type="tel" id="shipping_phone" name="shipping_phone" required
-                               value="{{ customer.phone if customer else '' }}">
+                               value="{{ (customer.phone if customer else '') or '' }}">
                     </div>
 
                     <div class="account-field">
                         <label for="shipping_address" data-i18n="shipping_address_label">Adresse de livraison *</label>
-                        <textarea id="shipping_address" name="shipping_address" rows="3" required>{{ customer.address if customer else '' }}</textarea>
+                        <textarea id="shipping_address" name="shipping_address" rows="3" required>{{ (customer.address if customer else '') or '' }}</textarea>
                     </div>
 
                     <div class="account-field">
                         <label for="notes" data-i18n="notes_label">Notes (optionnel)</label>
-                        <textarea id="notes" name="notes" rows="2"></textarea>
+                        <textarea id="notes" name="notes" rows="2">{{ notes or '' }}</textarea>
                     </div>
 
                     <button type="submit" class="btn btn-primary btn-block" data-i18n="confirm_order_btn">Confirmer la commande</button>
-                </form>
-            </div>
+                </div>
+            </form>
         </div>
     </div>
 </section>
+<script>
+(function(){
+    var btn=document.getElementById('payCopyBtn'),num=document.getElementById('payNumber');
+    if(btn&&num){btn.addEventListener('click',function(){
+        var t=num.textContent.trim();
+        function done(){var o=btn.textContent;btn.textContent='✓';setTimeout(function(){btn.textContent=o;},1500);}
+        if(navigator.clipboard){navigator.clipboard.writeText(t).then(done,done);}else{done();}
+    });}
+    var inp=document.getElementById('payment_proof'),img=document.getElementById('payProofPreview');
+    if(inp&&img){inp.addEventListener('change',function(){
+        var f=inp.files&&inp.files[0];
+        if(f){img.src=URL.createObjectURL(f);img.style.display='block';}else{img.style.display='none';}
+    });}
+})();
+</script>
 {% endblock %}
