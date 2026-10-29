@@ -25,7 +25,7 @@
             <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap;">
                 <div style="min-width:0;">
                     <div style="font-weight:700;">
-                        <i class="fas fa-user-circle" style="color:var(--admin-primary);"></i> {{ c.full_name }}
+                        {% if c.avatar_url %}<img src="{{ c.avatar_url }}" alt="" loading="lazy" style="width:30px;height:30px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px;border:2px solid var(--admin-primary);">{% else %}<i class="fas fa-user-circle" style="color:var(--admin-primary);"></i>{% endif %} {{ c.full_name }}
                         {% if c.is_blocked %}
                         <span
                             style="background:var(--admin-danger,#EF4444); color:#fff; border-radius:999px; font-size:0.65rem; font-weight:700; padding:2px 10px; margin-left:6px; vertical-align:middle;">
