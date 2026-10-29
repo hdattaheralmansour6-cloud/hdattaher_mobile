@@ -8,7 +8,8 @@
 .pay-methods{display:flex;gap:10px;flex-wrap:wrap;}
 .pay-method{flex:1;min-width:120px;cursor:pointer;margin:0;}
 .pay-method input{position:absolute;opacity:0;pointer-events:none;}
-.pay-method span{display:block;text-align:center;padding:14px;border-radius:14px;border:2px solid var(--border);font-weight:700;transition:.2s;}
+.pay-method span{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:12px;border-radius:14px;border:2px solid var(--border);font-weight:700;transition:.2s;}
+.pay-method img{width:84px;height:56px;object-fit:contain;background:#fff;border-radius:10px;padding:2px;}
 .pay-method input:checked + span{border-color:#6c63ff;background:rgba(108,99,255,.12);color:#6c63ff;}
 .pay-number{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 16px;border-radius:14px;border:1px dashed #d4a017;background:rgba(212,160,23,.08);margin-bottom:16px;}
 .pay-number span{flex:1 1 100%;font-size:.85rem;color:var(--text-secondary);}
@@ -58,7 +59,7 @@
                             <label class="pay-method">
                                 <input type="radio" name="payment_method" value="{{ m }}" required
                                        {% if selected_method == m %}checked{% endif %}>
-                                <span>{{ m }}</span>
+                                <span><img src="{{ url_for('static', filename='img/' ~ m|lower ~ '.png') }}" alt="" loading="lazy">{{ m }}</span>
                             </label>
                             {% endfor %}
                         </div>
