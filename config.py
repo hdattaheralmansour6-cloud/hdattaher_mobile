@@ -3,6 +3,8 @@ Configuration sécurisée du projet HDATTAHER MOBILE
 Version Supabase (PostgreSQL)
 """
 import os
+import hmac
+import hashlib
 import secrets
 
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -29,9 +31,28 @@ def _get_or_create_secret_key():
     return key
 
 
+def _get_secret_key():
+    """
+    Clé secrète des sessions, identique pour les 2 workers et à chaque redéploiement :
+    1. SECRET_KEY définie dans l'environnement (Render) si elle existe ;
+    2. sinon dérivée de SUPABASE_SERVICE_KEY (stable, jamais exposée) ;
+    3. sinon fichier .secret_key (développement local uniquement).
+    Une clé qui change à chaque déploiement invalide toutes les sessions et fait
+    échouer les formulaires déjà ouverts ("The CSRF session token is missing").
+    """
+    env_key = os.environ.get('SECRET_KEY')
+    if env_key:
+        return env_key
+    service_key = os.environ.get('SUPABASE_SERVICE_KEY', '')
+    if service_key:
+        return hmac.new(service_key.encode('utf-8'), b'hdattaher-mobile-flask-secret-v1',
+                        hashlib.sha256).hexdigest()
+    return _get_or_create_secret_key()
+
+
 class Config:
-    # --- Clé secrète forte ---
-    SECRET_KEY = os.environ.get('SECRET_KEY') or _get_or_create_secret_key()
+    # --- Clé secrète forte et stable ---
+    SECRET_KEY = _get_secret_key()
 
     # --- Supabase ---
     SUPABASE_URL = os.environ.get('SUPABASE_URL', '')
