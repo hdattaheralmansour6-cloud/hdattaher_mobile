@@ -1,0 +1,43 @@
+<script>
+(function () {
+    // Afficher / masquer le mot de passe
+    document.querySelectorAll('.acc-eye').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var f = document.getElementById(btn.getAttribute('data-target'));
+            var show = f.type === 'password';
+            f.type = show ? 'text' : 'password';
+            btn.innerHTML = show ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+        });
+    });
+    // Force du mot de passe
+    var pw = document.querySelector('[data-strength]'), meter = document.getElementById('pwMeter');
+    if (pw && meter) pw.addEventListener('input', function () {
+        var v = pw.value, n = 0;
+        if (v.length >= 6) n++;
+        if (v.length >= 10) n++;
+        if (/[A-Z]/.test(v) && /[a-z]/.test(v)) n++;
+        if (/[0-9]/.test(v)) n++;
+        if (/[^A-Za-z0-9]/.test(v)) n++;
+        var s = !v ? 0 : (v.length < 6 || n <= 2 ? 1 : (n <= 3 ? 2 : 3));
+        meter.className = 'auth-meter s' + s;
+    });
+    // Les deux mots de passe correspondent ?
+    var c = document.querySelector('[data-match]');
+    if (c) {
+        var first = document.getElementById(c.getAttribute('data-match'));
+        var hint = document.getElementById('matchHint');
+        var check = function () {
+            if (!c.value) { hint.className = 'auth-match'; return; }
+            hint.className = 'auth-match ' + (c.value === first.value ? 'ok' : 'ko');
+        };
+        c.addEventListener('input', check); first.addEventListener('input', check);
+    }
+    // Bouton en chargement à l'envoi (évite les doubles clics)
+    document.querySelectorAll('form.auth-form').forEach(function (f) {
+        f.addEventListener('submit', function () {
+            var b = f.querySelector('.acc-btn[type=submit]');
+            if (b) setTimeout(function () { b.classList.add('is-loading'); b.disabled = true; }, 10);
+        });
+    });
+})();
+</script>

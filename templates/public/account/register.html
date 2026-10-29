@@ -1,53 +1,84 @@
 {% extends "public/base.html" %}
 {% block title %}Créer un compte{% endblock %}
 {% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}?v=2">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}?v=4">
 {% endblock %}
 
 {% block content %}
-<div class="account-wrapper">
-    <div class="account-card">
-        <h1 data-i18n="register_title">Créer un compte</h1>
-        <p class="account-subtitle" data-i18n="register_subtitle">Suivez vos commandes et gagnez du temps à chaque achat.</p>
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-head">
+            <span class="auth-badge"><i class="fas fa-user-plus"></i></span>
+            <h1 data-i18n="register_title">Créer un compte</h1>
+            <p data-i18n="register_subtitle">Suivez vos commandes et gagnez du temps à chaque achat.</p>
+        </div>
 
-        <form method="POST">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="auth-body">
+            <ul class="auth-perks">
+                <li><i class="fas fa-box"></i> <span data-i18n="perk_track">Suivi de vos commandes</span></li>
+                <li><i class="fas fa-file-invoice"></i> <span data-i18n="perk_invoice">Factures PDF</span></li>
+                <li><i class="fas fa-bolt"></i> <span data-i18n="perk_fast">Commande plus rapide</span></li>
+            </ul>
 
-            <div class="account-field">
-                <label for="full_name" data-i18n="fullname_label">Nom complet *</label>
-                <input type="text" id="full_name" name="full_name" required
-                       value="{{ request.form.get('full_name', '') }}">
-            </div>
+            <form method="POST" class="auth-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-            <div class="account-field">
-                <label for="email" data-i18n="email_label">Email *</label>
-                <input type="email" id="email" name="email" required
-                       value="{{ request.form.get('email', '') }}">
-            </div>
+                <div class="acc-field">
+                    <label for="full_name" data-i18n="fullname_label">Nom complet</label>
+                    <div class="acc-input"><i class="fas fa-user"></i>
+                        <input type="text" id="full_name" name="full_name" required autocomplete="name"
+                               value="{{ request.form.get('full_name', '') }}"></div>
+                </div>
 
-            <div class="account-field">
-                <label for="phone" data-i18n="phone_label">Téléphone</label>
-                <input type="tel" id="phone" name="phone"
-                       value="{{ request.form.get('phone', '') }}">
-            </div>
+                <div class="acc-field">
+                    <label for="email" data-i18n="email_label">Email</label>
+                    <div class="acc-input"><i class="fas fa-envelope"></i>
+                        <input type="email" id="email" name="email" required autocomplete="email" inputmode="email"
+                               placeholder="exemple@gmail.com" value="{{ request.form.get('email', '') }}"></div>
+                </div>
 
-            <div class="account-field">
-                <label for="password" data-i18n="password_label">Mot de passe *</label>
-                <input type="password" id="password" name="password" required minlength="6">
-            </div>
+                <div class="acc-field">
+                    <label for="phone" data-i18n="phone_label">Téléphone</label>
+                    <div class="acc-input"><i class="fas fa-phone"></i>
+                        <input type="tel" id="phone" name="phone" autocomplete="tel" inputmode="tel"
+                               placeholder="90 00 00 00" value="{{ request.form.get('phone', '') }}"></div>
+                </div>
 
-            <div class="account-field">
-                <label for="confirm_password" data-i18n="confirm_password_label">Confirmer le mot de passe *</label>
-                <input type="password" id="confirm_password" name="confirm_password" required minlength="6">
-            </div>
+                <div class="acc-field">
+                    <label for="password" data-i18n="password_label">Mot de passe</label>
+                    <div class="acc-input"><i class="fas fa-lock"></i>
+                        <input type="password" id="password" name="password" required minlength="6" autocomplete="new-password" data-strength>
+                        <button type="button" class="acc-eye" data-target="password" aria-label="Afficher"><i class="fas fa-eye"></i></button>
+                    </div>
+                    <div id="pwMeter" class="auth-meter s0">
+                        <div class="auth-strength"><div class="auth-strength-bar"></div></div>
+                        <small class="auth-hint"><span data-i18n="pw_min">6 caractères minimum</span>
+                            <span class="pw-l pw-l1" data-i18n="pw_weak">Faible</span><span class="pw-l pw-l2" data-i18n="pw_medium">Moyen</span><span class="pw-l pw-l3" data-i18n="pw_strong">Fort</span></small>
+                    </div>
+                </div>
 
-            <button type="submit" class="btn btn-primary btn-block" data-i18n="register_btn">Créer mon compte</button>
-        </form>
+                <div class="acc-field">
+                    <label for="confirm_password" data-i18n="confirm_password_label">Confirmer le mot de passe</label>
+                    <div class="acc-input"><i class="fas fa-lock"></i>
+                        <input type="password" id="confirm_password" name="confirm_password" required minlength="6"
+                               autocomplete="new-password" data-match="password">
+                        <button type="button" class="acc-eye" data-target="confirm_password" aria-label="Afficher"><i class="fas fa-eye"></i></button>
+                    </div>
+                    <small id="matchHint" class="auth-match">
+                        <span class="m-ok"><i class="fas fa-check"></i> <span data-i18n="pw_match">Les mots de passe correspondent</span></span>
+                        <span class="m-ko"><i class="fas fa-xmark"></i> <span data-i18n="pw_nomatch">Les mots de passe ne correspondent pas</span></span>
+                    </small>
+                </div>
 
-        <div class="account-footer-link">
-            <span data-i18n="already_account">Déjà un compte ?</span>
-            <a href="{{ url_for('customer_login') }}" data-i18n="login_link">Se connecter</a>
+                <button type="submit" class="acc-btn"><i class="fas fa-user-plus"></i> <span data-i18n="register_btn">Créer mon compte</span></button>
+            </form>
+
+            <p class="auth-foot"><span data-i18n="already_account">Déjà un compte ?</span>
+                <a href="{{ url_for('customer_login') }}" data-i18n="login_link">Se connecter</a></p>
         </div>
     </div>
+    {% include "public/account/_auth_trust.html" %}
 </div>
 {% endblock %}
+
+{% block extra_js %}{% include "public/account/_auth_js.html" %}{% endblock %}
