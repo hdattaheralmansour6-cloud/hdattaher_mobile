@@ -1115,35 +1115,6 @@ def admin_settings():
     return render_template('admin/settings.html')
 
 
-@app.route('/azawad/password', methods=['POST'])
-@login_required
-def admin_change_password():
-    old_pwd = request.form.get('old_password', '')
-    new_pwd = request.form.get('new_password', '')
-
-    if len(new_pwd) < 8:
-        flash('Le mot de passe doit contenir au moins 8 caractères.', 'error')
-        return redirect(url_for('admin_settings'))
-
-    sb = get_supabase()
-    try:
-        result = sb.rpc('change_admin_password', {
-            'p_admin_id': session['user_id'],
-            'p_old_password': old_pwd,
-            'p_new_password': new_pwd
-        }).execute()
-
-        if result.data is True:
-            log_action('Changement mot de passe', f'Utilisateur: {session.get("username")}')
-            flash('Mot de passe changé avec succès!', 'success')
-        else:
-            flash('Ancien mot de passe incorrect.', 'error')
-    except Exception as e:
-        flash('Erreur lors du changement de mot de passe.', 'error')
-
-    return redirect(url_for('admin_settings'))
-
-
 @app.route('/azawad/logs')
 @login_required
 def admin_logs():
