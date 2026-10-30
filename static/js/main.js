@@ -645,8 +645,10 @@ const AnimationManager = {
           observer.unobserve(entry.target);
         }
       });
-    }, { threshold: 0.1 });
+    }, { threshold: 0, rootMargin: '0px 0px -40px 0px' });
     document.querySelectorAll('.animate-on-scroll').forEach(el => observer.observe(el));
+    // Sécurité : rien ne doit rester invisible
+    setTimeout(() => document.querySelectorAll('.animate-on-scroll').forEach(el => el.classList.add('animate-in')), 2500);
   }
 };
 
@@ -1186,6 +1188,7 @@ function initBannerSwipe() {
 function initStickyBuy() {
   const bar = document.querySelector('.pd-sticky');
   if (!bar) return;
+  document.body.classList.add('has-sticky');
   const target = document.getElementById('pdBuy') || document.querySelector('.pd-wa');
   if (!target || !('IntersectionObserver' in window)) { bar.classList.add('show'); return; }
   new IntersectionObserver((entries) => {
