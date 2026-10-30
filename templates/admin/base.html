@@ -3,90 +3,76 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0B0B0D">
+    <meta name="robots" content="noindex, nofollow">
     <title>{% block title %}Admin{% endblock %} - HDATTAHER MOBILE</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v=3">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin2.css') }}?v=1">
 </head>
 
-<body class="admin-body">
-    <button class="mobile-sidebar-toggle" id="sidebarToggle" aria-label="Menu">
-        <i class="fas fa-bars" id="sidebarToggleIcon"></i>
-    </button>
+{% set ep = request.endpoint or '' %}
+{% set nav = [
+    ('admin_dashboard', 'Tableau de bord', 'fa-house', ['admin_dashboard']),
+    ('admin_orders', 'Commandes', 'fa-receipt', ['admin_orders', 'admin_order_detail']),
+    ('admin_products', 'Produits', 'fa-box', ['admin_products', 'admin_add_product', 'admin_edit_product']),
+    ('admin_customers', 'Clients', 'fa-users', ['admin_customers']),
+    ('admin_categories', 'Catégories', 'fa-layer-group', ['admin_categories']),
+    ('admin_banners', 'Bannières', 'fa-images', ['admin_banners', 'admin_add_banner', 'admin_edit_banner']),
+    ('admin_reset_requests', 'Codes mot de passe', 'fa-key', ['admin_reset_requests']),
+    ('admin_settings', 'Paramètres', 'fa-gear', ['admin_settings']),
+    ('admin_logs', 'Journal', 'fa-clipboard-list', ['admin_logs']),
+    ('admin_profile', 'Mon profil', 'fa-user-shield', ['admin_profile']),
+] %}
+{% set more_active = ep in ['admin_categories', 'admin_banners', 'admin_add_banner', 'admin_edit_banner', 'admin_reset_requests', 'admin_settings', 'admin_logs', 'admin_profile'] %}
+
+<body class="admin-body ax">
+    <!-- ===== Barre du haut (mobile) ===== -->
+    <header class="ax-top">
+        <a href="{{ url_for('admin_dashboard') }}" class="ax-logo" aria-label="Tableau de bord">HM</a>
+        <div class="ax-top-title">
+            <b>{% block top_title %}{{ self.title() }}{% endblock %}</b>
+            <small>Espace admin</small>
+        </div>
+        <a href="{{ url_for('index') }}" target="_blank" rel="noopener" class="ax-top-btn" aria-label="Voir le site">
+            <i class="fas fa-arrow-up-right-from-square"></i></a>
+        <a href="{{ url_for('admin_add_product') }}" class="ax-top-btn ax-top-add" aria-label="Nouveau produit">
+            <i class="fas fa-plus"></i></a>
+    </header>
+
     <div class="admin-layout">
-        <!-- SIDEBAR -->
-        <aside class="admin-sidebar" id="adminSidebar">
-            <div class="sidebar-logo">
-                <h2>HDATTAHER MOBILE</h2>
-                <small>Panneau d'administration</small>
+        <!-- ===== Menu latéral (ordinateur) ===== -->
+        <aside class="admin-sidebar ax-side" id="adminSidebar">
+            <div class="ax-side-brand">
+                <span class="ax-logo">HM</span>
+                <div><b>HDATTAHER</b><small>Espace admin</small></div>
             </div>
             <nav class="sidebar-nav">
-                <a href="{{ url_for('admin_dashboard') }}"
-                    class="{% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
-                    <i class="fas fa-chart-pie"></i> Tableau de bord
+                {% for endpoint, label, icon, eps in nav %}
+                <a href="{{ url_for(endpoint) }}" class="{{ 'active' if ep in eps }}">
+                    <i class="fas {{ icon }}"></i> <span>{{ label }}</span>
+                    {% if endpoint == 'admin_orders' and pending_orders_count %}<em class="ax-count">{{ pending_orders_count }}</em>{% endif %}
+                    {% if endpoint == 'admin_reset_requests' and pending_reset_count %}<em class="ax-count">{{ pending_reset_count }}</em>{% endif %}
                 </a>
-                <a href="{{ url_for('admin_products') }}"
-                    class="{% if request.endpoint in ['admin_products','admin_add_product','admin_edit_product'] %}active{% endif %}">
-                    <i class="fas fa-box"></i> Produits
-                </a>
-                <a href="{{ url_for('admin_orders') }}"
-                    class="{% if request.endpoint in ['admin_orders','admin_order_detail'] %}active{% endif %}">
-                    <i class="fas fa-receipt"></i> Commandes
-                </a>
-                <a href="{{ url_for('admin_categories') }}"
-                    class="{% if request.endpoint == 'admin_categories' %}active{% endif %}">
-                    <i class="fas fa-layer-group"></i> Catégories
-                </a>
-                <a href="{{ url_for('admin_banners') }}"
-                    class="{% if request.endpoint in ['admin_banners','admin_add_banner','admin_edit_banner'] %}active{% endif %}">
-                    <i class="fas fa-images"></i> Bannières
-                </a>
-                <a href="{{ url_for('admin_customers') }}"
-                    class="{% if request.endpoint == 'admin_customers' %}active{% endif %}">
-                    <i class="fas fa-users"></i> Clients
-                </a>
-                <a href="{{ url_for('admin_reset_requests') }}"
-                    class="{% if request.endpoint == 'admin_reset_requests' %}active{% endif %}"
-                    style="display:flex; align-items:center; justify-content:space-between;">
-                    <span><i class="fas fa-key"></i> Réinitialisations</span>
-                    {% if pending_reset_count %}
-                    <span style="background:var(--admin-danger,#EF4444); color:#fff; border-radius:999px;
-                                 font-size:0.7rem; font-weight:700; padding:1px 8px; margin-left:6px;">{{ pending_reset_count }}</span>
-                    {% endif %}
-                </a>
-                <a href="{{ url_for('admin_settings') }}"
-                    class="{% if request.endpoint == 'admin_settings' %}active{% endif %}">
-                    <i class="fas fa-cog"></i> Paramètres
-                </a>
-                <a href="{{ url_for('admin_logs') }}"
-                    class="{% if request.endpoint == 'admin_logs' %}active{% endif %}">
-                    <i class="fas fa-clipboard-list"></i> Journal
-                </a>
-                <a href="{{ url_for('admin_profile') }}"
-                    class="{% if request.endpoint == 'admin_profile' %}active{% endif %}">
-                    <i class="fas fa-user-circle"></i> Mon Profil
-                </a>
+                {% endfor %}
             </nav>
             <div class="sidebar-footer">
-                <a href="{{ url_for('admin_logout') }}"><i class="fas fa-sign-out-alt"></i> Déconnexion</a>
+                <a href="{{ url_for('index') }}" target="_blank" rel="noopener"><i class="fas fa-store"></i> Voir le site</a>
+                <a href="{{ url_for('admin_logout') }}"><i class="fas fa-right-from-bracket"></i> Déconnexion</a>
             </div>
         </aside>
 
-        <!-- OVERLAY (mobile) -->
-        <div class="admin-sidebar-overlay" id="sidebarOverlay"></div>
-
-        <!-- MAIN -->
+        <!-- ===== Contenu ===== -->
         <main class="admin-main">
             {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-            <div style="margin-bottom:1rem;">
+            <div class="ax-flash" id="axFlash">
                 {% for category, message in messages %}
-                <div
-                    style="padding:12px 20px; border-radius:10px; margin-bottom:8px;
-                            background: {% if category == 'success' %}rgba(16,185,129,0.15); color:#10B981;{% elif category == 'error' %}rgba(239,68,68,0.15); color:#EF4444;{% else %}rgba(108,99,255,0.15); color:#6C63FF;{% endif %}; font-size:0.9rem; display:flex; align-items:center; gap:8px;">
-                    <i
-                        class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'error' %}times-circle{% else %}info-circle{% endif %}"></i>
-                    {{ message }}
+                <div class="ax-flash-item {{ category }}">
+                    <i class="fas fa-{% if category == 'success' %}circle-check{% elif category == 'error' %}circle-xmark{% elif category == 'warning' %}triangle-exclamation{% else %}circle-info{% endif %}"></i>
+                    <span>{{ message }}</span>
+                    <button type="button" aria-label="Fermer" onclick="this.parentNode.remove()"><i class="fas fa-xmark"></i></button>
                 </div>
                 {% endfor %}
             </div>
@@ -97,38 +83,82 @@
         </main>
     </div>
 
+    <!-- ===== Barre d'onglets (mobile) ===== -->
+    <nav class="ax-tabs" aria-label="Navigation admin">
+        <a href="{{ url_for('admin_dashboard') }}" class="{{ 'on' if ep == 'admin_dashboard' }}">
+            <i class="fas fa-house"></i><span>Accueil</span></a>
+        <a href="{{ url_for('admin_orders') }}" class="{{ 'on' if ep in ['admin_orders', 'admin_order_detail'] }}">
+            <span class="ax-tab-ic"><i class="fas fa-receipt"></i>{% if pending_orders_count %}<em>{{ pending_orders_count }}</em>{% endif %}</span><span>Commandes</span></a>
+        <a href="{{ url_for('admin_products') }}" class="{{ 'on' if ep in ['admin_products', 'admin_add_product', 'admin_edit_product'] }}">
+            <i class="fas fa-box"></i><span>Produits</span></a>
+        <a href="{{ url_for('admin_customers') }}" class="{{ 'on' if ep == 'admin_customers' }}">
+            <i class="fas fa-users"></i><span>Clients</span></a>
+        <button type="button" class="{{ 'on' if more_active }}" onclick="axSheet(true)">
+            <span class="ax-tab-ic"><i class="fas fa-grip"></i>{% if pending_reset_count %}<em>{{ pending_reset_count }}</em>{% endif %}</span><span>Plus</span></button>
+    </nav>
+
+    <!-- ===== Menu « Plus » ===== -->
+    <div class="ax-sheet-back" id="axSheetBack" hidden onclick="axSheet(false)"></div>
+    <div class="ax-sheet" id="axSheet" hidden>
+        <div class="ax-sheet-grip"></div>
+        <div class="ax-sheet-head"><b>Menu</b><button type="button" onclick="axSheet(false)" aria-label="Fermer"><i class="fas fa-xmark"></i></button></div>
+        <div class="ax-sheet-grid">
+            {% for endpoint, label, icon, eps in nav[4:] %}
+            <a href="{{ url_for(endpoint) }}" class="{{ 'on' if ep in eps }}">
+                <span class="ax-sheet-ic"><i class="fas {{ icon }}"></i>
+                    {% if endpoint == 'admin_reset_requests' and pending_reset_count %}<em>{{ pending_reset_count }}</em>{% endif %}</span>
+                <span>{{ label }}</span>
+            </a>
+            {% endfor %}
+            <a href="{{ url_for('index') }}" target="_blank" rel="noopener">
+                <span class="ax-sheet-ic"><i class="fas fa-store"></i></span><span>Voir le site</span></a>
+        </div>
+        <a href="{{ url_for('admin_logout') }}" class="ax-logout"><i class="fas fa-right-from-bracket"></i> Déconnexion</a>
+    </div>
+
     <script>
+        // Menu « Plus »
+        function axSheet(open) {
+            var s = document.getElementById('axSheet'), b = document.getElementById('axSheetBack');
+            if (open) {
+                s.hidden = false; b.hidden = false;
+                requestAnimationFrame(function () { s.classList.add('open'); b.classList.add('open'); });
+            } else {
+                s.classList.remove('open'); b.classList.remove('open');
+                setTimeout(function () { s.hidden = true; b.hidden = true; }, 250);
+            }
+        }
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') axSheet(false); });
+
+        // Les messages disparaissent seuls
         (function () {
-            const sidebar = document.getElementById('adminSidebar');
-            const toggle = document.getElementById('sidebarToggle');
-            const overlay = document.getElementById('sidebarOverlay');
-            const icon = document.getElementById('sidebarToggleIcon');
-
-            function openSidebar() {
-                sidebar.classList.add('open');
-                icon.className = 'fas fa-times';
-            }
-
-            function closeSidebar() {
-                sidebar.classList.remove('open');
-                icon.className = 'fas fa-bars';
-            }
-
-            toggle.addEventListener('click', function () {
-                if (sidebar.classList.contains('open')) {
-                    closeSidebar();
-                } else {
-                    openSidebar();
-                }
-            });
-
-            overlay.addEventListener('click', closeSidebar);
-
-            // Auto-close sidebar on nav link click (mobile)
-            sidebar.querySelectorAll('.sidebar-nav a, .sidebar-footer a').forEach(function (link) {
-                link.addEventListener('click', closeSidebar);
-            });
+            var f = document.getElementById('axFlash');
+            if (!f) return;
+            setTimeout(function () {
+                f.querySelectorAll('.ax-flash-item.success, .ax-flash-item.info').forEach(function (el) {
+                    el.classList.add('out'); setTimeout(function () { el.remove(); }, 400);
+                });
+            }, 4500);
         })();
+
+        // Petit message rapide (utilisé par les actions sans rechargement)
+        function axToast(text, kind) {
+            var t = document.createElement('div');
+            t.className = 'ax-toast ' + (kind || 'success');
+            t.textContent = text;
+            document.body.appendChild(t);
+            requestAnimationFrame(function () { t.classList.add('show'); });
+            setTimeout(function () { t.classList.remove('show'); setTimeout(function () { t.remove(); }, 300); }, 2200);
+        }
+
+        // Envoi d'un formulaire sans recharger la page (renvoie le JSON du serveur)
+        function axPost(url, data) {
+            var fd = new FormData();
+            fd.append('csrf_token', '{{ csrf_token() }}');
+            Object.keys(data || {}).forEach(function (k) { fd.append(k, data[k]); });
+            return fetch(url, { method: 'POST', body: fd, credentials: 'same-origin', headers: { 'X-Requested-With': 'fetch' } })
+                .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); });
+        }
     </script>
     {% block scripts %}{% endblock %}
 </body>

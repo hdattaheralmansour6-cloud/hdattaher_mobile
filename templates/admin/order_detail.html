@@ -1,117 +1,153 @@
 {% extends "admin/base.html" %}
 {% block title %}Commande {{ order.order_number }}{% endblock %}
+{% block top_title %}Commande{% endblock %}
 
 {% block admin_content %}
-<div class="admin-header">
-    <div>
-        <h1>Commande #{{ order.order_number }}</h1>
-        <span class="breadcrumb">{{ order.created_at[:10] if order.created_at else '' }}</span>
-    </div>
-    <div style="display:flex; gap:10px;">
-        <a href="{{ url_for('admin_order_invoice', order_id=order.id) }}" class="btn-admin primary">
-            <i class="fas fa-file-pdf"></i> Facture PDF
-        </a>
-        <a href="{{ url_for('admin_orders') }}" class="btn-admin"><i class="fas fa-arrow-left"></i> Retour</a>
-    </div>
-</div>
+{% set status_colors = {'En attente':'#F59E0B','Confirmée':'#3B82F6','Préparation':'#8B5CF6','Expédiée':'#06B6D4','Livrée':'#10B981','Annulée':'#EF4444'} %}
+{% set next_labels = {'Confirmée':'Confirmer la commande', 'Préparation':'Passer en préparation', 'Expédiée':'Marquer expédiée', 'Livrée':'Marquer livrée'} %}
+{% set steps = [('En attente','fa-hourglass-half'), ('Confirmée','fa-circle-check'), ('Préparation','fa-box-open'), ('Expédiée','fa-truck-fast'), ('Livrée','fa-house-circle-check')] %}
+{% set names = steps|map(attribute=0)|list %}
+{% set cur = names.index(order.status) if order.status in names else -1 %}
+{% set nxt = next_status.get(order.status) %}
+{% set col = status_colors.get(order.status, '#9CA3AF') %}
+{% set phone = order.shipping_phone|wa %}
+{% set wa_msgs = {
+    'En attente': 'Bonjour ' ~ (order.shipping_name or '') ~ ', nous avons bien reçu votre commande ' ~ order.order_number ~ '. Nous vérifions votre paiement et revenons vers vous très vite.',
+    'Confirmée': 'Bonjour ' ~ (order.shipping_name or '') ~ ', votre commande ' ~ order.order_number ~ ' est confirmée ✅ Merci pour votre confiance !',
+    'Préparation': 'Bonjour ' ~ (order.shipping_name or '') ~ ', votre commande ' ~ order.order_number ~ ' est en cours de préparation 📦',
+    'Expédiée': 'Bonjour ' ~ (order.shipping_name or '') ~ ', votre commande ' ~ order.order_number ~ ' est en route 🚚 Elle arrive bientôt !',
+    'Livrée': 'Bonjour ' ~ (order.shipping_name or '') ~ ', votre commande ' ~ order.order_number ~ ' a été livrée. Merci et à bientôt chez HDATTAHER MOBILE !',
+    'Annulée': 'Bonjour ' ~ (order.shipping_name or '') ~ ', votre commande ' ~ order.order_number ~ ' a été annulée. Contactez-nous pour toute question.'
+} %}
 
-<div class="admin-card">
-    <div class="admin-card-body">
-        <h3 style="margin-bottom:12px;">Changer le statut</h3>
-        <form method="POST" action="{{ url_for('admin_update_order_status', order_id=order.id) }}"
-              style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+<a href="{{ url_for('admin_orders') }}" class="ax-back"><i class="fas fa-arrow-left"></i> Commandes</a>
+
+<!-- En-tête -->
+<section class="admin-card ax-ohero" style="--c: {{ col }}">
+    <div class="ax-ohero-top">
+        <div>
+            <small>Commande</small>
+            <h1>#{{ order.order_number }}</h1>
+            <small>{{ (order.created_at or '')[:16]|replace('T', ' à ') }}</small>
+        </div>
+        <div class="ax-ohero-total">
+            <b>{{ order.total|fcfa }}</b>
+            <em class="ax-pill" style="--c: {{ col }}">{{ order.status }}</em>
+        </div>
+    </div>
+
+    {% if order.status == 'Annulée' %}
+    <div class="ax-note ax-note-red"><i class="fas fa-ban"></i> Commande annulée — le stock a été remis.</div>
+    {% else %}
+    <ol class="ax-steps">
+        {% for name, icon in steps %}
+        <li class="{{ 'done' if loop.index0 < cur else ('now' if loop.index0 == cur else '') }}">
+            <span><i class="fas {{ icon }}"></i></span><small>{{ name }}</small>
+        </li>
+        {% endfor %}
+    </ol>
+    {% endif %}
+
+    <div class="ax-ohero-actions">
+        {% if nxt %}
+        <form method="POST" action="{{ url_for('admin_update_order_status', order_id=order.id) }}" class="ax-grow">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <select name="status" class="form-control" style="max-width:240px;">
-                {% for s in statuses %}
-                <option value="{{ s }}" {% if order.status==s %}selected{% endif %}>{{ s }}</option>
-                {% endfor %}
-            </select>
-            <button type="submit" class="btn-admin primary">Mettre à jour</button>
+            <input type="hidden" name="status" value="{{ nxt }}">
+            <button type="submit" class="btn-admin primary ax-w100 ax-big"><i class="fas fa-arrow-right"></i> {{ next_labels.get(nxt, nxt) }}</button>
         </form>
-    </div>
-</div>
-
-{% if customer %}
-<div class="admin-card">
-    <div class="admin-card-body" style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
-        {% if customer.avatar_url %}
-        <a href="{{ customer.avatar_url }}" target="_blank" rel="noopener">
-            <img src="{{ customer.avatar_url }}" alt="" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--admin-primary);display:block;">
-        </a>
-        {% else %}
-        <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#6C63FF,#FF6584);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.8rem;font-weight:800;">
-            {{ ((customer.full_name or customer.email or '?')|trim)[:1]|upper }}
-        </div>
         {% endif %}
-        <div style="min-width:0;">
-            <div style="font-size:.75rem;opacity:.7;text-transform:uppercase;letter-spacing:.05em;">Client</div>
-            <div style="font-size:1.1rem;font-weight:700;">{{ customer.full_name }}</div>
-            <div style="opacity:.8;font-size:.9rem;overflow-wrap:anywhere;"><i class="fas fa-envelope"></i> {{ customer.email }}</div>
-            {% if customer.phone %}<div style="opacity:.8;font-size:.9rem;"><i class="fas fa-phone"></i> {{ customer.phone }}</div>{% endif %}
+        <a href="{{ url_for('admin_order_invoice', order_id=order.id) }}" class="btn-admin {{ 'ax-grow' if not nxt }}"><i class="fas fa-file-pdf"></i> Facture</a>
+    </div>
+
+    <details class="ax-other-status">
+        <summary>Choisir un autre statut</summary>
+        <form method="POST" action="{{ url_for('admin_update_order_status', order_id=order.id) }}" class="ax-status-grid" id="statusForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% for s in statuses %}
+            <button type="submit" name="status" value="{{ s }}" class="ax-status-btn {{ 'on' if s == order.status }}" style="--c: {{ status_colors.get(s) }}"
+                    {{ 'disabled' if s == order.status }} {% if s == 'Annulée' %}data-confirm="1"{% endif %}>{{ s }}</button>
+            {% endfor %}
+        </form>
+        <small class="ax-muted">Annuler une commande remet automatiquement le stock des produits.</small>
+    </details>
+</section>
+
+<div class="ax-grid-2">
+    <!-- Client & livraison -->
+    <section class="admin-card">
+        <div class="admin-card-header"><h3><i class="fas fa-user"></i> Client & livraison</h3></div>
+        <div class="admin-card-body">
+            <div class="ax-client">
+                {% if customer and customer.avatar_url %}
+                <a href="{{ customer.avatar_url }}" target="_blank" rel="noopener"><img src="{{ customer.avatar_url }}" alt="" class="ax-avatar ax-avatar-lg"></a>
+                {% else %}
+                <span class="ax-avatar ax-avatar-lg ax-avatar-txt">{{ (((customer.full_name if customer else order.shipping_name) or '?')|trim)[:1]|upper }}</span>
+                {% endif %}
+                <div>
+                    <b>{{ customer.full_name if customer else (order.shipping_name or 'Client') }}</b>
+                    {% if customer and customer.email %}<small>{{ customer.email }}</small>{% endif %}
+                </div>
+            </div>
+            <dl class="ax-dl">
+                <div><dt>Livrer à</dt><dd>{{ order.shipping_name or '—' }}</dd></div>
+                <div><dt>Téléphone</dt><dd>{{ order.shipping_phone or '—' }}</dd></div>
+                <div><dt>Adresse</dt><dd>{{ order.shipping_address or '—' }}</dd></div>
+                {% if order.notes %}<div><dt>Note du client</dt><dd>{{ order.notes }}</dd></div>{% endif %}
+            </dl>
+            {% if phone %}
+            <div class="ax-contact">
+                <a href="https://wa.me/{{ phone }}?text={{ wa_msgs.get(order.status, '')|urlencode }}" target="_blank" rel="noopener" class="btn-admin ax-wa-btn"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+                <a href="tel:+{{ phone }}" class="btn-admin"><i class="fas fa-phone"></i> Appeler</a>
+            </div>
+            <small class="ax-muted">Le message WhatsApp est déjà écrit selon le statut actuel.</small>
+            {% endif %}
         </div>
-    </div>
-</div>
-{% endif %}
+    </section>
 
-<div class="admin-card">
-    <div class="admin-card-header">
-        <h3>Livraison</h3>
-    </div>
-    <div class="admin-card-body">
-        <p><strong>Nom :</strong> {{ order.shipping_name }}</p>
-        <p><strong>Téléphone :</strong> {{ order.shipping_phone }}</p>
-        <p><strong>Adresse :</strong> {{ order.shipping_address }}</p>
-        {% if order.notes %}<p><strong>Notes :</strong> {{ order.notes }}</p>{% endif %}
-    </div>
-</div>
-
-<div class="admin-card">
-    <div class="admin-card-header">
-        <h3>Paiement</h3>
-    </div>
-    <div class="admin-card-body">
-        <p><strong>Moyen :</strong> {% if order.payment_method %}<img src="{{ url_for('static', filename='img/' ~ order.payment_method|lower ~ '.png') }}" alt="" style="height:26px;vertical-align:middle;border-radius:6px;background:#fff;margin-right:6px;">{% endif %}{{ order.payment_method or 'Non renseigné' }}</p>
-        <p><strong>Montant attendu :</strong> {{ "{:,.0f}".format(order.total) }} FCFA</p>
-        {% if order.payment_proof %}
-        <p><strong>Reçu envoyé par le client :</strong></p>
-        <a href="{{ order.payment_proof }}" target="_blank" rel="noopener">
-            <img src="{{ order.payment_proof }}" alt="Reçu de paiement" style="max-width:100%; max-height:420px; border-radius:12px; border:1px solid var(--border);">
-        </a>
-        <p style="margin-top:8px;"><a href="{{ order.payment_proof }}" target="_blank" rel="noopener" class="btn-admin"><i class="fas fa-up-right-from-square"></i> Ouvrir en grand</a></p>
-        {% else %}
-        <p style="color:#f59e0b;">Aucun reçu joint (commande passée avant l'ajout du paiement).</p>
-        {% endif %}
-    </div>
-</div>
-
-<div class="admin-card">
-    <div class="admin-card-header">
-        <h3>Produits commandés</h3>
-    </div>
-    <div class="admin-card-body" style="padding:0; overflow-x:auto;">
-        <table class="admin-table">
-            <thead>
-                <tr>
-                    <th>Produit</th>
-                    <th>Prix unitaire</th>
-                    <th>Quantité</th>
-                    <th>Sous-total</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in items %}
-                <tr>
-                    <td>{{ item.product_name }}</td>
-                    <td>{{ "{:,.0f}".format(item.unit_price) }} FCFA</td>
-                    <td>{{ item.quantity }}</td>
-                    <td>{{ "{:,.0f}".format(item.subtotal) }} FCFA</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        <div style="padding:16px; text-align:right; font-size:1.1rem;">
-            <strong>Total : {{ "{:,.0f}".format(order.total) }} FCFA</strong>
+    <!-- Paiement -->
+    <section class="admin-card">
+        <div class="admin-card-header"><h3><i class="fas fa-wallet"></i> Paiement</h3></div>
+        <div class="admin-card-body">
+            <div class="ax-pay">
+                {% if order.payment_method %}<img src="{{ url_for('static', filename='img/' ~ order.payment_method|lower ~ '.png') }}" alt="">{% endif %}
+                <div><b>{{ order.payment_method or 'Non renseigné' }}</b><small>Montant attendu : {{ order.total|fcfa }}</small></div>
+            </div>
+            {% if order.payment_proof %}
+            <a href="{{ order.payment_proof }}" target="_blank" rel="noopener" class="ax-receipt">
+                <img src="{{ order.payment_proof }}" alt="Reçu de paiement" loading="lazy">
+                <span><i class="fas fa-expand"></i> Voir le reçu en grand</span>
+            </a>
+            {% else %}
+            <div class="ax-note"><i class="fas fa-circle-exclamation"></i> Aucun reçu joint à cette commande.</div>
+            {% endif %}
         </div>
-    </div>
+    </section>
 </div>
+
+<!-- Articles -->
+<section class="admin-card">
+    <div class="admin-card-header"><h3><i class="fas fa-bag-shopping"></i> Articles</h3><small class="ax-muted">{{ items|sum(attribute='quantity') }} article(s)</small></div>
+    <div class="ax-list">
+        {% for item in items %}
+        <div class="ax-row">
+            <span class="ax-thumb"><i class="fas fa-mobile-screen"></i></span>
+            <span class="ax-row-main"><b>{{ item.product_name }}</b><small>{{ item.unit_price|fcfa }} × {{ item.quantity }}</small></span>
+            <span class="ax-row-side"><b>{{ item.subtotal|fcfa }}</b>
+                {% if item.product_id %}<a href="{{ url_for('admin_edit_product', product_id=item.product_id) }}" class="ax-link">Produit</a>{% endif %}</span>
+        </div>
+        {% endfor %}
+        <div class="ax-total"><span>Total</span><b>{{ order.total|fcfa }}</b></div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Confirmation avant d'annuler
+    document.querySelectorAll('[data-confirm]').forEach(function (b) {
+        b.addEventListener('click', function (e) {
+            if (!confirm('Annuler cette commande ? Le stock des produits sera remis automatiquement.')) e.preventDefault();
+        });
+    });
+</script>
 {% endblock %}

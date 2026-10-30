@@ -1,162 +1,193 @@
 {% extends "admin/base.html" %}
-{% block title %}{% if action == 'add' %}Ajouter{% else %}Modifier{% endif %} Produit{% endblock %}
+{% block title %}{% if action == 'add' %}Nouveau produit{% else %}Modifier le produit{% endif %}{% endblock %}
 
 {% block admin_content %}
+{% set cur_brand = ((product.brand if product else '') or '')|trim %}
+{% set brand_list = brands|default([]) %}
+{% set is_other = cur_brand and (cur_brand|lower) not in (brand_list|map('lower')|list) %}
+{% set has_img = product and product.image and product.image != 'default.png' %}
+{# Ancienne promo saisie seulement en % : on retrouve l'ancien prix pour pouvoir la modifier #}
+{% if product and product.old_price and product.old_price > product.price %}{% set old_val = product.old_price|int %}
+{% elif product and (product.discount or 0) > 0 and product.price %}{% set old_val = (product.price / (1 - product.discount / 100))|round|int %}
+{% else %}{% set old_val = 0 %}{% endif %}
+
+<a href="{{ url_for('admin_products') }}" class="ax-back"><i class="fas fa-arrow-left"></i> Produits</a>
 <div class="admin-header">
     <div>
-        <h1>{% if action == 'add' %}Ajouter un Produit{% else %}Modifier: {{ product.name }}{% endif %}</h1>
-    </div>
-    <a href="{{ url_for('admin_products') }}" class="btn-admin primary" style="background:var(--admin-border);"><i
-            class="fas fa-arrow-left"></i> Retour</a>
-</div>
-
-<div class="admin-card">
-    <div class="admin-card-body">
-        <form method="POST" enctype="multipart/form-data"
-            action="{% if action == 'add' %}{{ url_for('admin_add_product') }}{% else %}{{ url_for('admin_edit_product', product_id=product.id) }}{% endif %}">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Nom (Français) *</label>
-                    <input type="text" name="name" class="form-control" value="{{ product.name if product else '' }}"
-                        required>
-                </div>
-                {% set cur_brand = ((product.brand if product else '') or '')|trim %}
-                {% set brand_list = brands|default([]) %}
-                {% set is_other = cur_brand and (cur_brand|lower) not in (brand_list|map('lower')|list) %}
-                <div class="form-group full-width">
-                    <label>Marque <small style="opacity:.6; font-weight:400;">— touchez pour choisir</small></label>
-                    <div class="brand-picker" id="brandPicker">
-                        <label class="brand-opt"><input type="radio" name="brand" value="" {{ 'checked' if not cur_brand }}><span>Aucune</span></label>
-                        {% for b in brand_list %}
-                        <label class="brand-opt"><input type="radio" name="brand" value="{{ b }}" {{ 'checked' if cur_brand|lower == b|lower }}><span>{{ b }}</span></label>
-                        {% endfor %}
-                        <label class="brand-opt brand-opt-other"><input type="radio" name="brand" value="__other__" {{ 'checked' if is_other }}><span><i class="fas fa-plus"></i> Autre</span></label>
-                    </div>
-                    <input type="text" name="brand_other" id="brandOther" class="form-control" maxlength="40"
-                           placeholder="Nom de la nouvelle marque" value="{{ cur_brand if is_other else '' }}"
-                           style="margin-top:10px; {{ '' if is_other else 'display:none;' }}">
-                </div>
-                <div class="form-group full-width">
-                    <label>Description (Français)</label>
-                    <textarea name="description"
-                        class="form-control">{{ product.description if product else '' }}</textarea>
-                </div>
-                <div class="form-group">
-                    <label>Prix (FCFA) *</label>
-                    <input type="number" name="price" class="form-control"
-                        value="{{ product.price if product else '' }}" required min="0">
-                </div>
-                <div class="form-group">
-                    <label>Ancien Prix (FCFA)</label>
-                    <input type="number" name="old_price" class="form-control"
-                        value="{{ product.old_price if product else 0 }}" min="0">
-                </div>
-                <div class="form-group">
-                    <label>Réduction (%)</label>
-                    <input type="number" name="discount" class="form-control"
-                        value="{{ product.discount if product else 0 }}" min="0" max="99">
-                </div>
-                <div class="form-group">
-                    <label>Stock</label>
-                    <input type="number" name="stock" class="form-control" value="{{ product.stock if product else 0 }}"
-                        min="0">
-                </div>
-                <div class="form-group">
-                    <label>Catégorie</label>
-                    <select name="category_id" class="form-control">
-                        {% for cat in categories %}
-                        <option value="{{ cat.id }}" {% if product and product.category_id==cat.id %}selected{% endif
-                            %}>{{ cat.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Nouvel arrivage 🆕</label>
-                    <label class="toggle-switch" style="display:block; margin-top:8px;">
-                        <input type="checkbox" name="is_new" {% if product and product.is_new %}checked{% endif %}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-                {% if action == 'edit' %}
-                <div class="form-group">
-                    <label>Produit actif</label>
-                    <label class="toggle-switch" style="display:block; margin-top:8px;">
-                        <input type="checkbox" name="is_active" {% if product and product.is_active %}checked{% endif
-                            %}>
-                        <span class="toggle-slider"></span>
-                    </label>
-                </div>
-                {% endif %}
-                <div class="form-group full-width">
-                    <label>Image du produit</label>
-                    <div class="image-upload" onclick="document.getElementById('imageInput').click()">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <p>Cliquez pour sélectionner une image (JPG, PNG, WEBP)</p>
-                        <input type="file" name="image" id="imageInput" accept="image/*" style="display:none;"
-                            onchange="previewImg(this)">
-                    </div>
-                    <img id="imagePreview" class="image-preview" {% if product and product.image and product.image
-                        !='default.png' %} src="{{ product.image }}"
-                        style="display:block;margin-top:1rem;" {% else %}style="display:none;" {% endif %}>
-                </div>
-            </div>
-            <div style="margin-top:1.5rem; display:flex; gap:1rem;">
-                <button type="submit" class="btn-admin primary">
-                    <i class="fas fa-save"></i> {% if action == 'add' %}Ajouter le Produit{% else %}Sauvegarder{% endif
-                    %}
-                </button>
-                <a href="{{ url_for('admin_products') }}" class="btn-admin"
-                    style="background:var(--admin-border);">Annuler</a>
-            </div>
-        </form>
+        <h1>{% if action == 'add' %}Nouveau produit{% else %}{{ product.name }}{% endif %}</h1>
+        {% if action == 'edit' %}<span class="breadcrumb"><i class="fas fa-eye"></i> {{ product.views or 0 }} vues ·
+            <a href="{{ url_for('product_detail', product_id=product.id) }}" target="_blank" rel="noopener" class="ax-link">Voir sur le site</a></span>{% endif %}
     </div>
 </div>
 
-<script>
-    function previewImg(input) {
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                const preview = document.getElementById('imagePreview');
-                preview.src = e.target.result;
-                preview.style.display = 'block';
-            };
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
-</script>
+<form method="POST" enctype="multipart/form-data" id="productForm" class="ax-form"
+      action="{% if action == 'add' %}{{ url_for('admin_add_product') }}{% else %}{{ url_for('admin_edit_product', product_id=product.id) }}{% endif %}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <!-- Photo -->
+    <section class="admin-card">
+        <div class="admin-card-header"><h3><i class="fas fa-camera"></i> Photo</h3></div>
+        <div class="admin-card-body">
+            <label class="ax-photo {{ 'has-img' if has_img }}" id="photoBox">
+                <img id="imagePreview" src="{{ product.image if has_img else '' }}" alt="" {{ '' if has_img else 'hidden' }}>
+                <span class="ax-photo-empty"><i class="fas fa-cloud-arrow-up"></i><b>Ajouter une photo</b><small>JPG, PNG ou WEBP — fond blanc ou transparent idéal</small></span>
+                <span class="ax-photo-change"><i class="fas fa-camera-rotate"></i> Changer la photo</span>
+                <input type="file" name="image" id="imageInput" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+            </label>
+            <small class="ax-muted">La photo est automatiquement redressée, réduite et allégée pour un site plus rapide.</small>
+        </div>
+    </section>
+
+    <!-- Infos -->
+    <section class="admin-card">
+        <div class="admin-card-header"><h3><i class="fas fa-pen"></i> Informations</h3></div>
+        <div class="admin-card-body">
+            <div class="form-group">
+                <label for="fName">Nom du produit *</label>
+                <input type="text" name="name" id="fName" class="form-control" value="{{ product.name if product else '' }}" required maxlength="120"
+                       placeholder="Ex : Samsung Galaxy A56 5G 256 Go">
+            </div>
+            <div class="form-group">
+                <label>Marque <small class="ax-muted">— touchez pour choisir</small></label>
+                <div class="brand-picker" id="brandPicker">
+                    <label class="brand-opt"><input type="radio" name="brand" value="" {{ 'checked' if not cur_brand }}><span>Aucune</span></label>
+                    {% for b in brand_list %}
+                    <label class="brand-opt"><input type="radio" name="brand" value="{{ b }}" {{ 'checked' if cur_brand|lower == b|lower }}><span>{{ b }}</span></label>
+                    {% endfor %}
+                    <label class="brand-opt brand-opt-other"><input type="radio" name="brand" value="__other__" {{ 'checked' if is_other }}><span><i class="fas fa-plus"></i> Autre</span></label>
+                </div>
+                <input type="text" name="brand_other" id="brandOther" class="form-control" maxlength="40"
+                       placeholder="Nom de la nouvelle marque" value="{{ cur_brand if is_other else '' }}"
+                       style="margin-top:10px; {{ '' if is_other else 'display:none;' }}">
+            </div>
+            <div class="form-group">
+                <label for="fCat">Catégorie</label>
+                <select name="category_id" id="fCat" class="form-control">
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if product and product.category_id == cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="fDesc">Description <small class="ax-muted">— traduite automatiquement en anglais et arabe</small></label>
+                <textarea name="description" id="fDesc" class="form-control" rows="5"
+                          placeholder="Écran, mémoire, appareil photo, batterie, ce qui est inclus dans la boîte…">{{ product.description if product else '' }}</textarea>
+            </div>
+        </div>
+    </section>
+
+    <!-- Prix & stock -->
+    <section class="admin-card">
+        <div class="admin-card-header"><h3><i class="fas fa-tag"></i> Prix & stock</h3></div>
+        <div class="admin-card-body">
+            <div class="ax-form-2">
+                <div class="form-group">
+                    <label for="fPrice">Prix de vente (FCFA) *</label>
+                    <input type="number" name="price" id="fPrice" class="form-control" inputmode="numeric"
+                           value="{{ (product.price|int) if product else '' }}" required min="0" step="1">
+                </div>
+                <div class="form-group">
+                    <label for="fOld">Ancien prix (FCFA) <small class="ax-muted">— pour une promo</small></label>
+                    <input type="number" name="old_price" id="fOld" class="form-control" inputmode="numeric"
+                           value="{{ old_val if old_val else '' }}" min="0" step="1" placeholder="Laisser vide si pas de promo">
+                </div>
+            </div>
+            <input type="hidden" name="discount" id="fDisc" value="{{ product.discount if product else 0 }}">
+            <div class="ax-promo-hint" id="promoHint" hidden></div>
+
+            <div class="form-group">
+                <label>Stock disponible</label>
+                <div class="ax-stepper ax-stepper-lg" id="stockStepper">
+                    <button type="button" data-d="-1" aria-label="Moins"><i class="fas fa-minus"></i></button>
+                    <input type="number" name="stock" id="fStock" value="{{ product.stock if product else 1 }}" min="0" inputmode="numeric">
+                    <button type="button" data-d="1" aria-label="Plus"><i class="fas fa-plus"></i></button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Visibilité -->
+    <section class="admin-card">
+        <div class="admin-card-header"><h3><i class="fas fa-eye"></i> Sur le site</h3></div>
+        <div class="admin-card-body ax-toggles">
+            <label class="ax-toggle-row">
+                <span><b>Nouvel arrivage</b><small>Apparaît dans « Nouveautés »</small></span>
+                <span class="ax-switch"><input type="checkbox" name="is_new" {{ 'checked' if product and product.is_new }}><span></span></span>
+            </label>
+            {% if action == 'edit' %}
+            <label class="ax-toggle-row">
+                <span><b>Visible sur le site</b><small>Désactivé : le produit est caché aux clients mais pas supprimé</small></span>
+                <span class="ax-switch"><input type="checkbox" name="is_active" {{ 'checked' if product and product.is_active }}><span></span></span>
+            </label>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Enregistrer (toujours visible) -->
+    <div class="ax-savebar">
+        <a href="{{ url_for('admin_products') }}" class="btn-admin">Annuler</a>
+        <button type="submit" class="btn-admin primary" id="saveBtn"><i class="fas fa-check"></i> {% if action == 'add' %}Ajouter le produit{% else %}Enregistrer{% endif %}</button>
+    </div>
+</form>
 {% endblock %}
 
 {% block scripts %}
-{{ super() }}
 <style>
 .brand-picker { display: flex; flex-wrap: wrap; gap: 8px; }
 .brand-opt { position: relative; cursor: pointer; margin: 0; }
 .brand-opt input { position: absolute; opacity: 0; pointer-events: none; }
-.brand-opt span {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 9px 15px; border-radius: 999px;
-    border: 1px solid var(--admin-border); background: var(--admin-bg);
-    color: var(--admin-text); font-size: .88rem; font-weight: 600;
-    transition: var(--admin-transition);
-}
-.brand-opt input:checked + span { background: var(--admin-gradient); border-color: transparent; color: #fff; box-shadow: 0 6px 16px rgba(108, 99, 255, .35); }
+.brand-opt span { display: inline-flex; align-items: center; gap: 6px; padding: 9px 15px; border-radius: 999px;
+    border: 1px solid var(--admin-border); background: var(--admin-bg); color: var(--admin-text); font-size: .88rem; font-weight: 600; transition: var(--admin-transition); }
+.brand-opt input:checked + span { background: var(--admin-gradient); border-color: transparent; color: var(--on-gold); box-shadow: 0 6px 16px rgba(212, 175, 55, .3); }
 .brand-opt-other span { border-style: dashed; }
 </style>
 <script>
 (function () {
-    var other = document.getElementById('brandOther');
-    var picker = document.getElementById('brandPicker');
-    if (!other || !picker) return;
-    function sync() {
-        var sel = picker.querySelector('input[name=brand]:checked');
-        var isOther = sel && sel.value === '__other__';
-        other.style.display = isOther ? '' : 'none';
-        other.required = !!isOther;
-        if (isOther) other.focus();
+    // Marque « Autre »
+    var other = document.getElementById('brandOther'), picker = document.getElementById('brandPicker');
+    picker.addEventListener('change', function () {
+        var sel = picker.querySelector('input[name=brand]:checked'), isOther = sel && sel.value === '__other__';
+        other.style.display = isOther ? '' : 'none'; other.required = !!isOther; if (isOther) other.focus();
+    });
+
+    // Aperçu de la photo
+    var input = document.getElementById('imageInput'), prev = document.getElementById('imagePreview'), box = document.getElementById('photoBox');
+    input.addEventListener('change', function () {
+        if (!input.files || !input.files[0]) return;
+        var r = new FileReader();
+        r.onload = function (e) { prev.src = e.target.result; prev.hidden = false; box.classList.add('has-img'); };
+        r.readAsDataURL(input.files[0]);
+    });
+
+    // Réduction calculée automatiquement
+    var price = document.getElementById('fPrice'), old = document.getElementById('fOld'), disc = document.getElementById('fDisc'), hint = document.getElementById('promoHint');
+    var fmt = function (n) { return new Intl.NumberFormat('fr-FR').format(Math.round(n)) + ' FCFA'; };
+    function promo() {
+        var p = parseFloat(price.value) || 0, o = parseFloat(old.value) || 0;
+        if (o > p && p > 0) {
+            var d = Math.round((o - p) / o * 100);
+            disc.value = d;
+            hint.innerHTML = '<i class="fas fa-fire"></i> Promo <b>-' + d + ' %</b> · le client économise <b>' + fmt(o - p) + '</b>';
+            hint.className = 'ax-promo-hint ok'; hint.hidden = false;
+        } else if (o && o <= p) {
+            disc.value = 0;
+            hint.innerHTML = '<i class="fas fa-circle-info"></i> L\'ancien prix doit être plus élevé que le prix de vente.';
+            hint.className = 'ax-promo-hint warn'; hint.hidden = false;
+        } else { if (!o) disc.value = 0; hint.hidden = true; }
     }
-    picker.addEventListener('change', sync);
+    price.addEventListener('input', promo); old.addEventListener('input', promo); promo();
+
+    // Stock + / −
+    var st = document.getElementById('fStock');
+    document.querySelectorAll('#stockStepper button').forEach(function (b) {
+        b.addEventListener('click', function () { st.value = Math.max(0, (parseInt(st.value, 10) || 0) + parseInt(b.dataset.d, 10)); });
+    });
+
+    // Bouton en chargement (évite les doubles envois pendant l'envoi de la photo)
+    document.getElementById('productForm').addEventListener('submit', function () {
+        var b = document.getElementById('saveBtn');
+        setTimeout(function () { b.disabled = true; b.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement…'; }, 10);
+    });
 })();
 </script>
 {% endblock %}

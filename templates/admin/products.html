@@ -2,158 +2,218 @@
 {% block title %}Produits{% endblock %}
 
 {% block admin_content %}
+{% set filtres = [('all', 'Tous', counts.all), ('active', 'En ligne', counts.active), ('hidden', 'Masqués', counts.hidden),
+                  ('stock', 'Stock bas', counts.low + counts.out), ('out', 'Rupture', counts.out), ('promo', 'Promo', counts.promo)] %}
 <div class="admin-header">
     <div>
-        <h1>Gestion des Produits</h1><span class="breadcrumb">{{ products|length }} produit(s)</span>
+        <h1>Produits</h1>
+        <span class="breadcrumb"><span id="pVisibleCount">{{ products|length }}</span> produit(s)</span>
     </div>
-    <a href="{{ url_for('admin_add_product') }}" class="btn-admin primary"><i class="fas fa-plus"></i> Nouveau
-        Produit</a>
+    <a href="{{ url_for('admin_add_product') }}" class="btn-admin primary"><i class="fas fa-plus"></i> Nouveau produit</a>
 </div>
 
-<div class="admin-card">
-    <div class="admin-card-body" style="padding:0; overflow-x:auto;">
-        <table class="admin-table products-table">
-            <thead>
-                <tr>
-                    <th>Image</th>
-                    <th>Nom</th>
-                    <th>Catégorie</th>
-                    <th>Prix (FCFA)</th>
-                    <th>Stock</th>
-                    <th>Promo</th>
-                    <th>Vues</th>
-                    <th>Statut</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for p in products %}
-                <tr>
-                    <td data-label="Image">
-                        {% if p.image and p.image != 'default.png' %}
-                        <img src="{{ p.image }}" class="product-thumb" alt="">
-                        {% else %}
-                        <div class="product-thumb"
-                            style="display:flex;align-items:center;justify-content:center;background:var(--admin-bg);font-size:1.2rem;">
-                            📱</div>
-                        {% endif %}
-                    </td>
-                    <td data-label="Nom" style="font-weight:600;">{{ p.name[:30] }}{% if p.name|length > 30 %}...{% endif %}</td>
-                    <td data-label="Catégorie">{{ p.category_name or 'N/A' }}</td>
-                    <td data-label="Prix (FCFA)">{{ "{:,.0f}".format(p.price) }}</td>
-                    <td data-label="Stock">
-                        {% if p.stock == 0 %}<span style="color:var(--admin-danger); font-weight:600;">Rupture</span>
-                        {% elif p.stock <= 5 %}<span style="color:var(--admin-warning); font-weight:600;">{{ p.stock
-                            }}</span>
-                            {% else %}<span style="color:var(--admin-success);">{{ p.stock }}</span>{% endif %}
-                    </td>
-                    <td data-label="Promo">{% if p.discount > 0 %}<span style="color:var(--admin-danger); font-weight:600;">-{{ p.discount
-                            }}%</span>{% else %}-{% endif %}</td>
-                    <td data-label="Vues"><i class="fas fa-eye" style="color:var(--admin-primary);"></i> {{ p.views }}</td>
-                    <td data-label="Statut">{% if p.is_active %}<span style="color:var(--admin-success);">✔ Actif</span>{% else %}<span
-                            style="color:var(--admin-text-sec);">Inactif</span>{% endif %}</td>
-                    <td data-label="Actions">
-                        <div class="table-actions">
-                            <a href="{{ url_for('admin_edit_product', product_id=p.id) }}" class="btn-admin primary"
-                                style="padding:6px 12px; font-size:0.8rem;">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <form id="delete-form-{{ p.id }}" method="POST"
-                                action="{{ url_for('admin_delete_product', product_id=p.id) }}" style="display:inline;">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <input type="hidden" name="confirmed" value="yes">
-                                <button type="button" class="btn-admin danger"
-                                    style="padding:6px 12px; font-size:0.8rem;"
-                                    onclick="showDeleteModal('{{ p.name[:40] }}', '{{ p.id }}')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<div class="ax-toolbar">
+    <label class="ax-search">
+        <i class="fas fa-magnifying-glass"></i>
+        <input type="search" id="pSearch" placeholder="Nom, marque, catégorie…" autocomplete="off">
+    </label>
+    <div class="ax-chips" id="pFilters">
+        {% for key, label, n in filtres %}
+        <button type="button" class="ax-chip {{ 'on' if filtre == key }}" data-f="{{ key }}">{{ label }} <em>{{ n }}</em></button>
+        {% endfor %}
     </div>
 </div>
 
-<!-- Modale de confirmation de suppression -->
-<div id="deleteModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
-    background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
-    <div style="background:var(--admin-card); border:1px solid var(--admin-border); border-radius:20px;
-        padding:2rem; max-width:420px; width:90%; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.5);
-        animation: modalIn 0.25s ease-out;">
-        <div style="width:60px; height:60px; border-radius:50%; background:rgba(239,68,68,0.15);
-            display:flex; align-items:center; justify-content:center; margin:0 auto 1.2rem; font-size:1.5rem;">
-            <i class="fas fa-exclamation-triangle" style="color:var(--admin-danger);"></i>
+<div class="ax-plist" id="pList">
+    {% for p in products %}
+    {% set st = p.stock or 0 %}
+    <article class="ax-pcard {{ '' if p.is_active else 'is-hidden' }}" data-id="{{ p.id }}"
+             data-search="{{ ((p.name or '') ~ ' ' ~ (p.brand or '') ~ ' ' ~ (p.category_name or ''))|lower }}"
+             data-active="{{ 1 if p.is_active else 0 }}" data-stock="{{ st }}" data-promo="{{ 1 if (p.discount or 0) > 0 else 0 }}">
+        <a href="{{ url_for('admin_edit_product', product_id=p.id) }}" class="ax-pimg">
+            {% if p.image and p.image != 'default.png' %}<img src="{{ p.image }}" alt="" loading="lazy">
+            {% else %}<i class="fas fa-mobile-screen"></i>{% endif %}
+            {% if (p.discount or 0) > 0 %}<em class="ax-pdisc">-{{ p.discount }}%</em>{% endif %}
+        </a>
+        <div class="ax-pbody">
+            <div class="ax-ptop">
+                <div class="ax-pname">
+                    {% if p.brand %}<small>{{ p.brand }}</small>{% endif %}
+                    <a href="{{ url_for('admin_edit_product', product_id=p.id) }}">{{ p.name }}</a>
+                </div>
+                <button type="button" class="ax-more" aria-label="Plus d'actions" data-menu="{{ p.id }}"><i class="fas fa-ellipsis-vertical"></i></button>
+            </div>
+            <div class="ax-pmeta">
+                <b>{{ p.price|fcfa }}</b>
+                {% if p.old_price and p.old_price > p.price %}<s>{{ p.old_price|fcfa }}</s>{% endif %}
+                <span class="ax-muted">· {{ p.category_name or 'Sans catégorie' }} · <i class="fas fa-eye"></i> {{ p.views or 0 }}</span>
+            </div>
+            <div class="ax-pactions">
+                <span class="ax-stepper" data-id="{{ p.id }}">
+                    <button type="button" data-d="-1" aria-label="Moins" {{ 'disabled' if st == 0 }}><i class="fas fa-minus"></i></button>
+                    <output class="{{ 'ax-red' if st == 0 else ('ax-orange' if st <= 5 else '') }}">{{ st }}</output>
+                    <button type="button" data-d="1" aria-label="Plus"><i class="fas fa-plus"></i></button>
+                </span>
+                <span class="ax-stock-lab {{ 'ax-red' if st == 0 else ('ax-orange' if st <= 5 else 'ax-green') }}">{{ 'Rupture' if st == 0 else ('Stock bas' if st <= 5 else 'En stock') }}</span>
+                <label class="ax-switch" title="Visible sur le site">
+                    <input type="checkbox" data-toggle="{{ p.id }}" {{ 'checked' if p.is_active }}>
+                    <span></span>
+                    <small>{{ 'En ligne' if p.is_active else 'Masqué' }}</small>
+                </label>
+            </div>
         </div>
-        <h3 style="font-size:1.2rem; margin-bottom:0.5rem; color:var(--admin-text);">Confirmer la suppression</h3>
-        <p style="color:var(--admin-text-sec); font-size:0.9rem; margin-bottom:1.5rem;">
-            Voulez-vous vraiment supprimer <strong id="deleteProductName" style="color:var(--admin-danger);"></strong> ?
-            <br><small>Cette action est irréversible.</small>
-        </p>
-        <div style="display:flex; gap:12px; justify-content:center;">
-            <button onclick="hideDeleteModal()" class="btn-admin"
-                style="background:var(--admin-border); padding:10px 24px;">
-                <i class="fas fa-times"></i> Annuler
-            </button>
-            <button id="confirmDeleteBtn" onclick="confirmDelete()" class="btn-admin danger" style="padding:10px 24px;">
-                <i class="fas fa-trash"></i> Supprimer
-            </button>
+
+        <!-- Menu d'actions -->
+        <div class="ax-menu" id="menu-{{ p.id }}" hidden>
+            <a href="{{ url_for('admin_edit_product', product_id=p.id) }}"><i class="fas fa-pen"></i> Modifier</a>
+            <a href="{{ url_for('product_detail', product_id=p.id) }}" target="_blank" rel="noopener"><i class="fas fa-arrow-up-right-from-square"></i> Voir sur le site</a>
+            <form method="POST" action="{{ url_for('admin_product_duplicate', product_id=p.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit"><i class="fas fa-copy"></i> Dupliquer</button>
+            </form>
+            <form method="POST" action="{{ url_for('admin_delete_product', product_id=p.id) }}" class="ax-del-form" data-name="{{ p.name }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="confirmed" value="yes">
+                <button type="submit" class="ax-danger"><i class="fas fa-trash"></i> Supprimer</button>
+            </form>
+        </div>
+    </article>
+    {% else %}
+    <div class="ax-empty">
+        <i class="fas fa-box-open"></i>
+        <p>Aucun produit pour le moment.</p>
+        <a href="{{ url_for('admin_add_product') }}" class="btn-admin primary"><i class="fas fa-plus"></i> Ajouter le premier</a>
+    </div>
+    {% endfor %}
+    <div class="ax-empty" id="pNoResult" hidden><i class="fas fa-magnifying-glass"></i><p>Aucun produit ne correspond.</p></div>
+</div>
+
+<!-- Confirmation de suppression -->
+<div class="ax-modal-back" id="delModal" hidden>
+    <div class="ax-modal">
+        <span class="ax-modal-ic"><i class="fas fa-trash"></i></span>
+        <h3>Supprimer ce produit ?</h3>
+        <p><b id="delName"></b><br><small>Cette action est définitive. Pour le retirer temporairement, masquez-le plutôt.</small></p>
+        <div class="ax-modal-btns">
+            <button type="button" class="btn-admin" id="delCancel">Annuler</button>
+            <button type="button" class="btn-admin danger" id="delOk"><i class="fas fa-trash"></i> Supprimer</button>
         </div>
     </div>
 </div>
+{% endblock %}
 
-<style>
-    @keyframes modalIn {
-        from {
-            opacity: 0;
-            transform: scale(0.9) translateY(-20px);
-        }
-
-        to {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-        }
-    }
-</style>
-
+{% block scripts %}
 <script>
-    let deleteProductId = null;
+(function () {
+    var list = document.getElementById('pList');
+    var cards = Array.prototype.slice.call(list.querySelectorAll('.ax-pcard'));
+    var search = document.getElementById('pSearch');
+    var current = '{{ filtre }}';
 
-    function showDeleteModal(productName, productId) {
-        deleteProductId = productId;
-        document.getElementById('deleteProductName').textContent = productName;
-        const modal = document.getElementById('deleteModal');
-        modal.style.display = 'flex';
+    function matches(c, f) {
+        var st = parseInt(c.dataset.stock, 10);
+        if (f === 'active') return c.dataset.active === '1';
+        if (f === 'hidden') return c.dataset.active === '0';
+        if (f === 'stock') return st <= 5;
+        if (f === 'out') return st === 0;
+        if (f === 'promo') return c.dataset.promo === '1';
+        return true;
     }
-
-    function hideDeleteModal() {
-        document.getElementById('deleteModal').style.display = 'none';
-        deleteProductId = null;
+    function apply() {
+        var q = (search.value || '').toLowerCase().trim(), n = 0;
+        cards.forEach(function (c) {
+            var ok = matches(c, current) && (!q || c.dataset.search.indexOf(q) !== -1);
+            c.hidden = !ok; if (ok) n++;
+        });
+        document.getElementById('pVisibleCount').textContent = n;
+        document.getElementById('pNoResult').hidden = n > 0 || !cards.length;
     }
+    document.querySelectorAll('#pFilters .ax-chip').forEach(function (b) {
+        b.addEventListener('click', function () {
+            current = b.dataset.f;
+            document.querySelectorAll('#pFilters .ax-chip').forEach(function (x) { x.classList.toggle('on', x === b); });
+            try { history.replaceState(null, '', current === 'all' ? location.pathname : '?filtre=' + current); } catch (e) {}
+            apply();
+        });
+    });
+    search.addEventListener('input', apply);
+    apply();
 
-    function confirmDelete() {
-        if (deleteProductId) {
-            const form = document.getElementById('delete-form-' + deleteProductId);
-            if (form) {
-                form.submit();
-            }
-        }
-    }
-
-    // Fermer la modale en cliquant à l'extérieur
-    document.getElementById('deleteModal').addEventListener('click', function (e) {
-        if (e.target === this) {
-            hideDeleteModal();
-        }
+    // Stock + / −
+    list.querySelectorAll('.ax-stepper').forEach(function (box) {
+        var card = box.closest('.ax-pcard'), out = box.querySelector('output'), lab = card.querySelector('.ax-stock-lab');
+        box.querySelectorAll('button').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                box.classList.add('busy');
+                axPost('/azawad/product/stock/' + box.dataset.id, { delta: btn.dataset.d }).then(function (r) {
+                    var s = r.stock;
+                    out.textContent = s; card.dataset.stock = s;
+                    out.className = s === 0 ? 'ax-red' : (s <= 5 ? 'ax-orange' : '');
+                    lab.textContent = s === 0 ? 'Rupture' : (s <= 5 ? 'Stock bas' : 'En stock');
+                    lab.className = 'ax-stock-lab ' + (s === 0 ? 'ax-red' : (s <= 5 ? 'ax-orange' : 'ax-green'));
+                    box.querySelector('[data-d="-1"]').disabled = s === 0;
+                }).catch(function () { axToast('Erreur, réessayez', 'error'); })
+                  .finally(function () { box.classList.remove('busy'); });
+            });
+        });
+        // Toucher le chiffre pour saisir une valeur précise
+        out.addEventListener('click', function () {
+            var v = prompt('Nouveau stock :', out.textContent);
+            if (v === null) return;
+            v = parseInt(v, 10);
+            if (isNaN(v) || v < 0) { axToast('Nombre invalide', 'error'); return; }
+            axPost('/azawad/product/stock/' + box.dataset.id, { value: v }).then(function (r) {
+                var s = r.stock; out.textContent = s; card.dataset.stock = s;
+                out.className = s === 0 ? 'ax-red' : (s <= 5 ? 'ax-orange' : '');
+                lab.textContent = s === 0 ? 'Rupture' : (s <= 5 ? 'Stock bas' : 'En stock');
+                lab.className = 'ax-stock-lab ' + (s === 0 ? 'ax-red' : (s <= 5 ? 'ax-orange' : 'ax-green'));
+                box.querySelector('[data-d="-1"]').disabled = s === 0;
+                axToast('Stock : ' + s);
+            }).catch(function () { axToast('Erreur, réessayez', 'error'); });
+        });
     });
 
-    // Fermer la modale avec Escape
-    document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') {
-            hideDeleteModal();
-        }
+    // Afficher / masquer sur le site
+    list.querySelectorAll('[data-toggle]').forEach(function (cb) {
+        cb.addEventListener('change', function () {
+            var card = cb.closest('.ax-pcard'), lab = cb.parentNode.querySelector('small');
+            cb.disabled = true;
+            axPost('/azawad/product/visible/' + cb.dataset.toggle, {}).then(function (r) {
+                cb.checked = r.active; card.dataset.active = r.active ? '1' : '0';
+                card.classList.toggle('is-hidden', !r.active);
+                lab.textContent = r.active ? 'En ligne' : 'Masqué';
+                axToast(r.active ? 'Produit visible sur le site' : 'Produit masqué du site');
+            }).catch(function () { cb.checked = !cb.checked; axToast('Erreur, réessayez', 'error'); })
+              .finally(function () { cb.disabled = false; });
+        });
     });
+
+    // Menu « ⋮ »
+    var openMenu = null;
+    list.querySelectorAll('[data-menu]').forEach(function (b) {
+        b.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var m = document.getElementById('menu-' + b.dataset.menu);
+            if (openMenu && openMenu !== m) openMenu.hidden = true;
+            m.hidden = !m.hidden; openMenu = m.hidden ? null : m;
+        });
+    });
+    document.addEventListener('click', function (e) {
+        if (openMenu && !openMenu.contains(e.target)) { openMenu.hidden = true; openMenu = null; }
+    });
+
+    // Suppression avec confirmation
+    var modal = document.getElementById('delModal'), pending = null;
+    list.querySelectorAll('.ax-del-form').forEach(function (f) {
+        f.addEventListener('submit', function (e) {
+            e.preventDefault(); pending = f;
+            document.getElementById('delName').textContent = f.dataset.name;
+            modal.hidden = false;
+        });
+    });
+    document.getElementById('delCancel').addEventListener('click', function () { modal.hidden = true; pending = null; });
+    modal.addEventListener('click', function (e) { if (e.target === modal) { modal.hidden = true; pending = null; } });
+    document.getElementById('delOk').addEventListener('click', function () { if (pending) pending.submit(); });
+})();
 </script>
 {% endblock %}

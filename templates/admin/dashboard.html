@@ -1,310 +1,241 @@
 {% extends "admin/base.html" %}
-{% block title %}Tableau de Bord{% endblock %}
+{% block title %}Tableau de bord{% endblock %}
+{% block top_title %}Accueil{% endblock %}
 
 {% block admin_content %}
-<div class="admin-header">
+{% set ov = overview %}
+{% set status_colors = {'En attente':'#F59E0B','Confirmée':'#3B82F6','Préparation':'#8B5CF6','Expédiée':'#06B6D4','Livrée':'#10B981','Annulée':'#EF4444'} %}
+
+<!-- Bonjour -->
+<section class="ax-hello">
     <div>
-        <h1>Tableau de Bord</h1>
-        <span class="breadcrumb">Bienvenue, {{ session.username }} 👋</span>
+        <small id="axDate">&nbsp;</small>
+        <h1>Bonjour {{ session.username }} 👋</h1>
     </div>
-    <div style="display:flex; gap:10px; align-items:center;">
-        <form method="GET" style="margin:0;">
-            <select name="periode" onchange="this.form.submit()" class="form-control" style="max-width:180px;">
-                <option value="7" {% if periode==7 %}selected{% endif %}>7 derniers jours</option>
-                <option value="30" {% if periode==30 %}selected{% endif %}>30 derniers jours</option>
-                <option value="90" {% if periode==90 %}selected{% endif %}>90 derniers jours</option>
-            </select>
-        </form>
-        <a href="{{ url_for('admin_add_product') }}" class="btn-admin primary">
-            <i class="fas fa-plus"></i> Nouveau Produit
-        </a>
-    </div>
-</div>
+    <a href="{{ url_for('admin_add_product') }}" class="btn-admin primary ax-hide-mobile"><i class="fas fa-plus"></i> Nouveau produit</a>
+</section>
 
-<!-- Stats commandes -->
-<div class="stats-grid">
-    <div class="stat-card">
-        <div class="stat-icon green"><i class="fas fa-coins"></i></div>
-        <div class="stat-info">
-            <h3>{{ "{:,.0f}".format(order_stats.ca_total_periode) }} FCFA</h3>
-            <p>CA ({{ periode }} jours)</p>
-        </div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-icon purple"><i class="fas fa-receipt"></i></div>
-        <div class="stat-info">
-            <h3>{{ order_stats.nb_commandes_periode }}</h3>
-            <p>Commandes vendues</p>
-        </div>
-    </div>
-</div>
+<!-- À traiter -->
+<section class="ax-todo">
+    <a href="{{ url_for('admin_orders', status='En attente') }}" class="ax-todo-card {{ 'hot' if ov.pending else 'calm' }}">
+        <span class="ax-todo-ic"><i class="fas fa-hourglass-half"></i></span>
+        <span><b>{{ ov.pending }}</b> commande{{ 's' if ov.pending != 1 }} à confirmer</span>
+        <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{{ url_for('admin_products', filtre='stock') }}" class="ax-todo-card {{ 'warn' if ov.stock_alerts else 'calm' }}">
+        <span class="ax-todo-ic"><i class="fas fa-boxes-stacked"></i></span>
+        <span><b>{{ ov.stock_alerts|length }}</b> produit{{ 's' if ov.stock_alerts|length != 1 }} à réapprovisionner
+            {% if ov.out_of_stock %}<small>dont {{ ov.out_of_stock }} en rupture</small>{% endif %}</span>
+        <i class="fas fa-chevron-right"></i>
+    </a>
+    <a href="{{ url_for('admin_reset_requests') }}" class="ax-todo-card {{ 'hot' if pending_reset_count else 'calm' }}">
+        <span class="ax-todo-ic"><i class="fas fa-key"></i></span>
+        <span><b>{{ pending_reset_count or 0 }}</b> code{{ 's' if pending_reset_count != 1 }} mot de passe à envoyer
+            <small>Envoi au client sur WhatsApp</small></span>
+        <i class="fas fa-chevron-right"></i>
+    </a>
+</section>
 
-<!-- Stats -->
-<div class="stats-grid">
-    <div class="stat-card">
-        <div class="stat-icon purple"><i class="fas fa-box"></i></div>
-        <div class="stat-info">
-            <h3>{{ stats.total_products }}</h3>
-            <p>Total Produits</p>
-        </div>
+<!-- Chiffres clés -->
+<section class="ax-kpis">
+    <div class="ax-kpi ax-kpi-main">
+        <small>Ventes des 7 derniers jours</small>
+        <b>{{ ov.ca_7|fcfa }}</b>
+        {% if ov.evolution_7 is not none %}
+        <span class="ax-trend {{ 'up' if ov.evolution_7 >= 0 else 'down' }}">
+            <i class="fas fa-arrow-{{ 'up' if ov.evolution_7 >= 0 else 'down' }}"></i> {{ ov.evolution_7|abs }} % vs semaine d'avant</span>
+        {% else %}
+        <span class="ax-trend">{{ ov.nb_7 }} vente{{ 's' if ov.nb_7 != 1 }}</span>
+        {% endif %}
     </div>
-    <div class="stat-card">
-        <div class="stat-icon green"><i class="fas fa-check-circle"></i></div>
-        <div class="stat-info">
-            <h3>{{ stats.active_products }}</h3>
-            <p>Produits Actifs</p>
-        </div>
+    <div class="ax-kpi">
+        <small>Aujourd'hui</small>
+        <b>{{ ov.ca_today|fcfa }}</b>
+        <span>{{ ov.orders_today }} commande{{ 's' if ov.orders_today != 1 }}</span>
     </div>
-    <div class="stat-card">
-        <div class="stat-icon blue"><i class="fas fa-eye"></i></div>
-        <div class="stat-info">
-            <h3>{{ "{:,}".format(stats.total_views) }}</h3>
-            <p>Total Vues</p>
-        </div>
+    <div class="ax-kpi">
+        <small>Panier moyen</small>
+        <b>{{ ov.panier_moyen|fcfa }}</b>
+        <span>sur 7 jours</span>
     </div>
-    <div class="stat-card">
-        <div class="stat-icon red"><i class="fas fa-exclamation-triangle"></i></div>
-        <div class="stat-info">
-            <h3>{{ stats.out_of_stock }}</h3>
-            <p>En Rupture</p>
-        </div>
+    <div class="ax-kpi">
+        <small>Produits en ligne</small>
+        <b>{{ stats.active_products }}<em>/{{ stats.total_products }}</em></b>
+        <span>{{ stats.promo_products }} en promo</span>
     </div>
-    <div class="stat-card">
-        <div class="stat-icon orange"><i class="fas fa-battery-quarter"></i></div>
-        <div class="stat-info">
-            <h3>{{ stats.low_stock }}</h3>
-            <p>Stock Faible</p>
-        </div>
+    <div class="ax-kpi">
+        <small>Vues des produits</small>
+        <b>{{ stats.total_views|nombre }}</b>
+        <span>depuis le début</span>
     </div>
-    <div class="stat-card">
-        <div class="stat-icon purple"><i class="fas fa-tags"></i></div>
-        <div class="stat-info">
-            <h3>{{ stats.promo_products }}</h3>
-            <p>En Promotion</p>
-        </div>
-    </div>
-</div>
+</section>
 
-<!-- Graphique CA -->
-<div class="admin-card" style="margin-bottom:1.5rem;">
+<!-- Ventes par jour -->
+<section class="admin-card ax-chart-card">
     <div class="admin-card-header">
-        <h3><i class="fas fa-chart-line"></i> Chiffre d'affaires par jour</h3>
+        <h3><i class="fas fa-chart-line"></i> Ventes</h3>
+        <div class="ax-seg">
+            {% for d in [7, 30, 90] %}
+            <a href="{{ url_for('admin_dashboard', periode=d) }}" class="{{ 'on' if periode == d }}">{{ d }} j</a>
+            {% endfor %}
+        </div>
     </div>
     <div class="admin-card-body">
-        <canvas id="chartCA" height="90"></canvas>
+        <div class="ax-chart-sum">
+            <div><small>Total</small><b>{{ order_stats.ca_total_periode|fcfa }}</b></div>
+            <div><small>Ventes</small><b>{{ order_stats.nb_commandes_periode }}</b></div>
+        </div>
+        {% if order_stats.ca_values %}
+        {% set vals = order_stats.ca_values %}
+        {% set labs = order_stats.ca_labels %}
+        {% set mx = vals|max %}
+        <div class="ax-bars" role="img" aria-label="Ventes par jour">
+            {% for v in vals %}
+            <div class="ax-bars-col" title="{{ labs[loop.index0][8:10] }}/{{ labs[loop.index0][5:7] }} : {{ v|fcfa }}">
+                <span class="ax-bars-val">{{ (v / 1000)|round|int }}k</span>
+                <span class="ax-bars-bar" style="height: {{ [((v / mx) * 100)|round|int, 4]|max if mx else 4 }}%"></span>
+                <small>{{ labs[loop.index0][8:10] }}/{{ labs[loop.index0][5:7] }}</small>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="ax-empty-line">Aucune vente sur cette période.</p>
+        {% endif %}
     </div>
+</section>
+
+<div class="ax-grid-2">
+    <!-- Dernières commandes -->
+    <section class="admin-card">
+        <div class="admin-card-header">
+            <h3><i class="fas fa-receipt"></i> Dernières commandes</h3>
+            <a href="{{ url_for('admin_orders') }}" class="ax-link">Tout voir</a>
+        </div>
+        <div class="ax-list">
+            {% for o in recent_orders %}
+            {% set col = status_colors.get(o.status, '#9CA3AF') %}
+            <a href="{{ url_for('admin_order_detail', order_id=o.id) }}" class="ax-row">
+                {% if o.customer_avatar %}<img src="{{ o.customer_avatar }}" alt="" class="ax-avatar" loading="lazy">
+                {% else %}<span class="ax-avatar ax-avatar-txt">{{ ((o.customer_name or '?')|trim)[:1]|upper }}</span>{% endif %}
+                <span class="ax-row-main"><b>{{ o.customer_name }}</b><small>#{{ o.order_number }} · {{ (o.created_at or '')[:10] }}</small></span>
+                <span class="ax-row-side"><b>{{ o.total|fcfa }}</b><em class="ax-pill" style="--c: {{ col }}">{{ o.status }}</em></span>
+            </a>
+            {% else %}
+            <p class="ax-empty-line">Aucune commande pour le moment.</p>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Stock à surveiller -->
+    <section class="admin-card">
+        <div class="admin-card-header">
+            <h3><i class="fas fa-triangle-exclamation"></i> Stock à surveiller</h3>
+            <a href="{{ url_for('admin_products', filtre='stock') }}" class="ax-link">Gérer</a>
+        </div>
+        <div class="ax-list">
+            {% for p in ov.stock_alerts[:6] %}
+            <div class="ax-row" data-stock-row="{{ p.id }}">
+                {% if p.image and p.image != 'default.png' %}<img src="{{ p.image }}" alt="" class="ax-thumb" loading="lazy">
+                {% else %}<span class="ax-thumb"><i class="fas fa-mobile-screen"></i></span>{% endif %}
+                <span class="ax-row-main"><b>{{ p.name }}</b>
+                    <small class="{{ 'ax-red' if p.stock == 0 else 'ax-orange' }}" data-stock-label>{{ 'Rupture' if p.stock == 0 else p.stock ~ ' restant' ~ ('s' if p.stock > 1 else '') }}</small></span>
+                <span class="ax-stepper" data-id="{{ p.id }}">
+                    <button type="button" data-d="-1" aria-label="Moins" {{ 'disabled' if p.stock == 0 }}><i class="fas fa-minus"></i></button>
+                    <output>{{ p.stock }}</output>
+                    <button type="button" data-d="1" aria-label="Plus"><i class="fas fa-plus"></i></button>
+                </span>
+            </div>
+            {% else %}
+            <p class="ax-empty-line"><i class="fas fa-circle-check" style="color:#10B981;"></i> Tout est bien approvisionné.</p>
+            {% endfor %}
+        </div>
+    </section>
 </div>
 
-<div class="dashboard-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:1.5rem;">
-    <!-- Répartition par statut -->
-    <div class="admin-card">
-        <div class="admin-card-header">
-            <h3><i class="fas fa-chart-pie"></i> Commandes par statut</h3>
-        </div>
-        <div class="admin-card-body">
-            <canvas id="chartStatuts" height="220"></canvas>
-        </div>
-    </div>
-
-    <!-- Top produits -->
-    <div class="admin-card">
-        <div class="admin-card-header">
-            <h3><i class="fas fa-fire"></i> Top 5 produits vendus</h3>
-        </div>
+<div class="ax-grid-2">
+    <!-- Meilleures ventes -->
+    <section class="admin-card">
+        <div class="admin-card-header"><h3><i class="fas fa-trophy"></i> Meilleures ventes</h3><small class="ax-muted">{{ periode }} jours</small></div>
         <div class="admin-card-body">
             {% if order_stats.top_produits_labels %}
-            <canvas id="chartTopProduits" height="220"></canvas>
+            {% set maxv = order_stats.top_produits_values|max %}
+            {% for name in order_stats.top_produits_labels %}
+            {% set v = order_stats.top_produits_values[loop.index0] %}
+            <div class="ax-bar">
+                <div class="ax-bar-top"><span>{{ loop.index }}. {{ name }}</span><b>{{ v }}</b></div>
+                <div class="ax-bar-track"><span style="width: {{ (v / maxv * 100)|round|int if maxv else 0 }}%"></span></div>
+            </div>
+            {% endfor %}
             {% else %}
-            <p style="color:var(--admin-text-sec); text-align:center; padding:20px;">Aucune vente sur la période.</p>
+            <p class="ax-empty-line">Aucune vente sur la période.</p>
             {% endif %}
         </div>
-    </div>
+    </section>
+
+    <!-- Commandes par statut -->
+    <section class="admin-card">
+        <div class="admin-card-header"><h3><i class="fas fa-chart-simple"></i> Commandes par statut</h3><small class="ax-muted">{{ periode }} jours</small></div>
+        <div class="admin-card-body">
+            {% if order_stats.statuts_labels %}
+            {% set tot = order_stats.statuts_values|sum %}
+            {% for s in order_stats.statuts_labels %}
+            {% set v = order_stats.statuts_values[loop.index0] %}
+            <a class="ax-bar ax-bar-link" href="{{ url_for('admin_orders', status=s) }}">
+                <div class="ax-bar-top"><span><i class="fas fa-circle" style="color: {{ status_colors.get(s, '#9CA3AF') }}; font-size:.55rem;"></i> {{ s }}</span><b>{{ v }}</b></div>
+                <div class="ax-bar-track"><span style="width: {{ (v / tot * 100)|round|int if tot else 0 }}%; background: {{ status_colors.get(s, '#9CA3AF') }}"></span></div>
+            </a>
+            {% endfor %}
+            {% else %}
+            <p class="ax-empty-line">Aucune commande sur la période.</p>
+            {% endif %}
+        </div>
+    </section>
 </div>
 
-{% if order_stats.stock_bas %}
-<div class="admin-card" style="margin-bottom:1.5rem;">
-    <div class="admin-card-header">
-        <h3><i class="fas fa-exclamation-triangle"></i> Alertes stock bas</h3>
+<!-- Plus consultés -->
+<section class="admin-card">
+    <div class="admin-card-header"><h3><i class="fas fa-eye"></i> Produits les plus consultés</h3></div>
+    <div class="ax-list">
+        {% for p in top_viewed %}
+        <a href="{{ url_for('admin_edit_product', product_id=p.id) }}" class="ax-row">
+            {% if p.image and p.image != 'default.png' %}<img src="{{ p.image }}" alt="" class="ax-thumb" loading="lazy">
+            {% else %}<span class="ax-thumb"><i class="fas fa-mobile-screen"></i></span>{% endif %}
+            <span class="ax-row-main"><b>{{ p.name }}</b><small>{{ p.price|fcfa }}</small></span>
+            <span class="ax-row-side"><b><i class="fas fa-eye ax-muted"></i> {{ p.views or 0 }}</b></span>
+        </a>
+        {% endfor %}
     </div>
-    <div class="admin-card-body" style="padding:0; overflow-x:auto;">
-        <table class="admin-table">
-            <thead>
-                <tr>
-                    <th>Produit</th>
-                    <th>Stock restant</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for p in order_stats.stock_bas %}
-                <tr>
-                    <td style="font-weight:600;">{{ p.name }}</td>
-                    <td>
-                        {% if p.stock == 0 %}<span style="color:var(--admin-danger);">Rupture</span>
-                        {% else %}<span style="color:var(--admin-warning);">{{ p.stock }}</span>{% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-{% endif %}
-
-<div class="dashboard-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
-    <!-- Produits récents -->
-    <div class="admin-card">
-        <div class="admin-card-header">
-            <h3><i class="fas fa-clock"></i> Derniers Produits</h3>
-            <a href="{{ url_for('admin_products') }}" style="color:var(--admin-primary); font-size:0.85rem;">Voir tout
-                →</a>
-        </div>
-        <div class="admin-card-body" style="padding:0; overflow-x:auto;">
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>Produit</th>
-                        <th>Prix</th>
-                        <th>Stock</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for p in recent %}
-                    <tr>
-                        <td style="display:flex; align-items:center; gap:10px;">
-                            {% if p.image and p.image != 'default.png' %}
-                            <img src="{{ p.image }}" class="product-thumb" alt="">
-                            {% else %}
-                            <div class="product-thumb"
-                                style="display:flex; align-items:center; justify-content:center; background:var(--admin-bg); font-size:1.2rem;">
-                                📱</div>
-                            {% endif %}
-                            <span style="font-weight:600;">{{ p.name[:25] }}{% if p.name|length > 25 %}...{% endif
-                                %}</span>
-                        </td>
-                        <td>{{ "{:,.0f}".format(p.price) }}</td>
-                        <td>
-                            {% if p.stock == 0 %}<span style="color:var(--admin-danger);">Rupture</span>
-                            {% elif p.stock <= 5 %}<span style="color:var(--admin-warning);">{{ p.stock }}</span>
-                                {% else %}<span style="color:var(--admin-success);">{{ p.stock }}</span>{% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Plus vus -->
-    <div class="admin-card">
-        <div class="admin-card-header">
-            <h3><i class="fas fa-fire"></i> Plus Populaires</h3>
-        </div>
-        <div class="admin-card-body" style="padding:0; overflow-x:auto;">
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>Produit</th>
-                        <th>Vues</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for p in top_viewed %}
-                    <tr>
-                        <td style="font-weight:600;">{{ p.name[:30] }}{% if p.name|length > 30 %}...{% endif %}</td>
-                        <td><i class="fas fa-eye" style="color:var(--admin-primary);"></i> {{ p.views }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
+</section>
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <script>
-(function () {
-    const textColor = '#9CA3AF';
-    const gridColor = '#2D2D44';
-    Chart.defaults.color = textColor;
-    Chart.defaults.borderColor = gridColor;
+    // Date du jour
+    try {
+        var d = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+        document.getElementById('axDate').textContent = d.charAt(0).toUpperCase() + d.slice(1);
+    } catch (e) {}
 
-    // --- CA par jour ---
-    new Chart(document.getElementById('chartCA'), {
-        type: 'line',
-        data: {
-            labels: {{ order_stats.ca_labels|tojson }},
-            datasets: [{
-                label: 'CA (FCFA)',
-                data: {{ order_stats.ca_values|tojson }},
-                borderColor: '#6C63FF',
-                backgroundColor: 'rgba(108,99,255,0.15)',
-                fill: true,
-                tension: 0.3,
-                pointRadius: 3,
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-                x: { grid: { color: gridColor } },
-                y: { grid: { color: gridColor }, beginAtZero: true }
-            }
-        }
+    // Stock : + / − sans recharger
+    document.querySelectorAll('.ax-stepper').forEach(function (box) {
+        box.querySelectorAll('button').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                box.classList.add('busy');
+                axPost('/azawad/product/stock/' + box.dataset.id, { delta: btn.dataset.d })
+                    .then(function (r) {
+                        box.querySelector('output').textContent = r.stock;
+                        box.querySelector('[data-d="-1"]').disabled = r.stock === 0;
+                        var row = box.closest('[data-stock-row]'), lab = row && row.querySelector('[data-stock-label]');
+                        if (lab) {
+                            lab.textContent = r.stock === 0 ? 'Rupture' : r.stock + (r.stock > 1 ? ' restants' : ' restant');
+                            lab.className = r.stock === 0 ? 'ax-red' : (r.stock <= 5 ? 'ax-orange' : 'ax-green');
+                        }
+                        axToast('Stock : ' + r.stock);
+                    })
+                    .catch(function () { axToast('Erreur, réessayez', 'error'); })
+                    .finally(function () { box.classList.remove('busy'); });
+            });
+        });
     });
-
-    // --- Commandes par statut ---
-    const statutColors = {
-        'En attente': '#F59E0B',
-        'Confirmée': '#6C63FF',
-        'Préparation': '#3B82F6',
-        'Expédiée': '#06B6D4',
-        'Livrée': '#10B981',
-        'Annulée': '#EF4444',
-    };
-    const statutsLabels = {{ order_stats.statuts_labels|tojson }};
-    new Chart(document.getElementById('chartStatuts'), {
-        type: 'doughnut',
-        data: {
-            labels: statutsLabels,
-            datasets: [{
-                data: {{ order_stats.statuts_values|tojson }},
-                backgroundColor: statutsLabels.map(s => statutColors[s] || '#9CA3AF'),
-                borderWidth: 0,
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { legend: { position: 'bottom' } }
-        }
-    });
-
-    // --- Top produits vendus ---
-    {% if order_stats.top_produits_labels %}
-    new Chart(document.getElementById('chartTopProduits'), {
-        type: 'bar',
-        data: {
-            labels: {{ order_stats.top_produits_labels|tojson }},
-            datasets: [{
-                label: 'Quantité vendue',
-                data: {{ order_stats.top_produits_values|tojson }},
-                backgroundColor: '#FF6584',
-                borderRadius: 6,
-            }]
-        },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-                x: { grid: { color: gridColor }, beginAtZero: true },
-                y: { grid: { display: false } }
-            }
-        }
-    });
-    {% endif %}
-})();
 </script>
 {% endblock %}

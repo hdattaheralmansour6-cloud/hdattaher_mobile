@@ -2,96 +2,102 @@
 {% block title %}Commandes{% endblock %}
 
 {% block admin_content %}
-{% set status_colors = {
-    'En attente': '#F59E0B',
-    'Confirmée': '#3B82F6',
-    'Préparation': '#8B5CF6',
-    'Expédiée': '#06B6D4',
-    'Livrée': '#10B981',
-    'Annulée': '#EF4444'
-} %}
+{% set status_colors = {'En attente':'#F59E0B','Confirmée':'#3B82F6','Préparation':'#8B5CF6','Expédiée':'#06B6D4','Livrée':'#10B981','Annulée':'#EF4444'} %}
+{% set next_labels = {'Confirmée':'Confirmer', 'Préparation':'Préparer', 'Expédiée':'Expédier', 'Livrée':'Marquer livrée'} %}
 <div class="admin-header">
     <div>
-        <h1>Gestion des Commandes</h1><span class="breadcrumb">{{ orders|length }} commande(s)</span>
+        <h1>Commandes</h1>
+        <span class="breadcrumb"><span id="oCount">{{ orders|length }}</span> commande(s){% if status_filter %} · {{ status_filter }}{% endif %}</span>
     </div>
 </div>
 
-<div class="admin-card" style="margin-bottom:1.5rem;">
-    <div class="admin-card-body" style="padding:0.8rem 1rem;">
-        <form method="GET" style="margin-bottom:10px;">
-            <select name="status" onchange="this.form.submit()" class="form-control">
-                <option value="">Tous les statuts</option>
-                {% for s in statuses %}
-                <option value="{{ s }}" {% if status_filter==s %}selected{% endif %}>{{ s }}</option>
-                {% endfor %}
-            </select>
-        </form>
-        <input type="text" class="form-control" placeholder="🔍 Rechercher (n° commande, client, téléphone)..."
-               oninput="filterOrders(this.value)">
+<div class="ax-toolbar">
+    <label class="ax-search">
+        <i class="fas fa-magnifying-glass"></i>
+        <input type="search" id="oSearch" placeholder="N° de commande, client, téléphone…" autocomplete="off">
+    </label>
+    <div class="ax-chips">
+        <a href="{{ url_for('admin_orders') }}" class="ax-chip {{ 'on' if not status_filter }}">Toutes <em>{{ total_count }}</em></a>
+        {% for s in statuses %}
+        <a href="{{ url_for('admin_orders', status=s) }}" class="ax-chip {{ 'on' if status_filter == s }}" style="--c: {{ status_colors.get(s) }}">
+            <i class="fas fa-circle ax-dot"></i> {{ s }} <em>{{ counts.get(s, 0) }}</em></a>
+        {% endfor %}
     </div>
 </div>
 
-<div id="ordersList">
+<div class="ax-olist" id="oList">
     {% for order in orders %}
-    {% set color = status_colors.get(order.status, '#6B7280') %}
-    <div class="admin-card order-card" style="margin-bottom:1rem;"
-         data-search="{{ ((order.order_number or '') ~ ' ' ~ (order.customer_name or '') ~ ' ' ~ (order.customer_email or '') ~ ' ' ~ (order.shipping_phone or ''))|lower }}">
-        <div class="admin-card-body" style="padding:1rem;">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap;">
-                <div style="min-width:0;">
-                    <div style="font-weight:700; word-break:break-all;">#{{ order.order_number }}</div>
-                    <div style="font-size:0.78rem; color:var(--admin-text-sec); margin-top:2px;">
-                        {{ order.created_at[:10] if order.created_at else '' }}
-                    </div>
-                </div>
-                <span style="background:{{ color }}22; color:{{ color }}; border:1px solid {{ color }}55; border-radius:999px; font-size:0.75rem; font-weight:700; padding:4px 12px; white-space:nowrap;">
-                    {{ order.status }}
-                </span>
-            </div>
-
-            <div style="margin-top:12px;">
-                <div style="font-weight:600;">{% if order.customer_avatar %}<img src="{{ order.customer_avatar }}" alt="" loading="lazy" style="width:28px;height:28px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px;border:2px solid var(--admin-primary);">{% else %}<i class="fas fa-user-circle" style="color:var(--admin-primary);"></i>{% endif %} {{ order.customer_name }}</div>
-                <div style="font-size:0.78rem; color:var(--admin-text-sec); word-break:break-all; margin-top:2px;">
-                    <i class="fas fa-envelope"></i> {{ order.customer_email }}</div>
-                {% if order.shipping_phone %}
-                <div style="font-size:0.85rem; color:var(--admin-text-sec); margin-top:2px;">
-                    <i class="fas fa-phone"></i> {{ order.shipping_phone }}</div>
-                {% endif %}
-            </div>
-
-            <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-top:12px; padding-top:12px; border-top:1px solid var(--admin-border);">
-                <div>
-                    <div style="font-size:1.1rem; font-weight:800;">{{ "{:,.0f}".format(order.total) }} FCFA</div>
-                    <div style="font-size:0.8rem; margin-top:2px;">
-                        {% if order.payment_proof %}
-                        <span style="color:#10B981; font-weight:600;"><i class="fas fa-receipt"></i> {{ order.payment_method or 'Reçu' }} · reçu joint</span>
-                        {% else %}
-                        <span style="color:var(--admin-text-sec);">Pas de reçu</span>
-                        {% endif %}
-                    </div>
-                </div>
-                <a href="{{ url_for('admin_order_detail', order_id=order.id) }}" class="btn-admin primary"
-                   style="padding:10px 18px;">
-                    <i class="fas fa-eye"></i> Voir
-                </a>
-            </div>
+    {% set col = status_colors.get(order.status, '#9CA3AF') %}
+    {% set nxt = next_status.get(order.status) %}
+    {% set phone = order.shipping_phone|wa %}
+    <article class="ax-ocard" style="--c: {{ col }}"
+             data-search="{{ ((order.order_number or '') ~ ' ' ~ (order.customer_name or '') ~ ' ' ~ (order.customer_email or '') ~ ' ' ~ (order.shipping_phone or '') ~ ' ' ~ (order.shipping_name or ''))|lower }}">
+        <a href="{{ url_for('admin_order_detail', order_id=order.id) }}" class="ax-ohead">
+            {% if order.customer_avatar %}<img src="{{ order.customer_avatar }}" alt="" class="ax-avatar" loading="lazy">
+            {% else %}<span class="ax-avatar ax-avatar-txt">{{ ((order.customer_name or '?')|trim)[:1]|upper }}</span>{% endif %}
+            <span class="ax-row-main">
+                <b>{{ order.customer_name }}</b>
+                <small>#{{ order.order_number }} · <span class="ax-date" data-iso="{{ order.created_at or '' }}">{{ (order.created_at or '')[:10] }}</span></small>
+            </span>
+            <span class="ax-row-side">
+                <b>{{ order.total|fcfa }}</b>
+                <em class="ax-pill" style="--c: {{ col }}">{{ order.status }}</em>
+            </span>
+        </a>
+        <div class="ax-oinfo">
+            {% if order.payment_method %}
+            <span class="ax-tag"><img src="{{ url_for('static', filename='img/' ~ order.payment_method|lower ~ '.png') }}" alt="">{{ order.payment_method }}</span>
+            {% endif %}
+            {% if order.payment_proof %}<span class="ax-tag ax-tag-ok"><i class="fas fa-receipt"></i> Reçu joint</span>
+            {% else %}<span class="ax-tag ax-tag-warn"><i class="fas fa-circle-exclamation"></i> Pas de reçu</span>{% endif %}
+            {% if order.shipping_address %}<span class="ax-tag"><i class="fas fa-location-dot"></i> {{ order.shipping_address|truncate(28, True, '…') }}</span>{% endif %}
         </div>
-    </div>
+        <div class="ax-oactions">
+            {% if nxt %}
+            <form method="POST" action="{{ url_for('admin_update_order_status', order_id=order.id) }}" class="ax-grow">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="status" value="{{ nxt }}">
+                <button type="submit" class="btn-admin primary ax-w100"><i class="fas fa-arrow-right"></i> {{ next_labels.get(nxt, nxt) }}</button>
+            </form>
+            {% else %}
+            <a href="{{ url_for('admin_order_detail', order_id=order.id) }}" class="btn-admin ax-grow"><i class="fas fa-eye"></i> Voir le détail</a>
+            {% endif %}
+            {% if phone %}
+            <a href="https://wa.me/{{ phone }}?text={{ ('Bonjour ' ~ (order.shipping_name or '') ~ ', concernant votre commande ' ~ order.order_number ~ ' chez HDATTAHER MOBILE : ')|urlencode }}"
+               target="_blank" rel="noopener" class="ax-icon-btn ax-wa" aria-label="WhatsApp"><i class="fab fa-whatsapp"></i></a>
+            {% endif %}
+            <a href="{{ url_for('admin_order_detail', order_id=order.id) }}" class="ax-icon-btn" aria-label="Détail"><i class="fas fa-chevron-right"></i></a>
+        </div>
+    </article>
     {% else %}
-    <div class="admin-card">
-        <div class="admin-card-body" style="text-align:center; padding:30px; color:var(--admin-text-sec);">
-            Aucune commande pour le moment.
-        </div>
-    </div>
+    <div class="ax-empty"><i class="fas fa-receipt"></i><p>{{ 'Aucune commande « ' ~ status_filter ~ ' ».' if status_filter else 'Aucune commande pour le moment.' }}</p></div>
     {% endfor %}
+    <div class="ax-empty" id="oNoResult" hidden><i class="fas fa-magnifying-glass"></i><p>Aucune commande ne correspond.</p></div>
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script>
-function filterOrders(q) {
-    q = (q || '').toLowerCase().trim();
-    document.querySelectorAll('#ordersList .order-card').forEach(function (c) {
-        c.style.display = (!q || c.dataset.search.indexOf(q) !== -1) ? '' : 'none';
+(function () {
+    var cards = Array.prototype.slice.call(document.querySelectorAll('#oList .ax-ocard'));
+    document.getElementById('oSearch').addEventListener('input', function () {
+        var q = this.value.toLowerCase().trim(), n = 0;
+        cards.forEach(function (c) { var ok = !q || c.dataset.search.indexOf(q) !== -1; c.hidden = !ok; if (ok) n++; });
+        document.getElementById('oCount').textContent = n;
+        document.getElementById('oNoResult').hidden = n > 0 || !cards.length;
     });
-}
+    // « il y a 2 h », « hier »…
+    var now = Date.now();
+    document.querySelectorAll('.ax-date[data-iso]').forEach(function (el) {
+        var iso = el.dataset.iso; if (!iso) return;
+        var t = Date.parse(/[zZ]|[+-]\d\d:?\d\d$/.test(iso) ? iso : iso + 'Z'); if (isNaN(t)) return;
+        var m = Math.round((now - t) / 60000);
+        if (m < 1) el.textContent = "à l'instant";
+        else if (m < 60) el.textContent = 'il y a ' + m + ' min';
+        else if (m < 1440) el.textContent = 'il y a ' + Math.round(m / 60) + ' h';
+        else if (m < 2880) el.textContent = 'hier';
+        else if (m < 10080) el.textContent = 'il y a ' + Math.round(m / 1440) + ' j';
+    });
+})();
 </script>
 {% endblock %}
