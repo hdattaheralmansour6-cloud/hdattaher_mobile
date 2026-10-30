@@ -9,15 +9,24 @@
     <title>{% block title %}HDATTAHER MOBILE{% endblock %}</title>
     <link rel="canonical" href="{% block canonical %}{{ config.SITE_URL }}{{ request.path }}{% endblock %}">
 
-    <!-- Open Graph -->
+    <!-- Aperçu des liens partagés (WhatsApp, Facebook, Messenger, X…) -->
     <meta property="og:type" content="{% block og_type %}website{% endblock %}">
     <meta property="og:site_name" content="HDATTAHER MOBILE">
-    <meta property="og:title" content="{% block og_title %}HDATTAHER MOBILE{% endblock %}">
+    <meta property="og:locale" content="fr_FR">
+    <meta property="og:title" content="{% block og_title %}HDATTAHER MOBILE · Smartphones & accessoires au Niger{% endblock %}">
     <meta property="og:description"
-        content="{% block og_description %}HDATTAHER MOBILE - Votre boutique de smartphones et accessoires au Niger.{% endblock %}">
+        content="{% block og_description %}iPhone, Samsung, Xiaomi, Tecno et accessoires au meilleur prix. Livraison au Niger · Paiement Amanata ou Nita.{% endblock %}">
     <meta property="og:url" content="{{ config.SITE_URL }}{{ request.path }}">
-    <meta property="og:image"
-        content="{% block og_image %}{{ config.SITE_URL }}{{ url_for('static', filename='favicon/apple-touch-icon.png') }}{% endblock %}">
+    {% set og_img %}{% block og_image %}{{ share_image_url() }}{% endblock %}{% endset %}
+    <meta property="og:image" content="{{ og_img|trim }}">
+    <meta property="og:image:secure_url" content="{{ og_img|trim }}">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="{% block og_image_alt %}HDATTAHER MOBILE{% endblock %}">
+    {% block og_extra %}{% endblock %}
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="{{ og_img|trim }}">
 
     {% block structured_data %}
     <script type="application/ld+json">

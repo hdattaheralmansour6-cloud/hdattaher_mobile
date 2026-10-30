@@ -1,10 +1,14 @@
 {% extends "public/base.html" %}
 {% block title %}{{ product.name }} - HDATTAHER MOBILE{% endblock %}
 {% block meta_description %}{{ (product.description or (product.name ~ ' disponible chez HDATTAHER MOBILE au Niger. Prix : ' ~ '{:,.0f}'.format(product.price) ~ ' FCFA.'))[:160] }}{% endblock %}
-{% block og_title %}{{ product.name }} - HDATTAHER MOBILE{% endblock %}
-{% block og_description %}{{ (product.description or (product.name ~ ' disponible chez HDATTAHER MOBILE au Niger.'))[:160] }}{% endblock %}
+{% block og_title %}{{ product.name }} · {{ product.price|fcfa }}{% endblock %}
+{% block og_description %}{{ '✅ En stock' if (product.stock or 0) > 0 else '⏳ Bientôt de retour' }}{% if product.old_price and product.old_price > product.price %} · 🔥 Promo -{{ product.discount or ((1 - product.price / product.old_price) * 100)|round|int }} %{% endif %} · 🚚 Livraison au Niger · Paiement Amanata / Nita{% if product.description %} — {{ product.description|replace('\n', ' ')|truncate(110, True, '…') }}{% endif %}{% endblock %}
 {% block og_type %}product{% endblock %}
-{% block og_image %}{% if product.image and product.image != 'default.png' %}{{ product.image }}{% else %}{{ config.SITE_URL }}{{ url_for('static', filename='favicon/apple-touch-icon.png') }}{% endif %}{% endblock %}
+{% block og_image %}{{ share_image_url(product) }}{% endblock %}
+{% block og_image_alt %}{{ product.name }} — {{ product.price|fcfa }}{% endblock %}
+{% block og_extra %}<meta property="product:price:amount" content="{{ product.price|int }}">
+    <meta property="product:price:currency" content="XOF">
+    <meta property="product:availability" content="{{ 'in stock' if (product.stock or 0) > 0 else 'out of stock' }}">{% endblock %}
 {% block structured_data %}
 <script type="application/ld+json">
 {
@@ -31,7 +35,6 @@
 {% block content %}
 {% set wa = settings.get('whatsapp', '22791720755')|replace('+', '')|replace(' ', '') %}
 {% set has_img = product.image and product.image != 'default.png' %}
-{% set in_stock = product.stock and product.stock > 0 %}
 {% set saving = (product.old_price - product.price) if (product.old_price and product.old_price > product.price) else 0 %}
 <div class="pd" data-recent-id="{{ product.id }}" data-recent-name="{{ product.name }}" data-recent-price="{{ product.price }}"
      data-recent-image="{{ product.image if has_img else '' }}" data-recent-brand="{{ product.brand or '' }}">
