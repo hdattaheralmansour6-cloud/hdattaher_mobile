@@ -278,12 +278,6 @@ def index():
     """Page d'accueil"""
     sb = get_supabase()
 
-    # Produits vedettes
-    r = sb.table('products').select('*, categories(name)') \
-        .eq('is_active', True).eq('is_featured', True) \
-        .order('created_at', desc=True).limit(8).execute()
-    featured = r.data or []
-
     # Derniers produits
     r = sb.table('products').select('*, categories(name)') \
         .eq('is_active', True) \
@@ -297,7 +291,7 @@ def index():
     promos = r.data or []
 
     # Adapter le format category_name pour les templates
-    for lst in [featured, latest, promos]:
+    for lst in [latest, promos]:
         for p in lst:
             cat = p.pop('categories', None)
             p['category_name'] = cat['name'] if cat else None
@@ -321,7 +315,7 @@ def index():
 
     banners = db.fetch_all('banners', '*', {'is_active': True}, order=('sort_order', True))
 
-    return render_template('public/index.html', featured=featured, latest=latest,
+    return render_template('public/index.html', latest=latest,
                            promos=promos, stats=stats, banners=banners, brands=brand_names)
 
 
@@ -466,21 +460,8 @@ def favorites_page():
 
 @app.route('/featured')
 def featured_products():
-    """Produits en vedette"""
-    sb = get_supabase()
-    r = sb.table('products').select('*, categories(name)') \
-        .eq('is_active', True).eq('is_featured', True) \
-        .order('created_at', desc=True).execute()
-    products_list = r.data or []
-    for p in products_list:
-        cat = p.pop('categories', None)
-        p['category_name'] = cat['name'] if cat else None
-    return render_template('public/products.html',
-                           products=products_list,
-                           all_categories=db.fetch_all('categories', '*', {'is_active': True}, order=('sort_order', True)),
-                           page_title='Produits en Vedette ⭐',
-                           current_category=None, search='', sort='newest',
-                           min_price=None, max_price=None)
+    """Ancienne page « En vedette » (supprimée) : on renvoie vers la boutique."""
+    return redirect(url_for('products'), code=301)
 
 
 @app.route('/new-arrivals')
@@ -852,7 +833,6 @@ def admin_add_product():
             'category_id': request.form.get('category_id'),
             'image': image_filename,
             'brand': _brand_from_form(),
-            'is_featured': bool(request.form.get('is_featured')),
             'is_new': bool(request.form.get('is_new')),
         })
         log_action('Ajout produit', f'Produit: {name}')
@@ -932,7 +912,6 @@ def admin_edit_product(product_id):
             'category_id': request.form.get('category_id'),
             'image': image_filename,
             'brand': _brand_from_form(),
-            'is_featured': bool(request.form.get('is_featured')),
             'is_new': bool(request.form.get('is_new')),
             'is_active': bool(request.form.get('is_active')),
         }, {'id': product_id})
