@@ -4,10 +4,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap');
 
 :root {
-  --primary: #6C63FF;
-  --primary-dark: #5A52D5;
-  --secondary: #FF6584;
-  --accent: #00D9FF;
+  --primary: #D4AF37;
+  --primary-dark: #B8902F;
+  --secondary: #A9812F;
+  --accent: #F1D88A;
   --success: #10B981;
   --warning: #F59E0B;
   --danger: #EF4444;
@@ -17,8 +17,8 @@
   --text: #1A1A2E;
   --text-secondary: #6B7280;
   --border: #E5E7EB;
-  --shadow: 0 4px 24px rgba(108, 99, 255, 0.10);
-  --shadow-lg: 0 20px 60px rgba(108, 99, 255, 0.15);
+  --shadow: 0 4px 24px rgba(212, 175, 55, 0.10);
+  --shadow-lg: 0 20px 60px rgba(212, 175, 55, 0.15);
   --radius: 16px;
   --radius-sm: 10px;
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -129,7 +129,7 @@ textarea {
   right: 0;
   bottom: -1px;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(108, 99, 255, 0.5), rgba(255, 205, 90, 0.5), transparent);
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.5), rgba(255, 205, 90, 0.5), transparent);
   opacity: 0;
   transition: opacity 0.4s ease;
 }
@@ -168,7 +168,7 @@ textarea {
   font-weight: 900;
   font-size: 1.1rem;
   -webkit-text-fill-color: #fff;
-  box-shadow: 0 4px 16px rgba(108, 99, 255, 0.35);
+  box-shadow: 0 4px 16px rgba(212, 175, 55, 0.35);
   transition: var(--transition);
 }
 
@@ -244,7 +244,7 @@ textarea {
   color: #fff;
   border-color: transparent;
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(108, 99, 255, 0.35);
+  box-shadow: 0 6px 16px rgba(212, 175, 55, 0.35);
 }
 
 .btn-icon:active {
@@ -359,7 +359,7 @@ textarea {
 
 .product-fav-btn.active {
   color: #fff;
-  background: linear-gradient(135deg, #ff6584, #ff4d6d);
+  background: linear-gradient(135deg, #A9812F, #ff4d6d);
 }
 
 .product-fav-btn.pop {
@@ -383,7 +383,7 @@ textarea {
 
 .detail-fav-btn.active {
   color: #fff;
-  background: linear-gradient(135deg, #ff6584, #ff4d6d);
+  background: linear-gradient(135deg, #A9812F, #ff4d6d);
   border-color: transparent;
 }
 
@@ -432,7 +432,7 @@ textarea {
   width: 800px;
   height: 800px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(108, 99, 255, 0.35) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(212, 175, 55, 0.35) 0%, transparent 70%);
   animation: float 8s ease-in-out infinite;
 }
 
@@ -444,7 +444,7 @@ textarea {
   width: 650px;
   height: 650px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 101, 132, 0.25) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(169, 129, 47, 0.25) 0%, transparent 70%);
   animation: float 10s ease-in-out infinite reverse;
 }
 
@@ -881,12 +881,12 @@ textarea {
 .btn-primary {
   background: var(--gradient);
   color: #fff;
-  box-shadow: 0 4px 15px rgba(108, 99, 255, 0.3);
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(108, 99, 255, 0.4);
+  box-shadow: 0 8px 25px rgba(212, 175, 55, 0.4);
 }
 
 .btn-outline {
@@ -1031,7 +1031,7 @@ textarea {
   font-size: 1.6rem;
   color: #fff;
   background: var(--gradient);
-  box-shadow: 0 8px 20px rgba(108, 99, 255, 0.3);
+  box-shadow: 0 8px 20px rgba(212, 175, 55, 0.3);
   transition: var(--transition);
 }
 
@@ -1065,7 +1065,7 @@ textarea {
 .product-card:hover {
   transform: translateY(-8px);
   box-shadow: var(--shadow-lg);
-  border-color: rgba(108, 99, 255, 0.35);
+  border-color: rgba(212, 175, 55, 0.35);
 }
 
 .product-card:active {
@@ -1281,7 +1281,7 @@ textarea {
   font-size: 0.78rem;
   padding: 5px 14px;
   border-radius: 999px;
-  background: rgba(108, 99, 255, 0.1);
+  background: rgba(212, 175, 55, 0.1);
 }
 
 .detail-title {
@@ -1538,8 +1538,8 @@ textarea {
 .footer {
   position: relative;
   background:
-    radial-gradient(ellipse at 15% 0%, rgba(108, 99, 255, 0.08), transparent 55%),
-    radial-gradient(ellipse at 85% 100%, rgba(255, 101, 132, 0.07), transparent 55%),
+    radial-gradient(ellipse at 15% 0%, rgba(212, 175, 55, 0.08), transparent 55%),
+    radial-gradient(ellipse at 85% 100%, rgba(169, 129, 47, 0.07), transparent 55%),
     var(--bg-secondary);
   padding: 60px 2rem 0;
   color: var(--text);
@@ -1548,8 +1548,8 @@ textarea {
 
 [data-theme="dark"] .footer {
   background:
-    radial-gradient(ellipse at 15% 0%, rgba(108, 99, 255, 0.18), transparent 55%),
-    radial-gradient(ellipse at 85% 100%, rgba(255, 101, 132, 0.14), transparent 55%),
+    radial-gradient(ellipse at 15% 0%, rgba(212, 175, 55, 0.18), transparent 55%),
+    radial-gradient(ellipse at 85% 100%, rgba(169, 129, 47, 0.14), transparent 55%),
     #0f172a;
   color: #e2e8f0;
 }
@@ -1762,7 +1762,7 @@ textarea {
   color: #fff;
   border-color: transparent;
   transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(108, 99, 255, 0.45);
+  box-shadow: 0 8px 20px rgba(212, 175, 55, 0.45);
 }
 
 /* ---- Barre finale ---- */
@@ -2145,7 +2145,7 @@ textarea {
 }
 
 .mobile-cat-link .mobile-link-icon {
-  background: rgba(108, 99, 255, 0.08);
+  background: rgba(212, 175, 55, 0.08);
 }
 
 /* Actions rapides */

@@ -133,7 +133,7 @@
     background: var(--gradient);
     color: #fff;
     font-size: 1.8rem;
-    box-shadow: 0 10px 24px rgba(108, 99, 255, 0.3);
+    box-shadow: 0 10px 24px rgba(212, 175, 55, 0.3);
 }
 
 .account-nav-tabs {
@@ -277,7 +277,7 @@
     object-fit: cover;
     border: 4px solid var(--bg-card);
     background: var(--bg-secondary);
-    box-shadow: 0 8px 24px rgba(108, 99, 255, .25);
+    box-shadow: 0 8px 24px rgba(212, 175, 55, .25);
     display: block;
 }
 .acc-avatar-empty {
@@ -343,7 +343,7 @@
     font-weight: 600;
     padding: 4px 10px;
     border-radius: 999px;
-    background: rgba(108, 99, 255, .1);
+    background: rgba(212, 175, 55, .1);
     color: var(--primary);
 }
 
@@ -363,7 +363,7 @@
     font-size: .8rem;
     font-weight: 600;
     color: var(--primary);
-    background: rgba(108, 99, 255, .08);
+    background: rgba(212, 175, 55, .08);
     border: none;
     cursor: pointer;
     font-family: inherit;
@@ -399,7 +399,7 @@
 .acc-tabs a.active {
     background: var(--gradient);
     color: #fff;
-    box-shadow: 0 6px 16px rgba(108, 99, 255, .3);
+    box-shadow: 0 6px 16px rgba(212, 175, 55, .3);
 }
 .acc-tabs a.acc-tab-logout { color: var(--danger); }
 @media (max-width: 480px) {
@@ -431,7 +431,7 @@
     width: 36px; height: 36px;
     display: flex; align-items: center; justify-content: center;
     border-radius: 12px;
-    background: rgba(108, 99, 255, .1);
+    background: rgba(212, 175, 55, .1);
     color: var(--primary);
     margin-bottom: 6px;
 }
@@ -489,7 +489,7 @@
 .acc-input:focus-within {
     border-color: var(--primary);
     background: var(--bg-card);
-    box-shadow: 0 0 0 4px rgba(108, 99, 255, .12);
+    box-shadow: 0 0 0 4px rgba(212, 175, 55, .12);
 }
 .acc-input > i { color: var(--text-secondary); font-size: .9rem; width: 16px; text-align: center; }
 .acc-input:focus-within > i:first-child { color: var(--primary); }
@@ -534,7 +534,7 @@
     font-family: inherit;
     text-decoration: none;
     cursor: pointer;
-    box-shadow: 0 8px 20px rgba(108, 99, 255, .3);
+    box-shadow: 0 8px 20px rgba(212, 175, 55, .3);
     transition: var(--transition);
     width: 100%;
 }
@@ -567,7 +567,7 @@
     flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
     border-radius: 13px;
-    background: rgba(108, 99, 255, .1);
+    background: rgba(212, 175, 55, .1);
     color: var(--primary);
 }
 .acc-order-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -659,7 +659,7 @@
     background: var(--gradient);
     border-color: transparent;
     color: #fff;
-    box-shadow: 0 0 0 5px rgba(108, 99, 255, .18);
+    box-shadow: 0 0 0 5px rgba(212, 175, 55, .18);
 }
 .acc-step-label { font-size: .65rem; font-weight: 600; color: var(--text-secondary); line-height: 1.2; }
 .acc-steps li.current .acc-step-label { color: var(--primary); }
@@ -699,7 +699,7 @@
     margin-top: 14px;
     padding: 14px 16px;
     border-radius: 14px;
-    background: rgba(108, 99, 255, .08);
+    background: rgba(212, 175, 55, .08);
     font-weight: 700;
 }
 .acc-total strong {
@@ -776,7 +776,7 @@
     top: 60px; left: 50%;
     width: 340px; height: 340px;
     transform: translateX(-50%);
-    background: radial-gradient(circle, rgba(108, 99, 255, .22), transparent 65%);
+    background: radial-gradient(circle, rgba(212, 175, 55, .22), transparent 65%);
     filter: blur(10px);
     z-index: -1;
     pointer-events: none;
@@ -902,7 +902,7 @@
     width: 32px; height: 32px;
     display: flex; align-items: center; justify-content: center;
     border-radius: 10px;
-    background: rgba(108, 99, 255, .12);
+    background: rgba(212, 175, 55, .12);
     color: var(--primary);
     font-size: .8rem;
 }
@@ -970,7 +970,7 @@
     border: 2px solid var(--border);
     color: var(--text-secondary);
 }
-.auth-steps li.active span { background: var(--gradient); border-color: transparent; color: #fff; box-shadow: 0 0 0 4px rgba(108,99,255,.15); }
+.auth-steps li.active span { background: var(--gradient); border-color: transparent; color: #fff; box-shadow: 0 0 0 4px rgba(212, 175, 55,.15); }
 .auth-steps li.done span { background: var(--success); border-color: var(--success); color: #fff; }
 .auth-steps small { font-size: .68rem; font-weight: 600; color: var(--text-secondary); line-height: 1.2; }
 .auth-steps li.active small { color: var(--primary); }
@@ -980,8 +980,8 @@
     width: 100%;
     padding: 14px;
     border-radius: 16px;
-    border: 2px dashed rgba(108, 99, 255, .45);
-    background: rgba(108, 99, 255, .06);
+    border: 2px dashed rgba(212, 175, 55, .45);
+    background: rgba(212, 175, 55, .06);
     color: var(--text);
     text-align: center;
     font-size: 1.7rem;
@@ -992,7 +992,7 @@
     outline: none;
     transition: var(--transition);
 }
-.auth-code:focus { border-style: solid; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(108,99,255,.12); }
+.auth-code:focus { border-style: solid; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(212, 175, 55,.12); }
 
 /* Rassurance sous la carte */
 .auth-trust {
