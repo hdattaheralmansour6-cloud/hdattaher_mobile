@@ -691,3 +691,64 @@ body.no-scroll { overflow: hidden; }
 .pc-media, .pd-media, .mini-img, .cart-thumb, .sx-thumb { contain: paint; }
 .pc-card img, .cart-thumb img, .sx-thumb img, .mini-img img { max-height: 100%; }
 .h-rail .animate-on-scroll, .pc-grid .animate-on-scroll { opacity: 1 !important; transform: none !important; }
+
+/* ============================================================
+   BANNIÈRES QUI BRILLENT
+   ============================================================ */
+.banner-carousel {
+  position: relative;
+  border: 1.5px solid rgba(212, 175, 55, .55) !important;
+  animation: bannerGlow 3.2s ease-in-out infinite;
+}
+@keyframes bannerGlow {
+  0%, 100% { box-shadow: 0 0 14px rgba(212, 175, 55, .25), 0 18px 40px rgba(0, 0, 0, .45); border-color: rgba(212, 175, 55, .45); }
+  50%      { box-shadow: 0 0 30px rgba(241, 216, 138, .55), 0 18px 40px rgba(0, 0, 0, .45); border-color: rgba(241, 216, 138, .95); }
+}
+/* Reflet doré qui traverse l'image */
+.banner-slide { position: relative; overflow: hidden; }
+.banner-slide::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  left: -60%;
+  width: 45%;
+  background: linear-gradient(105deg, transparent 0%, rgba(255, 220, 120, .15) 25%, rgba(255, 250, 225, .75) 50%, rgba(255, 220, 120, .15) 75%, transparent 100%);
+  mix-blend-mode: screen;
+  transform: skewX(-18deg);
+  animation: bannerShine 3.8s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+@keyframes bannerShine {
+  0%   { left: -60%; }
+  55%  { left: 125%; }
+  100% { left: 125%; }
+}
+/* Petites étincelles dans les coins */
+.banner-carousel::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 8% 10%, rgba(255, 240, 190, .9) 0 1.5px, transparent 3px),
+    radial-gradient(circle at 92% 14%, rgba(255, 240, 190, .9) 0 1.5px, transparent 3px),
+    radial-gradient(circle at 85% 88%, rgba(255, 240, 190, .8) 0 1.2px, transparent 3px);
+  animation: bannerSparkle 2.4s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 4;
+}
+@keyframes bannerSparkle { from { opacity: .15; } to { opacity: 1; } }
+.banner-caption h3 {
+  background: linear-gradient(110deg, #E9C766 0%, #FFF3C4 45%, #D4AF37 60%, #E9C766 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: bannerTitle 3.8s linear infinite;
+}
+@keyframes bannerTitle { from { background-position: 100% 0; } to { background-position: -150% 0; } }
+.banner-arrow, .banner-dots { z-index: 5; }
+@media (prefers-reduced-motion: reduce) {
+  .banner-carousel, .banner-slide::after, .banner-carousel::before, .banner-caption h3 { animation: none; }
+}
