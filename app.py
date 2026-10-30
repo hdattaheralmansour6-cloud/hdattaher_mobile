@@ -10,6 +10,7 @@ import time
 import secrets
 import copy
 import tempfile
+import hashlib
 from urllib.parse import quote, urlparse
 from datetime import datetime, timedelta
 from functools import wraps
@@ -302,6 +303,92 @@ def make_session_permanent():
 # ============================================================
 #  ROUTES PUBLIQUES
 # ============================================================
+
+# ============================================================
+#  APERÇU WHATSAPP / FACEBOOK (image 1200 x 630 avec photo, nom et prix)
+# ============================================================
+_share_cache = {}
+
+
+def _share_version(*parts):
+    return hashlib.md5('|'.join(str(p) for p in parts).encode('utf-8')).hexdigest()[:10]
+
+
+def _product_share_version(p):
+    return _share_version('v2', p.get('name'), p.get('brand'), p.get('price'), p.get('old_price'),
+                          p.get('discount'), p.get('image'), (p.get('stock') or 0) > 0)
+
+
+def _home_share_version():
+    try:
+        latest = _home_data()['latest']
+    except Exception:
+        latest = []
+    return _share_version('v2', *[(x.get('id'), x.get('image')) for x in latest[:3]])
+
+
+@app.template_global()
+def share_image_url(product=None):
+    """Adresse complète de l'image d'aperçu (change quand le produit change -> WhatsApp la recharge)."""
+    base = (app.config.get('SITE_URL') or Config.SITE_URL or request.url_root).rstrip('/')
+    if product:
+        return base + url_for('share_product_image', product_id=product['id'], v=_product_share_version(product))
+    return base + url_for('share_home_image', v=_home_share_version())
+
+
+def _share_photo(url):
+    url = (url or '').strip()
+    if not url or url == 'default.png':
+        return None
+    try:
+        return _download_image(url, 8 * 1024 * 1024)
+    except Exception:
+        return None
+
+
+def _share_response(key, make):
+    data = _share_cache.get(key)
+    if data is None:
+        path = os.path.join(tempfile.gettempdir(), 'hm_share_' + hashlib.md5(repr(key).encode()).hexdigest() + '.jpg')
+        try:
+            with open(path, 'rb') as f:
+                data = f.read()
+        except OSError:
+            data = make()
+            try:
+                with open(path, 'wb') as f:
+                    f.write(data)
+            except OSError:
+                pass
+        if len(_share_cache) > 60:
+            _share_cache.clear()
+        _share_cache[key] = data
+    return Response(data, mimetype='image/jpeg',
+                    headers={'Cache-Control': 'public, max-age=604800'})
+
+
+@app.route('/partage/produit/<product_id>.jpg')
+def share_product_image(product_id):
+    import share_image
+    data = _product_page_data(str(product_id))
+    if not data:
+        abort(404)
+    p = data['product']
+    return _share_response(('p', str(product_id), _product_share_version(p)),
+                           lambda: share_image.render_product(p, _share_photo(p.get('image'))))
+
+
+@app.route('/partage/accueil.jpg')
+def share_home_image():
+    import share_image
+    try:
+        latest = _home_data()['latest']
+    except Exception:
+        latest = []
+    with_photo = [x for x in latest if x.get('image') and x.get('image') != 'default.png'][:3]
+    return _share_response(('h', _home_share_version()),
+                           lambda: share_image.render_home([_share_photo(x['image']) for x in with_photo]))
+
 
 @app.route('/ping')
 def ping():
