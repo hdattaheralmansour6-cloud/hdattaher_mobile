@@ -305,8 +305,12 @@ def index():
     # Stats
     total_products = db.count('products', {'is_active': True})
     all_prods = db.fetch_all('products', 'brand', {'is_active': True})
-    brand_names = sorted({p['brand'].strip() for p in all_prods if p.get('brand') and p['brand'].strip()},
-                         key=str.lower)
+    _seen = {}
+    for p in all_prods:
+        b = ' '.join((p.get('brand') or '').split())
+        if b and b.lower() not in _seen:
+            _seen[b.lower()] = b if any(ch.isupper() for ch in b) else b.title()
+    brand_names = sorted(_seen.values(), key=str.lower)
     unique_brands = len(brand_names)
 
     stats = {
@@ -369,7 +373,7 @@ def products():
     if max_price is not None:
         query = query.lte('price', max_price)
     if brand:
-        query = query.eq('brand', brand)
+        query = query.ilike('brand', re.sub(r'[%_\\]', '', brand))
 
     sort_map = {
         'price_asc': ('price', False),
@@ -391,7 +395,12 @@ def products():
             p['image'] = sb.storage.from_('product-images').get_public_url(p['image'])
     all_categories = db.fetch_all('categories', '*', {'is_active': True}, order=('sort_order', True))
     all_brands_rows = db.fetch_all('products', 'brand', {'is_active': True})
-    all_brands = sorted({row['brand'] for row in all_brands_rows if row.get('brand')})
+    _seen = {}
+    for row in all_brands_rows:
+        b = ' '.join((row.get('brand') or '').split())
+        if b and b.lower() not in _seen:
+            _seen[b.lower()] = b if any(ch.isupper() for ch in b) else b.title()
+    all_brands = sorted(_seen.values(), key=str.lower)
 
     return render_template('public/products.html',
                            products=products_list,
@@ -748,6 +757,40 @@ def admin_products():
     return render_template('admin/products.html', products=products_list)
 
 
+# ============================================================
+#  MARQUES (liste à choisir dans l'admin, même orthographe partout)
+# ============================================================
+KNOWN_BRANDS = ['Apple', 'Samsung', 'Tecno', 'Infinix', 'Itel', 'Xiaomi', 'Redmi', 'Huawei',
+                'Honor', 'Oppo', 'Realme', 'Vivo', 'Google', 'Nokia', 'OnePlus', 'Motorola', 'Oraimo', 'Anker']
+
+
+def _brand_choices():
+    """Marques connues + marques déjà utilisées sur les produits (sans doublon majuscule/minuscule)."""
+    choices = {b.lower(): b for b in KNOWN_BRANDS}
+    try:
+        for row in db.fetch_all('products', 'brand') or []:
+            b = ' '.join((row.get('brand') or '').split())
+            if b and b.lower() not in choices:
+                choices[b.lower()] = b
+    except Exception:
+        pass
+    return sorted(choices.values(), key=str.lower)
+
+
+def _brand_from_form():
+    """Lit la marque choisie (ou « Autre ») et l'écrit toujours de la même façon."""
+    raw = request.form.get('brand', '')
+    if raw == '__other__':
+        raw = request.form.get('brand_other', '')
+    raw = ' '.join((raw or '').split())[:40]
+    if not raw:
+        return ''
+    for b in _brand_choices():
+        if b.lower() == raw.lower():
+            return b
+    return raw if any(c.isupper() for c in raw) else raw.title()
+
+
 @app.route('/azawad/product/add', methods=['GET', 'POST'])
 @login_required
 def admin_add_product():
@@ -765,7 +808,7 @@ def admin_add_product():
 
         if not name:
             flash('Le nom du produit est obligatoire.', 'error')
-            return render_template('admin/product_form.html', product=None, categories=cats, action='add')
+            return render_template('admin/product_form.html', product=None, categories=cats, action='add', brands=_brand_choices())
 
         image_filename = 'default.png'
 
@@ -808,7 +851,7 @@ def admin_add_product():
             'stock': safe_int(request.form.get('stock'), 0),
             'category_id': request.form.get('category_id'),
             'image': image_filename,
-            'brand': request.form.get('brand', ''),
+            'brand': _brand_from_form(),
             'is_featured': bool(request.form.get('is_featured')),
             'is_new': bool(request.form.get('is_new')),
         })
@@ -816,7 +859,7 @@ def admin_add_product():
         flash('Produit ajouté avec succès!', 'success')
         return redirect(url_for('admin_products'))
 
-    return render_template('admin/product_form.html', product=None, categories=cats, action='add')
+    return render_template('admin/product_form.html', product=None, categories=cats, action='add', brands=_brand_choices())
 
 
 @app.route('/azawad/product/edit/<product_id>', methods=['GET', 'POST'])
@@ -842,7 +885,7 @@ def admin_edit_product(product_id):
         
         if not name:
             flash('Le nom est obligatoire.', 'error')
-            return render_template('admin/product_form.html', product=product, categories=cats, action='edit')
+            return render_template('admin/product_form.html', product=product, categories=cats, action='edit', brands=_brand_choices())
 
         image_filename = product['image']
         if 'image' in request.files:
@@ -888,7 +931,7 @@ def admin_edit_product(product_id):
             'stock': safe_int(request.form.get('stock'), 0),
             'category_id': request.form.get('category_id'),
             'image': image_filename,
-            'brand': request.form.get('brand', ''),
+            'brand': _brand_from_form(),
             'is_featured': bool(request.form.get('is_featured')),
             'is_new': bool(request.form.get('is_new')),
             'is_active': bool(request.form.get('is_active')),
@@ -897,7 +940,7 @@ def admin_edit_product(product_id):
         flash('Produit modifié avec succès!', 'success')
         return redirect(url_for('admin_products'))
 
-    return render_template('admin/product_form.html', product=product, categories=cats, action='edit')
+    return render_template('admin/product_form.html', product=product, categories=cats, action='edit', brands=_brand_choices())
 
 
 @app.route('/azawad/product/delete/<product_id>', methods=['POST'])
