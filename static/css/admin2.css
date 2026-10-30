@@ -476,3 +476,19 @@ a.ax-row:active, a.ax-row:hover { background: rgba(212, 175, 55, .04); }
 .ax-bars-bar { width: 100%; max-width: 38px; border-radius: 8px 8px 3px 3px; background: linear-gradient(180deg, #F3DE9A, #A9812F); box-shadow: 0 0 14px rgba(212, 175, 55, .25); }
 .ax-bars-val { font-size: .62rem; font-weight: 700; color: #E8C86E; white-space: nowrap; }
 .ax-bars-col small { font-size: .6rem; color: var(--admin-text-sec); white-space: nowrap; }
+
+/* Rien ne dépasse de l'écran : les cartes restent dans la largeur du téléphone */
+.admin-layout, .admin-main { min-width: 0; max-width: 100%; }
+.admin-main { overflow-x: hidden; }
+.ax-olist, .ax-plist, .ax-rlist { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) { .ax-plist, .ax-rlist { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1100px) { .ax-olist { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1400px) { .ax-plist { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.ax-olist > *, .ax-plist > *, .ax-rlist > *, .ax-ocard, .ax-pcard, .ax-rcard, .admin-card { min-width: 0; max-width: 100%; }
+.ax-ohead, .ax-row, .ax-rhead { min-width: 0; }
+.ax-ohead .ax-row-side { max-width: 48%; }
+.ax-ohead .ax-row-side b { font-size: .86rem; }
+.ax-pill { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ax-oactions > * { min-width: 0; }
+.ax-oactions .ax-grow .btn-admin, .ax-oactions .btn-admin.ax-grow { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ax-ohead .ax-row-main small { white-space: normal; overflow: visible; }
