@@ -3,290 +3,172 @@
 {% block meta_description %}HDATTAHER MOBILE : achetez smartphones neufs (iPhone, Samsung, Xiaomi, Tecno...) et accessoires au meilleur prix, livraison au Niger.{% endblock %}
 
 {% block content %}
-{% if banners %}
-<!-- CARROUSEL BANNIÈRES -->
-<section class="banner-carousel" id="bannerCarousel">
-    <div class="banner-track" id="bannerTrack">
-        {% for b in banners %}
-        <div class="banner-slide">
-            <img src="{{ b.image }}" alt="{{ b.title or '' }}" loading="{{ 'eager' if loop.index0 == 0 else 'lazy' }}">
-            {% if b.title or b.subtitle %}
-            <div class="banner-caption">
-                {% if b.title %}<h3 data-name-fr="{{ b.title }}" data-name-en="{{ b.title_en or '' }}"
-                    data-name-ar="{{ b.title_ar or '' }}">{{ b.title }}</h3>{% endif %}
-                {% if b.subtitle %}<p data-name-fr="{{ b.subtitle }}" data-name-en="{{ b.subtitle_en or '' }}"
-                    data-name-ar="{{ b.subtitle_ar or '' }}">{{ b.subtitle }}</p>{% endif %}
-            </div>
+{% set wa = settings.get('whatsapp', '22791720755')|replace('+', '')|replace(' ', '') %}
+<div class="home">
+
+    <!-- ===== Accueil : salutation + recherche ===== -->
+    <section class="h-top">
+        <p class="h-hello">
+            {% if current_user.is_authenticated %}
+            <span data-i18n="hello">Bonjour</span> {{ (current_user.full_name or '').split(' ')[0] }} 👋
+            {% else %}
+            <span data-i18n="welcome">Bienvenue chez HDATTAHER</span>
             {% endif %}
-        </div>
-        {% endfor %}
-    </div>
+        </p>
+        <h1 class="h-title"><span data-i18n="h_title1">Le smartphone de vos rêves,</span>
+            <em data-i18n="h_title2">livré au Niger.</em></h1>
+        <button type="button" class="h-search" onclick="openSearch()">
+            <i class="fas fa-magnifying-glass"></i>
+            <span data-i18n="search_ph">iPhone, Samsung, écouteurs…</span>
+        </button>
+    </section>
 
-    {% if banners|length > 1 %}
-    <button class="banner-arrow banner-arrow-prev" onclick="bannerCarouselGo(-1)" aria-label="Précédent">
-        <i class="fas fa-chevron-left"></i>
-    </button>
-    <button class="banner-arrow banner-arrow-next" onclick="bannerCarouselGo(1)" aria-label="Suivant">
-        <i class="fas fa-chevron-right"></i>
-    </button>
-    <div class="banner-dots" id="bannerDots">
-        {% for b in banners %}
-        <button class="banner-dot{% if loop.index0 == 0 %} active{% endif %}" onclick="bannerCarouselGoTo({{ loop.index0 }})" aria-label="Aller à l'image {{ loop.index }}"></button>
+    <!-- ===== Catégories ===== -->
+    {% if categories %}
+    <nav class="h-cats" aria-label="Catégories">
+        <a href="{{ url_for('products') }}" class="h-cat">
+            <span class="h-cat-ic"><i class="fas fa-border-all"></i></span>
+            <span data-i18n="all">Tout</span>
+        </a>
+        {% for cat in categories %}
+        <a href="{{ url_for('products', category=cat.id) }}" class="h-cat">
+            <span class="h-cat-ic"><i class="{{ cat.icon }}"></i></span>
+            <span data-name-fr="{{ cat.name }}" data-name-en="{{ cat.name_en or cat.name }}" data-name-ar="{{ cat.name_ar or cat.name }}">{{ cat.name }}</span>
+        </a>
         {% endfor %}
-    </div>
+    </nav>
     {% endif %}
-</section>
-{% endif %}
 
-<!-- HERO -->
-<section class="hero">
-    <div class="hero-glow-gold"></div>
-    <span class="hero-particle"></span>
-    <span class="hero-particle"></span>
-    <span class="hero-particle"></span>
-    <div class="hero-content">
-        <div class="hero-text">
-            <div class="hero-badge">
-                <i class="fas fa-bolt"></i>
-                <span>🇳🇪 N°1 au Niger</span>
-            </div>
-            <h1>
-                <span data-i18n="hero_title">La technologie</span><br>
-                <span class="gradient-text" data-i18n="hero_title2">que vous méritez.</span>
-            </h1>
-            <p data-i18n="hero_desc">Découvrez des smartphones et accessoires sélectionnés pour vous, avec qualité,
-                prix compétitifs et service fiable au Niger.</p>
-            <div class="hero-buttons">
-                <a href="{{ url_for('products') }}" class="btn btn-primary">
-                    <i class="fas fa-shopping-bag"></i> <span data-i18n="shop_now">Découvrir les produits</span>
-                </a>
-                <a href="https://wa.me/{{ settings.get('whatsapp','22791720755') }}" target="_blank"
-                    class="btn btn-whatsapp">
-                    <i class="fab fa-whatsapp"></i> <span data-i18n="order_whatsapp">Commander sur WhatsApp</span>
-                </a>
-            </div>
-            <div class="hero-stats">
-                <div class="hero-stat">
-                    <div class="number counter" data-target="{{ stats.total_products }}">0</div>
-                    <div class="label" data-i18n="products_count">Produits</div>
+    <!-- ===== Bannières (glisser avec le doigt) ===== -->
+    {% if banners %}
+    <section class="banner-carousel" id="bannerCarousel">
+        <div class="banner-track" id="bannerTrack">
+            {% for b in banners %}
+            <div class="banner-slide">
+                <img src="{{ b.image }}" alt="{{ b.title or '' }}" loading="{{ 'eager' if loop.index0 == 0 else 'lazy' }}">
+                {% if b.title or b.subtitle %}
+                <div class="banner-caption">
+                    {% if b.title %}<h3 data-name-fr="{{ b.title }}" data-name-en="{{ b.title_en or '' }}"
+                        data-name-ar="{{ b.title_ar or '' }}">{{ b.title }}</h3>{% endif %}
+                    {% if b.subtitle %}<p data-name-fr="{{ b.subtitle }}" data-name-en="{{ b.subtitle_en or '' }}"
+                        data-name-ar="{{ b.subtitle_ar or '' }}">{{ b.subtitle }}</p>{% endif %}
                 </div>
-                <div class="hero-stat">
-                    <div class="number counter" data-target="{{ stats.total_brands }}">0</div>
-                    <div class="label" data-i18n="brands_count">Marques</div>
-                </div>
-                <div class="hero-stat">
-                    <div class="number counter" data-target="{{ stats.happy_clients }}">0</div>
-                    <div class="label" data-i18n="clients_count">Clients satisfaits</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- BARRE DE CONFIANCE -->
-<section class="trust-bar">
-    <div class="trust-bar-track">
-        <div class="trust-item"><i class="fas fa-lock"></i> <span data-i18n="trust_payment">Paiement sécurisé</span></div>
-        <div class="trust-item"><i class="fas fa-truck"></i> <span data-i18n="trust_delivery">Livraison rapide</span></div>
-        <div class="trust-item"><i class="fas fa-check-circle"></i> <span data-i18n="trust_verified">Produits vérifiés</span></div>
-        <div class="trust-item"><i class="fab fa-whatsapp"></i> <span data-i18n="trust_support">Support WhatsApp</span></div>
-    </div>
-</section>
-
-<!-- CATEGORIES -->
-<section class="section" style="background:var(--bg-secondary);">
-    <div class="container">
-        <div class="section-header animate-on-scroll">
-            <h2 data-i18n="our_categories">Nos Catégories</h2>
-            <p data-i18n="categories_desc">
-                Trouvez exactement ce que vous cherchez
-           </p>
-        </div>
-        <div class="categories-grid">
-            {% for cat in categories %}
-            <a href="{{ url_for('products', category=cat.id) }}" class="category-card animate-on-scroll">
-                <i class="{{ cat.icon }}"></i>
-                <h3 data-name-fr="{{ cat.name }}" data-name-en="{{ cat.name_en or cat.name }}" data-name-ar="{{ cat.name_ar or cat.name }}">{{ cat.name }}</h3>
-            </a>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-
-<!-- PRODUITS VEDETTES -->
-<section class="section">
-    <div class="container">
-        <div class="section-header animate-on-scroll">
-            <h2 data-i18n="featured">⭐ Produits Vedettes</h2>
-            <p data-i18n="featured_desc">Nos meilleurs produits sélectionnés pour vous</p>
-        </div>
-        <div class="products-grid">
-            {% for p in featured %}
-            <div class="product-card featured-gold animate-on-scroll">
-                <a href="{{ url_for('product_detail', product_id=p.id) }}">
-                    <div class="product-image">
-                        {% if p.image and p.image != 'default.png' %}
-                        <img src="{{ p.image }}" alt="{{ p.name }}" loading="lazy">
-                        {% else %}
-                        <div class="placeholder-icon">📱</div>
-                        {% endif %}
-                        {% if p.discount > 0 %}
-                        <span class="badge-discount">-{{ p.discount }}%</span>
-                        {% endif %}
-                        {% if p.stock == 0 %}
-                        <span class="badge-stock out-of-stock" data-i18n="out_of_stock">Rupture</span>
-                        {% elif p.stock <= 5 %} <span class="badge-stock low-stock" data-i18n="low_stock">Stock
-                            faible</span>
-                            {% else %}
-                            <span class="badge-stock in-stock" data-i18n="in_stock">En stock</span>
-                            {% endif %}
-                    </div>
-                </a>
-                <div class="product-info">
-                    <div class="product-brand">{{ p.brand }}</div>
-                    <h3 class="product-name" data-name-fr="{{ p.name }}" data-name-en="{{ p.name_en or p.name }}" data-name-ar="{{ p.name_ar or p.name }}">{{ p.name }}</h3>
-                    <div class="product-price-row">
-                        <span class="product-price">{{ "{:,.0f}".format(p.price) }} FCFA</span>
-                        {% if p.old_price > 0 %}
-                        <span class="product-old-price">{{ "{:,.0f}".format(p.old_price) }}</span>
-                        {% endif %}
-                    </div>
-                    <div class="product-views"><i class="fas fa-eye"></i> {{ p.views }} <span
-                            data-i18n="views">vues</span></div>
-                    <div class="product-actions" style="margin-top:10px;">
-                        <a href="{{ url_for('product_detail', product_id=p.id) }}" class="btn btn-outline btn-sm"
-                            data-i18n="view_details">Voir détails</a>
-                        {% if p.stock > 0 %}
-                        <a href="https://wa.me/{{ settings.get('whatsapp','22791720755') }}?text=Bonjour, je veux acheter {{ p.name }}"
-                            target="_blank" class="btn btn-whatsapp btn-sm">
-                            <i class="fab fa-whatsapp"></i> <span data-i18n="buy">Acheter</span>
-                        </a>
-                        {% else %}
-                        <span class="btn btn-sm"
-                            style="background:#6b7280; color:#fff; cursor:not-allowed; opacity:0.7;">
-                            <span data-i18n="out_of_stock">Rupture de stock</span>
-                        </span>
-                        {% endif %}
-                    </div>
-                </div>
+                {% endif %}
             </div>
             {% endfor %}
         </div>
-        <div style="text-align:center; margin-top:2rem;">
-            <a href="{{ url_for('products') }}" class="btn btn-primary" data-i18n="view_all">Voir tout</a>
+        {% if banners|length > 1 %}
+        <button class="banner-arrow banner-arrow-prev" onclick="bannerCarouselGo(-1)" aria-label="Précédent"><i class="fas fa-chevron-left"></i></button>
+        <button class="banner-arrow banner-arrow-next" onclick="bannerCarouselGo(1)" aria-label="Suivant"><i class="fas fa-chevron-right"></i></button>
+        <div class="banner-dots" id="bannerDots">
+            {% for b in banners %}
+            <button class="banner-dot{% if loop.index0 == 0 %} active{% endif %}" onclick="bannerCarouselGoTo({{ loop.index0 }})" aria-label="Image {{ loop.index }}"></button>
+            {% endfor %}
         </div>
-    </div>
-</section>
+        {% endif %}
+    </section>
+    {% endif %}
 
-<!-- PROMOTIONS -->
-{% if promos %}
-<section class="promo-banner">
-    <h2 data-i18n="special_offers">🔥 Offres Spéciales</h2>
-    <p>Profitez de nos réductions exceptionnelles!</p>
-    <a href="{{ url_for('products', category=3) }}" class="btn" style="margin-top:1rem;">
-        <i class="fas fa-arrow-right"></i> <span data-i18n="view_all">Voir tout</span>
-    </a>
-</section>
-<section class="section">
-    <div class="container">
-        <div class="products-grid">
+    <!-- ===== Garanties ===== -->
+    <section class="h-perks">
+        <div><i class="fas fa-truck-fast"></i><span data-i18n="perk_delivery">Livraison au Niger</span></div>
+        <div><i class="fas fa-shield-halved"></i><span data-i18n="perk_original">Produits authentiques</span></div>
+        <div><i class="fas fa-wallet"></i><span data-i18n="perk_payment">Amanata & Nita</span></div>
+    </section>
+
+    <!-- ===== Offres du moment ===== -->
+    {% if promos %}
+    <section class="h-sec">
+        <div class="h-head">
+            <h2><i class="fas fa-fire-flame-curved"></i> <span data-i18n="deals">Offres du moment</span></h2>
+            <a href="{{ url_for('products', promo=1) }}" data-i18n="see_all">Tout voir</a>
+        </div>
+        <div class="h-rail">
             {% for p in promos %}
-            <div class="product-card animate-on-scroll">
-                <a href="{{ url_for('product_detail', product_id=p.id) }}">
-                    <div class="product-image">
-                        {% if p.image and p.image != 'default.png' %}
-                        <img src="{{ p.image }}" alt="{{ p.name }}" loading="lazy">
-                        {% else %}
-                        <div class="placeholder-icon">📱</div>
-                        {% endif %}
-                        <span class="badge-discount">-{{ p.discount }}%</span>
-                    </div>
-                </a>
-                <div class="product-info">
-                    <div class="product-brand">{{ p.brand }}</div>
-                    <h3 class="product-name" data-name-fr="{{ p.name }}" data-name-en="{{ p.name_en or p.name }}" data-name-ar="{{ p.name_ar or p.name }}">{{ p.name }}</h3>
-                    <div class="product-price-row">
-                        <span class="product-price">{{ "{:,.0f}".format(p.price) }} FCFA</span>
-                        {% if p.old_price > 0 %}
-                        <span class="product-old-price">{{ "{:,.0f}".format(p.old_price) }}</span>
-                        {% endif %}
-                    </div>
-                    <div class="product-actions" style="margin-top:10px;">
-                        {% if p.stock > 0 %}
-                        <a href="https://wa.me/{{ settings.get('whatsapp','22791720755') }}?text=Bonjour, je veux acheter {{ p.name }}"
-                            target="_blank" class="btn btn-whatsapp btn-sm btn-block">
-                            <i class="fab fa-whatsapp"></i> <span data-i18n="buy">Acheter</span>
-                        </a>
-                        {% else %}
-                        <span class="btn btn-sm btn-block"
-                            style="background:#6b7280; color:#fff; cursor:not-allowed; opacity:0.7; text-align:center;">
-                            <span data-i18n="out_of_stock">Rupture de stock</span>
-                        </span>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
+            <div class="h-rail-item">{% with featured = false %}{% include "public/_product_card.html" %}{% endwith %}</div>
             {% endfor %}
         </div>
-    </div>
-</section>
-{% endif %}
+    </section>
+    {% endif %}
 
-<!-- NOUVEAUTÉS -->
-<section class="section" style="background:var(--bg-secondary);">
-    <div class="container">
-        <div class="section-header animate-on-scroll">
-            <h2>🆕 <span data-i18n="new_arrivals">Nouveautés</span></h2>
-        </div>
-        <div class="products-grid">
-            {% for p in latest[:4] %}
-            <div class="product-card animate-on-scroll">
-                <a href="{{ url_for('product_detail', product_id=p.id) }}">
-                    <div class="product-image">
-                        {% if p.image and p.image != 'default.png' %}
-                        <img src="{{ p.image }}" alt="{{ p.name }}" loading="lazy">
-                        {% else %}
-                        <div class="placeholder-icon">📱</div>
-                        {% endif %}
-                        {% if p.discount > 0 %}
-                        <span class="badge-discount">-{{ p.discount }}%</span>
-                        {% endif %}
-                        {% if p.stock == 0 %}
-                        <span class="badge-stock out-of-stock" data-i18n="out_of_stock">Rupture</span>
-                        {% elif p.stock <= 5 %} <span class="badge-stock low-stock" data-i18n="low_stock">Stock faible</span>
-                            {% else %}
-                            <span class="badge-stock in-stock" data-i18n="in_stock">En stock</span>
-                            {% endif %}
-                    </div>
-                </a>
-                <div class="product-info">
-                    <div class="product-brand">{{ p.brand }}</div>
-                    <h3 class="product-name" data-name-fr="{{ p.name }}" data-name-en="{{ p.name_en or p.name }}" data-name-ar="{{ p.name_ar or p.name }}">{{ p.name }}</h3>
-                    <div class="product-price-row">
-                        <span class="product-price">{{ "{:,.0f}".format(p.price) }} FCFA</span>
-                        {% if p.old_price > 0 %}
-                        <span class="product-old-price">{{ "{:,.0f}".format(p.old_price) }}</span>
-                        {% endif %}
-                    </div>
-                    <div class="product-actions" style="margin-top:10px;">
-                        <a href="{{ url_for('product_detail', product_id=p.id) }}" class="btn btn-outline btn-sm"
-                            data-i18n="view_details">Voir détails</a>
-                        {% if p.stock > 0 %}
-                        <a href="https://wa.me/{{ settings.get('whatsapp','22791720755') }}?text=Bonjour, je veux acheter {{ p.name }}"
-                            target="_blank" class="btn btn-whatsapp btn-sm">
-                            <i class="fab fa-whatsapp"></i> <span data-i18n="buy">Acheter</span>
-                        </a>
-                        {% else %}
-                        <span class="btn btn-sm"
-                            style="background:#6b7280; color:#fff; cursor:not-allowed; opacity:0.7;">
-                            <span data-i18n="out_of_stock">Rupture de stock</span>
-                        </span>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
+    <!-- ===== Marques ===== -->
+    {% if brands %}
+    <section class="h-sec">
+        <div class="h-head"><h2 data-i18n="shop_by_brand">Par marque</h2></div>
+        <div class="h-brands">
+            {% for b in brands %}
+            <a href="{{ url_for('products', brand=b) }}" class="h-brand">{{ b }}</a>
             {% endfor %}
         </div>
-    </div>
-</section>
+    </section>
+    {% endif %}
+
+    <!-- ===== Vedettes ===== -->
+    {% if featured %}
+    <section class="h-sec">
+        <div class="h-head">
+            <h2><i class="fas fa-crown"></i> <span data-i18n="featured_short">Nos coups de cœur</span></h2>
+            <a href="{{ url_for('featured_products') }}" data-i18n="see_all">Tout voir</a>
+        </div>
+        <div class="h-rail">
+            {% for p in featured %}
+            <div class="h-rail-item">{% with featured = true %}{% include "public/_product_card.html" %}{% endwith %}</div>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- ===== Nouveautés ===== -->
+    {% if latest %}
+    <section class="h-sec">
+        <div class="h-head">
+            <h2><i class="fas fa-bolt"></i> <span data-i18n="new_arrivals">Nouveautés</span></h2>
+            <a href="{{ url_for('products') }}" data-i18n="see_all">Tout voir</a>
+        </div>
+        <div class="pc-grid">
+            {% for p in latest[:6] %}
+            {% with featured = false %}{% include "public/_product_card.html" %}{% endwith %}
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- ===== Vus récemment (rempli par le navigateur) ===== -->
+    <section class="h-sec" id="recentSection" hidden>
+        <div class="h-head">
+            <h2><i class="fas fa-clock-rotate-left"></i> <span data-i18n="recently_viewed">Vus récemment</span></h2>
+            <button type="button" onclick="clearRecentlyViewed()" data-i18n="clear">Effacer</button>
+        </div>
+        <div class="h-rail h-rail-mini" id="recentRail"></div>
+    </section>
+
+    <!-- ===== Pourquoi nous ===== -->
+    <section class="h-why">
+        <div class="h-why-stats">
+            <div><strong class="counter" data-target="{{ stats.total_products }}">0</strong><span data-i18n="products_count">Produits</span></div>
+            <div><strong class="counter" data-target="{{ stats.total_brands }}">0</strong><span data-i18n="brands_count">Marques</span></div>
+            <div><strong class="counter" data-target="{{ stats.happy_clients }}">0</strong><span data-i18n="clients_count">Clients satisfaits</span></div>
+        </div>
+        <div class="h-why-grid">
+            <div><i class="fas fa-truck-fast"></i><b data-i18n="why1_t">Livraison rapide</b><small data-i18n="why1_d">Partout au Niger</small></div>
+            <div><i class="fas fa-certificate"></i><b data-i18n="why2_t">100 % authentique</b><small data-i18n="why2_d">Produits vérifiés</small></div>
+            <div><i class="fas fa-lock"></i><b data-i18n="why3_t">Paiement sûr</b><small data-i18n="why3_d">Amanata & Nita</small></div>
+            <div><i class="fab fa-whatsapp"></i><b data-i18n="why4_t">Conseil WhatsApp</b><small data-i18n="why4_d">Réponse rapide</small></div>
+        </div>
+    </section>
+
+    <!-- ===== Suivi + WhatsApp ===== -->
+    <section class="h-cta">
+        <a href="{{ url_for('order_tracking') }}" class="h-cta-card">
+            <i class="fas fa-location-dot"></i>
+            <div><b data-i18n="track_order">Suivre ma commande</b><small data-i18n="track_hint">Avec votre numéro de commande</small></div>
+            <i class="fas fa-chevron-right h-cta-arrow"></i>
+        </a>
+        <a href="https://wa.me/{{ wa }}" target="_blank" rel="noopener" class="h-cta-card h-cta-wa">
+            <i class="fab fa-whatsapp"></i>
+            <div><b data-i18n="need_help">Besoin d'aide pour choisir ?</b><small data-i18n="write_us">Écrivez-nous sur WhatsApp</small></div>
+            <i class="fas fa-chevron-right h-cta-arrow"></i>
+        </a>
+    </section>
+</div>
 {% endblock %}

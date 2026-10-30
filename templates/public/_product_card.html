@@ -1,0 +1,60 @@
+{# Carte produit commune. Variables : p (produit), featured (bool, optionnel) #}
+{% set wa = settings.get('whatsapp', '22791720755')|replace('+', '')|replace(' ', '') %}
+{% set has_img = p.image and p.image != 'default.png' %}
+<div class="pc-card{{ ' pc-featured' if featured }} animate-on-scroll">
+    <a href="{{ url_for('product_detail', product_id=p.id) }}" class="pc-media" aria-label="{{ p.name }}">
+        {% if has_img %}
+        <img src="{{ p.image }}" alt="{{ p.name }}" loading="lazy">
+        {% else %}
+        <span class="pc-placeholder"><i class="fas fa-mobile-screen"></i></span>
+        {% endif %}
+
+        <span class="pc-badges">
+            {% if featured %}<span class="pc-badge pc-badge-star"><i class="fas fa-star"></i></span>{% endif %}
+            {% if p.discount and p.discount > 0 %}<span class="pc-badge pc-badge-promo">-{{ p.discount }}%</span>{% endif %}
+        </span>
+
+        {% if p.stock == 0 %}
+        <span class="pc-stock pc-out"><span data-i18n="out_of_stock">Rupture</span></span>
+        {% elif p.stock <= 5 %}
+        <span class="pc-stock pc-low"><i class="fas fa-fire"></i> <span data-i18n="low_stock">Stock faible</span></span>
+        {% endif %}
+    </a>
+
+    <button type="button" class="pc-fav product-fav-btn" aria-label="Favoris"
+            data-fav-id="{{ p.id }}" data-fav-name="{{ p.name }}" data-fav-price="{{ p.price }}" data-fav-image="{{ p.image if has_img else '' }}"
+            onclick="toggleFavoriteBtn(event, this)">
+        <i class="fas fa-heart"></i>
+    </button>
+
+    <div class="pc-body">
+        {% if p.brand %}<div class="pc-brand">{{ p.brand }}</div>{% endif %}
+        <a href="{{ url_for('product_detail', product_id=p.id) }}" class="pc-name"
+           data-name-fr="{{ p.name }}" data-name-en="{{ p.name_en or p.name }}" data-name-ar="{{ p.name_ar or p.name }}">{{ p.name }}</a>
+
+        <div class="pc-price">
+            <strong>{{ p.price|fcfa }}</strong>
+            {% if p.old_price and p.old_price > p.price %}<s>{{ p.old_price|fcfa }}</s>{% endif %}
+        </div>
+
+        <div class="pc-actions">
+            {% if p.stock and p.stock > 0 %}
+            <form method="POST" action="{{ url_for('cart_add', product_id=p.id) }}" class="pc-cart-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="quantity" value="1">
+                <button type="submit" class="pc-btn pc-btn-cart">
+                    <i class="fas fa-cart-plus"></i> <span data-i18n="add_cart_short">Ajouter</span>
+                </button>
+            </form>
+            <a href="https://wa.me/{{ wa }}?text={{ ('Bonjour, je veux acheter ' ~ p.name)|urlencode }}"
+               target="_blank" rel="noopener" class="pc-btn pc-btn-wa" aria-label="WhatsApp">
+                <i class="fab fa-whatsapp"></i>
+            </a>
+            {% else %}
+            <a href="{{ url_for('product_detail', product_id=p.id) }}" class="pc-btn pc-btn-ghost">
+                <span data-i18n="view_details">Voir détails</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>

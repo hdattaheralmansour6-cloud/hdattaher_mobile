@@ -29,113 +29,140 @@
 {% endblock %}
 
 {% block content %}
-<section class="product-detail">
-    <div class="product-detail-grid">
-        <div class="product-detail-image">
-            {% if product.image and product.image != 'default.png' %}
-            <img src="{{ product.image }}" alt="{{ product.name }}">
+{% set wa = settings.get('whatsapp', '22791720755')|replace('+', '')|replace(' ', '') %}
+{% set has_img = product.image and product.image != 'default.png' %}
+{% set in_stock = product.stock and product.stock > 0 %}
+{% set saving = (product.old_price - product.price) if (product.old_price and product.old_price > product.price) else 0 %}
+<div class="pd" data-recent-id="{{ product.id }}" data-recent-name="{{ product.name }}" data-recent-price="{{ product.price }}"
+     data-recent-image="{{ product.image if has_img else '' }}" data-recent-brand="{{ product.brand or '' }}">
+
+    <nav class="pd-crumbs">
+        <a href="{{ url_for('index') }}" data-i18n="home">Accueil</a> <i class="fas fa-chevron-right"></i>
+        <a href="{{ url_for('products') }}" data-i18n="tab_shop">Boutique</a>
+        {% if product.category_name %}<i class="fas fa-chevron-right"></i>
+        <a href="{{ url_for('products', category=product.category_id) }}">{{ product.category_name }}</a>{% endif %}
+    </nav>
+
+    <div class="pd-grid">
+        <!-- Photo -->
+        <div class="pd-media">
+            {% if has_img %}
+            <button type="button" class="pd-img-btn" onclick="openZoom(this.querySelector('img').src)" aria-label="Agrandir">
+                <img src="{{ product.image }}" alt="{{ product.name }}">
+                <span class="pd-zoom-hint"><i class="fas fa-expand"></i></span>
+            </button>
             {% else %}
-            <div class="placeholder-icon" style="font-size:8rem; opacity:0.3;">📱</div>
+            <div class="pd-noimg"><i class="fas fa-mobile-screen"></i></div>
             {% endif %}
+            <div class="pd-media-actions">
+                <button type="button" class="pd-round product-fav-btn" aria-label="Favoris"
+                    data-fav-id="{{ product.id }}" data-fav-name="{{ product.name }}" data-fav-price="{{ product.price }}" data-fav-image="{{ product.image if has_img else '' }}"
+                    onclick="toggleFavoriteBtn(event, this)">
+                    <i class="fas fa-heart"></i></button>
+                <button type="button" class="pd-round" data-share-name="{{ product.name }}" onclick="shareProduct(this.dataset.shareName)" aria-label="Partager">
+                    <i class="fas fa-share-nodes"></i></button>
+            </div>
+            {% if product.discount and product.discount > 0 %}<span class="pd-discount">-{{ product.discount }}%</span>{% endif %}
         </div>
-        <div class="product-detail-info">
-            <span class="detail-brand">{{ product.brand }}</span>
-            <h1 class="detail-title" data-name-fr="{{ product.name }}" data-name-en="{{ product.name_en or product.name }}" data-name-ar="{{ product.name_ar or product.name }}">{{ product.name }}</h1>
 
-            <div style="display:flex; align-items:baseline; gap:12px; margin:1rem 0;">
-                <span class="detail-price">{{ "{:,.0f}".format(product.price) }} FCFA</span>
-                {% if product.old_price and product.old_price > 0 %}
-                <span class="detail-old-price">{{ "{:,.0f}".format(product.old_price) }} FCFA</span>
+        <!-- Infos -->
+        <div class="pd-info">
+            {% if product.brand %}<a href="{{ url_for('products', brand=product.brand) }}" class="pd-brand">{{ product.brand }}</a>{% endif %}
+            <h1 class="pd-title" data-name-fr="{{ product.name }}" data-name-en="{{ product.name_en or product.name }}" data-name-ar="{{ product.name_ar or product.name }}">{{ product.name }}</h1>
+
+            <div class="pd-price">
+                <strong>{{ product.price|fcfa }}</strong>
+                {% if saving %}<s>{{ product.old_price|fcfa }}</s>{% endif %}
+            </div>
+            {% if saving %}<div class="pd-save"><i class="fas fa-tag"></i> <span data-i18n="you_save">Vous économisez</span> {{ saving|fcfa }}</div>{% endif %}
+
+            <!-- Stock -->
+            <div class="pd-stock {{ 'out' if not in_stock else ('low' if product.stock <= 5 else 'ok') }}">
+                {% if not in_stock %}
+                <i class="fas fa-circle-xmark"></i> <span data-i18n="out_of_stock_long">Rupture de stock</span>
+                {% elif product.stock <= 5 %}
+                <i class="fas fa-fire"></i> <span data-i18n="only_left">Plus que</span> {{ product.stock }} <span data-i18n="in_stock_count">en stock</span>
+                {% else %}
+                <i class="fas fa-circle-check"></i> <span data-i18n="in_stock">En stock</span>
                 {% endif %}
-                {% if product.discount > 0 %}
-                <span class="badge-discount" style="position:static;">-{{ product.discount }}%</span>
-                {% endif %}
+                {% if in_stock %}<div class="pd-stock-bar"><span style="width:{{ [product.stock * 10, 100]|min }}%"></span></div>{% endif %}
             </div>
 
-            <p class="detail-description" data-name-fr="{{ product.description }}" data-name-en="{{ product.description_en or product.description }}" data-name-ar="{{ product.description_ar or product.description }}">{{ product.description }}</p>
-            <div class="detail-meta">
-                <div class="meta-item">
-                    <i class="fas fa-folder"></i>
-                    <span data-i18n="category">Catégorie</span>: {{ product.category_name }}
+            <!-- Achat (ordinateur + mobile) -->
+            {% if in_stock %}
+            <form method="POST" action="{{ url_for('cart_add', product_id=product.id) }}" class="pd-buy pc-cart-form" id="pdBuy">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="qty" data-max="{{ [product.stock, 20]|min }}">
+                    <button type="button" class="qty-btn" data-step="-1" aria-label="Moins"><i class="fas fa-minus"></i></button>
+                    <input type="number" name="quantity" value="1" min="1" max="{{ [product.stock, 20]|min }}" inputmode="numeric" aria-label="Quantité">
+                    <button type="button" class="qty-btn" data-step="1" aria-label="Plus"><i class="fas fa-plus"></i></button>
                 </div>
-                <div class="meta-item">
-                    <i class="fas fa-boxes-stacked"></i>
-                    <span data-i18n="stock">Stock</span>:
-                    {% if product.stock == 0 %}
-                    <span style="color:var(--danger); font-weight:600;" data-i18n="out_of_stock">Rupture</span>
-                    {% elif product.stock <= 5 %} <span style="color:var(--warning); font-weight:600;">{{ product.stock
-                        }} (<span data-i18n="low_stock">Stock faible</span>)</span>
-                        {% else %}
-                        <span style="color:var(--success); font-weight:600;">{{ product.stock }} <span data-i18n="in_stock_count">en stock</span></span>
-                        {% endif %}
-                </div>
-                <div class="meta-item">
-                    <i class="fas fa-eye"></i> {{ product.views + 1 }} <span data-i18n="views">vues</span>
-                </div>
-                <div class="meta-item">
-                    <i class="fas fa-tag"></i>
-                    <span data-i18n="brand">Marque</span>: {{ product.brand }}
-                </div>
-            </div>
+                <button type="submit" class="btn btn-primary pd-add"><i class="fas fa-bag-shopping"></i> <span data-i18n="add_to_cart">Ajouter au panier</span></button>
+            </form>
+            {% endif %}
+            <a href="https://wa.me/{{ wa }}?text={{ ('Bonjour, je suis intéressé par : ' ~ product.name ~ ' (' ~ (product.price|fcfa) ~ '). Est-il disponible ?')|urlencode }}"
+               target="_blank" rel="noopener" class="pd-wa">
+                <i class="fab fa-whatsapp"></i> <span data-i18n="{{ 'ask_whatsapp_product' if in_stock else 'notify_whatsapp' }}">{{ 'Une question ? Écrivez-nous' if in_stock else 'Être prévenu du retour en stock' }}</span>
+            </a>
 
-            <div style="display:flex; gap:1rem; margin-top:2rem; flex-wrap:wrap;">
-                {% if product.stock > 0 %}
-                <form method="POST" action="{{ url_for('cart_add', product_id=product.id) }}" style="flex:1; min-width:180px;">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="hidden" name="quantity" value="1">
-                    <button type="submit" class="btn btn-primary" style="width:100%;">
-                        <i class="fas fa-cart-plus"></i> <span data-i18n="add_to_cart">Ajouter au panier</span>
-                    </button>
-                </form>
-                {% endif %}
-                <a href="https://wa.me/{{ settings.get('whatsapp','22791720755') }}?text=Bonjour Hdattaher! Je suis intéressé par: {{ product.name }} ({{ "
-                    {:,.0f}".format(product.price) }} FCFA). Est-il disponible?" target="_blank"
-                    class="btn btn-whatsapp" style="flex:1; min-width:180px;">
-                    <i class="fab fa-whatsapp"></i> <span data-i18n="buy_whatsapp">Commander via WhatsApp</span>
-                </a>
-                <a href="{{ url_for('products') }}" class="btn btn-outline">
-                    <i class="fas fa-arrow-left"></i> <span data-i18n="back">Retour</span>
-                </a>
-                <button type="button" class="detail-fav-btn" data-fav-id="{{ product.id }}"
-                    onclick="toggleFavorite(event, '{{ product.id }}', {{ product.name|tojson }}, {{ product.price }}, {{ (product.image if product.image and product.image != 'default.png' else '')|tojson }})"
-                    aria-label="Favoris">
-                    <i class="fas fa-heart"></i>
-                </button>
+            <!-- Avantages -->
+            <ul class="pd-perks">
+                <li><i class="fas fa-truck-fast"></i><div><b data-i18n="perk_delivery">Livraison au Niger</b><small data-i18n="perk_delivery_d">Rapide et suivie</small></div></li>
+                <li><i class="fas fa-shield-halved"></i><div><b data-i18n="perk_original">Produits authentiques</b><small data-i18n="perk_original_d">Vérifiés avant envoi</small></div></li>
+                <li class="pd-pay"><i class="fas fa-wallet"></i><div><b data-i18n="perk_payment_t">Paiement mobile</b>
+                    <small><img src="{{ url_for('static', filename='img/amanata.png') }}" alt="Amanata"> <img src="{{ url_for('static', filename='img/nita.png') }}" alt="Nita"></small></div></li>
+            </ul>
+
+            <!-- Description -->
+            {% if product.description %}
+            <div class="pd-desc">
+                <h2 data-i18n="description">Description</h2>
+                <div class="pd-desc-text" id="pdDesc">
+                    <p data-name-fr="{{ product.description }}" data-name-en="{{ product.description_en or product.description }}" data-name-ar="{{ product.description_ar or product.description }}">{{ product.description }}</p>
+                </div>
+                <button type="button" class="pd-more" id="pdMore" hidden onclick="document.getElementById('pdDesc').classList.add('open'); this.hidden = true;" data-i18n="read_more">Lire la suite</button>
             </div>
+            {% endif %}
+
+            <dl class="pd-specs">
+                {% if product.brand %}<div><dt data-i18n="brand">Marque</dt><dd>{{ product.brand }}</dd></div>{% endif %}
+                {% if product.category_name %}<div><dt data-i18n="category">Catégorie</dt><dd>{{ product.category_name }}</dd></div>{% endif %}
+                <div><dt data-i18n="views_label">Consultations</dt><dd>{{ (product.views or 0) + 1 }}</dd></div>
+            </dl>
         </div>
     </div>
 
     <!-- Produits similaires -->
     {% if related %}
-    <div class="container" style="margin-top:4rem;">
-        <h2 style="font-weight:800; margin-bottom:1.5rem;" data-i18n="related_products">Produits Similaires</h2>
-        <div class="products-grid">
+    <section class="h-sec pd-related">
+        <div class="h-head"><h2 data-i18n="related_products">Produits similaires</h2></div>
+        <div class="h-rail">
             {% for p in related %}
-            <div class="product-card">
-                <a href="{{ url_for('product_detail', product_id=p.id) }}">
-                    <div class="product-image">
-                        <button type="button" class="product-fav-btn" data-fav-id="{{ p.id }}" onclick="toggleFavorite(event, '{{ p.id }}', {{ p.name|tojson }}, {{ p.price }}, {{ (p.image if p.image and p.image != 'default.png' else '')|tojson }})" aria-label="Favoris">
-                            <i class="fas fa-heart"></i>
-                        </button>
-                        {% if p.image and p.image != 'default.png' %}
-                        <img src="{{ p.image }}">
-                        {% else %}
-                        <div class="placeholder-icon">📱</div>
-                        {% endif %}
-                        {% if p.discount > 0 %}<span class="badge-discount">-{{ p.discount }}%</span>{% endif %}
-                    </div>
-                </a>
-                <div class="product-info">
-                    <div class="product-brand">{{ p.brand }}</div>
-                    <h3 class="product-name" data-name-fr="{{ p.name }}" data-name-en="{{ p.name_en or p.name }}" data-name-ar="{{ p.name_ar or p.name }}">{{ p.name }}</h3>
-                    <div class="product-price-row">
-                        <span class="product-price">{{ "{:,.0f}".format(p.price) }} FCFA</span>
-                    </div>
-                </div>
-            </div>
+            <div class="h-rail-item">{% with featured = false %}{% include "public/_product_card.html" %}{% endwith %}</div>
             {% endfor %}
         </div>
-    </div>
+    </section>
     {% endif %}
-</section>
+</div>
+
+<!-- Barre d'achat fixe (mobile) -->
+<div class="pd-sticky">
+    <div class="pd-sticky-price">
+        <small data-i18n="price">Prix</small>
+        <strong>{{ product.price|fcfa }}</strong>
+    </div>
+    {% if in_stock %}
+    <button type="button" class="btn btn-primary" onclick="document.querySelector('#pdBuy .pd-add').click()">
+        <i class="fas fa-bag-shopping"></i> <span data-i18n="add_to_cart">Ajouter au panier</span></button>
+    {% else %}
+    <a href="https://wa.me/{{ wa }}?text={{ ('Bonjour, prévenez-moi quand ce produit revient en stock : ' ~ product.name)|urlencode }}"
+       target="_blank" rel="noopener" class="btn pd-sticky-wa"><i class="fab fa-whatsapp"></i> <span data-i18n="notify_short">Me prévenir</span></a>
+    {% endif %}
+</div>
+
+<!-- Zoom photo -->
+<div class="zoom" id="zoom" hidden onclick="closeZoom()">
+    <button type="button" class="zoom-close" aria-label="Fermer"><i class="fas fa-xmark"></i></button>
+    <img id="zoomImg" alt="">
+</div>
 {% endblock %}

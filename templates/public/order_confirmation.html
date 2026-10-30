@@ -17,12 +17,12 @@
                     {% for item in items %}
                     <div class="account-order-row">
                         <span>{{ item.product_name }} × {{ item.quantity }}</span>
-                        <strong>{{ "{:,.0f}".format(item.subtotal) }} FCFA</strong>
+                        <strong>{{ item.subtotal|fcfa }}</strong>
                     </div>
                     {% endfor %}
                     <div class="account-order-row" style="border-bottom:none;">
                         <strong data-i18n="cart_total">Total</strong>
-                        <strong>{{ "{:,.0f}".format(order.total) }} FCFA</strong>
+                        <strong>{{ order.total|fcfa }}</strong>
                     </div>
                 </div>
 

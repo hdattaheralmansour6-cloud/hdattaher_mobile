@@ -1,0 +1,80 @@
+{% extends "public/base.html" %}
+{% block title %}Suivre ma commande - HDATTAHER MOBILE{% endblock %}
+{% block meta_description %}Suivez votre commande HDATTAHER MOBILE avec votre numéro de commande et votre téléphone.{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}?v=5">
+{% endblock %}
+
+{% block content %}
+{% set wa = settings.get('whatsapp', '22791720755')|replace('+', '')|replace(' ', '') %}
+<div class="track">
+    <div class="track-hero">
+        <span class="track-ic"><i class="fas fa-truck-fast"></i></span>
+        <h1 data-i18n="track_order">Suivre ma commande</h1>
+        <p data-i18n="track_intro">Entrez le numéro de commande et le téléphone utilisés lors de l'achat.</p>
+    </div>
+
+    <form method="POST" action="{{ url_for('order_tracking') }}" class="track-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label class="track-field">
+            <span data-i18n="order_number">Numéro de commande</span>
+            <span class="acc-input"><i class="fas fa-hashtag"></i>
+                <input type="text" name="numero" value="{{ numero }}" required autocomplete="off" autocapitalize="characters"
+                       placeholder="CMD2610…" spellcheck="false"></span>
+        </label>
+        <label class="track-field">
+            <span data-i18n="phone_label">Téléphone</span>
+            <span class="acc-input"><i class="fas fa-phone"></i>
+                <input type="tel" name="telephone" value="{{ telephone }}" required inputmode="tel" placeholder="90 00 00 00"></span>
+        </label>
+        {% if error %}
+        <div class="auth-alert">
+            <i class="fas fa-circle-exclamation"></i>
+            {% if error == 'missing' %}<span data-i18n="track_missing">Indiquez le numéro de commande et un téléphone valide.</span>
+            {% else %}<span data-i18n="track_not_found">Aucune commande ne correspond. Vérifiez le numéro et le téléphone.</span>{% endif %}
+        </div>
+        {% endif %}
+        <button type="submit" class="btn btn-primary"><i class="fas fa-magnifying-glass"></i> <span data-i18n="track_btn">Voir ma commande</span></button>
+        <p class="track-hint"><i class="fas fa-circle-info"></i> <span data-i18n="track_where">Le numéro figure sur la page de confirmation et dans « Mes commandes ».</span></p>
+    </form>
+
+    {% if order %}
+    {% set steps = [('En attente','fa-hourglass-half','status_pending'), ('Confirmée','fa-circle-check','status_confirmed'),
+                    ('Préparation','fa-box-open','status_preparing'), ('Expédiée','fa-truck-fast','status_shipped'),
+                    ('Livrée','fa-house-circle-check','status_delivered')] %}
+    {% set names = steps|map(attribute=0)|list %}
+    {% set current = names.index(order.status) if order.status in names else -1 %}
+    <section class="track-result">
+        <div class="track-res-head">
+            <div><small data-i18n="order_prefix">Commande #</small><b>#{{ order.order_number }}</b>
+                <small>{{ order.created_at[:10] if order.created_at else '' }}</small></div>
+            <strong>{{ order.total|fcfa }}</strong>
+        </div>
+
+        {% if order.status == 'Annulée' %}
+        <div class="auth-alert"><i class="fas fa-ban"></i> <span data-i18n="order_cancelled_note">Cette commande a été annulée.</span></div>
+        {% else %}
+        <ol class="track-steps">
+            {% for name, icon, key in steps %}
+            <li class="{{ 'done' if loop.index0 < current else ('now' if loop.index0 == current else '') }}">
+                <span class="ts-dot"><i class="fas {{ icon }}"></i></span>
+                <span class="ts-label" data-i18n="{{ key }}">{{ name }}</span>
+            </li>
+            {% endfor %}
+        </ol>
+        {% endif %}
+
+        {% if items %}
+        <ul class="track-items">
+            {% for it in items %}
+            <li><span>{{ it.product_name }} <small>× {{ it.quantity }}</small></span><b>{{ it.subtotal|fcfa }}</b></li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        <a href="https://wa.me/{{ wa }}?text={{ ('Bonjour, je souhaite des nouvelles de ma commande ' ~ order.order_number)|urlencode }}"
+           target="_blank" rel="noopener" class="pd-wa"><i class="fab fa-whatsapp"></i> <span data-i18n="track_question">Une question sur cette commande ?</span></a>
+    </section>
+    {% endif %}
+</div>
+{% endblock %}

@@ -2,124 +2,139 @@
 {% block title %}{{ page_title|default('Nos Produits') }} - HDATTAHER MOBILE{% endblock %}
 
 {% block content %}
-<section class="section" style="padding-top:100px;">
-    <div class="container">
-        <div class="section-header">
-            <h2>{{ page_title|default('Nos Produits') }}</h2>
-        </div>
+{% set brands_list = all_brands|default([]) %}
+{% set cur_brand = current_brand|default('') %}
+{% set is_promo = promo_only|default(false) %}
+{% set cats = all_categories|default([]) %}
+{% set nb_filters = (1 if current_category else 0) + (1 if cur_brand else 0) + (1 if min_price is not none else 0) + (1 if max_price is not none else 0) + (1 if is_promo else 0) %}
 
-        <!-- Filtres -->
-        <div class="filters-bar">
-            <form method="GET" action="{{ url_for('products') }}" class="filters-form">
-                <div class="search-box" style="position:relative;">
-                    <i class="fas fa-search"></i>
-                    <input type="text" name="search" class="live-search-input" data-i18n-placeholder="search"
-                        placeholder="Rechercher..." value="{{ search }}">
-                    <div class="search-results-dropdown"></div>
-                </div>
-                <select name="category" class="filter-input">
-                    <option value="" data-i18n="all_categories">Toutes les catégories</option>
-                    {% for cat in all_categories %}
-                    <option value="{{ cat.id }}" {% if current_category==cat.id %}selected{% endif %} data-name-fr="{{ cat.name }}" data-name-en="{{ cat.name_en or cat.name }}" data-name-ar="{{ cat.name_ar or cat.name }}">{{ cat.name }}
-                    </option>
-                    {% endfor %}
-                </select>
-                {% if all_brands %}
-                <select name="brand" class="filter-input">
-                    <option value="" data-i18n="all_brands">Toutes les marques</option>
-                    {% for b in all_brands %}
-                    <option value="{{ b }}" {% if current_brand==b %}selected{% endif %}>{{ b }}</option>
-                    {% endfor %}
-                </select>
-                {% endif %}
-                <input type="number" name="min_price" class="filter-input" placeholder="Prix min" style="width:110px;"
-                    value="{{ min_price if min_price is not none else '' }}">
-                <input type="number" name="max_price" class="filter-input" placeholder="Prix max" style="width:110px;"
-                    value="{{ max_price if max_price is not none else '' }}">
-                <select name="sort" class="filter-input">
-                    <option value="newest" {% if sort=='newest' %}selected{% endif %} data-i18n="newest">Plus récent
-                    </option>
-                    <option value="price_asc" {% if sort=='price_asc' %}selected{% endif %} data-i18n="price_asc">Prix
-                        croissant</option>
-                    <option value="price_desc" {% if sort=='price_desc' %}selected{% endif %} data-i18n="price_desc">
-                        Prix décroissant</option>
-                    <option value="popular" {% if sort=='popular' %}selected{% endif %} data-i18n="popular">Populaire
-                    </option>
-                </select>
-                <button type="submit" class="btn btn-primary btn-sm" data-i18n="filter">
-                    <i class="fas fa-filter"></i> Filtrer
-                </button>
-                {% if search or current_category or current_brand or min_price is not none or max_price is not none %}
-                <a href="{{ url_for('products') }}" class="btn btn-outline btn-sm" data-i18n="reset_filters">
-                    <i class="fas fa-xmark"></i> Réinitialiser
-                </a>
-                {% endif %}
-            </form>
-        </div>
+<div class="shop">
+    <div class="shop-head">
+        <h1>{% if page_title %}{{ page_title }}{% elif search %}« {{ search }} »{% else %}<span data-i18n="shop_title">La boutique</span>{% endif %}</h1>
+        <p><b>{{ products|length }}</b> <span data-i18n="{{ 'product_one' if products|length == 1 else 'product_many' }}">produits</span></p>
+    </div>
 
-        <!-- Grille Produits -->
-        {% if products %}
-        <div class="products-grid">
-            {% for p in products %}
-            <div class="product-card animate-on-scroll">
-                <a href="{{ url_for('product_detail', product_id=p.id) }}">
-                    <div class="product-image">
-                        <button type="button" class="product-fav-btn" data-fav-id="{{ p.id }}" onclick="toggleFavorite(event, '{{ p.id }}', {{ p.name|tojson }}, {{ p.price }}, {{ (p.image if p.image and p.image != 'default.png' else '')|tojson }})" aria-label="Favoris">
-                            <i class="fas fa-heart"></i>
-                        </button>
-                        {% if p.image and p.image != 'default.png' %}
-                        <img src="{{ p.image }}"
-                             alt="{{ p.name }}"
-                             loading="lazy">
-                        {% else %}
-                        <div class="placeholder-icon">📱</div>
-                        {% endif %}
-                        {% if p.discount > 0 %}
-                        <span class="badge-discount">-{{ p.discount }}%</span>
-                        {% endif %}
-                        {% if p.stock == 0 %}
-                        <span class="badge-stock out-of-stock" data-i18n="out_of_stock">Rupture</span>
-                        {% elif p.stock <= 5 %} <span class="badge-stock low-stock" data-i18n="low_stock">Stock faible</span>
-                            {% else %}
-                            <span class="badge-stock in-stock" data-i18n="in_stock">En stock</span>
-                            {% endif %}
-                    </div>
-                </a>
-                <div class="product-info">
-                    <div class="product-brand">{{ p.brand }}</div>
-                    <h3 class="product-name" data-name-fr="{{ p.name }}" data-name-en="{{ p.name_en or p.name }}" data-name-ar="{{ p.name_ar or p.name }}">{{ p.name }}</h3>
-                    <div class="product-price-row">
-                        <span class="product-price">{{ "{:,.0f}".format(p.price) }} FCFA</span>
-                        {% if p.old_price and p.old_price > 0 %}
-                        <span class="product-old-price">{{ "{:,.0f}".format(p.old_price) }}</span>
-                        {% endif %}
-                    </div>
-                    <div class="product-views"><i class="fas fa-eye"></i> {{ p.views }} vues</div>
-                    <div class="product-actions" style="margin-top:10px;">
-                        <a href="{{ url_for('product_detail', product_id=p.id) }}"
-                            class="btn btn-outline btn-sm">Voir</a>
-                        {% if p.stock > 0 %}
-                        <a href="https://wa.me/{{ settings.get('whatsapp','22791720755') }}?text=Bonjour, je veux acheter {{ p.name }}"
-                            target="_blank" class="btn btn-whatsapp btn-sm">
-                            <i class="fab fa-whatsapp"></i> <span data-i18n="buy">Acheter</span>
-                        </a>
-                        {% else %}
-                        <span class="btn btn-sm"
-                            style="background:#6b7280; color:#fff; cursor:not-allowed; opacity:0.7;">
-                            <span data-i18n="out_of_stock">Rupture de stock</span>
-                        </span>
-                        {% endif %}
-                    </div>
-                </div>
+    <!-- Recherche + bouton filtres -->
+    <form method="GET" action="{{ url_for('products') }}" class="shop-bar" id="shopForm">
+        <label class="shop-search">
+            <i class="fas fa-magnifying-glass"></i>
+            <input type="search" name="search" value="{{ search }}" data-i18n-placeholder="search_ph"
+                   placeholder="iPhone, Samsung, écouteurs…" enterkeyhint="search">
+        </label>
+        <button type="button" class="shop-filter-btn" onclick="openSheet('filterSheet')">
+            <i class="fas fa-sliders"></i>
+            {% if nb_filters %}<span class="shop-filter-count">{{ nb_filters }}</span>{% endif %}
+        </button>
+        {% if current_category %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
+        {% if cur_brand %}<input type="hidden" name="brand" value="{{ cur_brand }}">{% endif %}
+        {% if is_promo %}<input type="hidden" name="promo" value="1">{% endif %}
+        <input type="hidden" name="sort" value="{{ sort }}">
+    </form>
+
+    <!-- Tri rapide -->
+    {% set base_args = {'search': search or None, 'category': current_category or None, 'brand': cur_brand or None, 'promo': '1' if is_promo else None, 'min_price': min_price, 'max_price': max_price} %}
+    <div class="chips">
+        {% for key, label, i18n in [('newest', 'Nouveautés', 'newest'), ('popular', 'Populaires', 'popular'), ('price_asc', 'Prix ↑', 'price_up'), ('price_desc', 'Prix ↓', 'price_down')] %}
+        <a href="{{ url_for('products', sort=key, **base_args) }}" class="chip {{ 'on' if sort == key }}" data-i18n="{{ i18n }}">{{ label }}</a>
+        {% endfor %}
+        <a href="{{ url_for('products', sort=sort, **dict(base_args, promo=None if is_promo else '1')) }}" class="chip chip-promo {{ 'on' if is_promo }}">
+            <i class="fas fa-fire-flame-curved"></i> <span data-i18n="promos">Promos</span></a>
+    </div>
+
+    <!-- Marques -->
+    {% if brands_list %}
+    <div class="chips chips-brands">
+        <a href="{{ url_for('products', sort=sort, **dict(base_args, brand=None)) }}" class="chip {{ 'on' if not cur_brand }}" data-i18n="all_brands_short">Toutes</a>
+        {% for b in brands_list %}
+        <a href="{{ url_for('products', sort=sort, **dict(base_args, brand=b)) }}" class="chip {{ 'on' if cur_brand == b }}">{{ b }}</a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Grille -->
+    {% if products %}
+    <div class="pc-grid">
+        {% for p in products %}
+        {% with featured = p.is_featured %}{% include "public/_product_card.html" %}{% endwith %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty">
+        <span class="empty-ic"><i class="fas fa-magnifying-glass"></i></span>
+        <h3 data-i18n="no_results">Aucun produit trouvé.</h3>
+        <p data-i18n="no_results_hint">Essayez un autre mot ou retirez des filtres.</p>
+        <a href="{{ url_for('products') }}" class="btn btn-primary" data-i18n="reset_filters">Réinitialiser</a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Panneau de filtres (glisse depuis le bas) -->
+<div class="sheet-backdrop" id="filterSheetBackdrop" onclick="closeSheet('filterSheet')" hidden></div>
+<form method="GET" action="{{ url_for('products') }}" class="sheet" id="filterSheet" hidden>
+    <div class="sheet-grip"></div>
+    <div class="sheet-head">
+        <h3 data-i18n="filters">Filtres</h3>
+        <button type="button" onclick="closeSheet('filterSheet')" aria-label="Fermer"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="sheet-body">
+        {% if search %}<input type="hidden" name="search" value="{{ search }}">{% endif %}
+
+        <div class="sheet-group">
+            <label data-i18n="category">Catégorie</label>
+            <div class="radio-chips">
+                <label><input type="radio" name="category" value="" {{ 'checked' if not current_category }}><span data-i18n="all">Tout</span></label>
+                {% for cat in cats %}
+                <label><input type="radio" name="category" value="{{ cat.id }}" {{ 'checked' if current_category == cat.id }}>
+                    <span data-name-fr="{{ cat.name }}" data-name-en="{{ cat.name_en or cat.name }}" data-name-ar="{{ cat.name_ar or cat.name }}">{{ cat.name }}</span></label>
+                {% endfor %}
             </div>
-            {% endfor %}
         </div>
-        {% else %}
-        <div style="text-align:center; padding:4rem 0;">
-            <i class="fas fa-search" style="font-size:3rem; color:var(--text-secondary); opacity:0.5;"></i>
-            <h3 style="margin-top:1rem; color:var(--text-secondary);">Aucun produit trouvé</h3>
+
+        {% if brands_list %}
+        <div class="sheet-group">
+            <label data-i18n="brand">Marque</label>
+            <div class="radio-chips">
+                <label><input type="radio" name="brand" value="" {{ 'checked' if not cur_brand }}><span data-i18n="all_brands_short">Toutes</span></label>
+                {% for b in brands_list %}
+                <label><input type="radio" name="brand" value="{{ b }}" {{ 'checked' if cur_brand == b }}><span>{{ b }}</span></label>
+                {% endfor %}
+            </div>
         </div>
         {% endif %}
+
+        <div class="sheet-group">
+            <label data-i18n="price_fcfa">Prix (FCFA)</label>
+            <div class="price-range">
+                <input type="number" name="min_price" inputmode="numeric" min="0" step="1000" data-i18n-placeholder="min" placeholder="Min"
+                       value="{{ min_price|int if min_price is not none else '' }}">
+                <span>—</span>
+                <input type="number" name="max_price" inputmode="numeric" min="0" step="1000" data-i18n-placeholder="max" placeholder="Max"
+                       value="{{ max_price|int if max_price is not none else '' }}">
+            </div>
+            <div class="radio-chips price-presets">
+                {% for lo, hi, txt in [(None, 50000, '< 50 000'), (50000, 150000, '50 – 150 000'), (150000, 400000, '150 – 400 000'), (400000, None, '> 400 000')] %}
+                <button type="button" class="preset" data-min="{{ lo if lo is not none else '' }}" data-max="{{ hi if hi is not none else '' }}">{{ txt }}</button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="sheet-group">
+            <label data-i18n="sort_by">Trier par</label>
+            <div class="radio-chips">
+                {% for key, label, i18n in [('newest', 'Nouveautés', 'newest'), ('popular', 'Populaires', 'popular'), ('price_asc', 'Prix croissant', 'price_asc'), ('price_desc', 'Prix décroissant', 'price_desc')] %}
+                <label><input type="radio" name="sort" value="{{ key }}" {{ 'checked' if sort == key }}><span data-i18n="{{ i18n }}">{{ label }}</span></label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <label class="switch-row">
+            <span><i class="fas fa-fire-flame-curved"></i> <span data-i18n="promo_only">Seulement les promos</span></span>
+            <input type="checkbox" name="promo" value="1" {{ 'checked' if is_promo }}>
+        </label>
     </div>
-</section>
+    <div class="sheet-foot">
+        <a href="{{ url_for('products') }}" class="btn btn-outline" data-i18n="reset_filters">Réinitialiser</a>
+        <button type="submit" class="btn btn-primary" data-i18n="show_results">Voir les produits</button>
+    </div>
+</form>
 {% endblock %}

@@ -1,63 +1,75 @@
 {% extends "public/base.html" %}
 {% block title %}Mon panier - HDATTAHER MOBILE{% endblock %}
-{% block extra_css %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}?v=2">
-{% endblock %}
 
 {% block content %}
-<section class="section" style="padding-top:100px;">
-    <div class="container">
-        <div class="section-header">
-            <h2 data-i18n="cart_title">Mon panier</h2>
-        </div>
+<div class="cart">
+    <div class="shop-head">
+        <h1 data-i18n="cart_title">Mon panier</h1>
+        {% if items %}<p><b>{{ items|sum(attribute='quantity') }}</b> <span data-i18n="articles">article(s)</span></p>{% endif %}
+    </div>
 
-        {% if items %}
-        <div class="account-card account-wide" style="margin:0 auto;">
+    {% if items %}
+    <div class="cart-grid">
+        <div class="cart-list">
             {% for item in items %}
-            <div class="account-order-row">
-                <div style="display:flex; align-items:center; gap:14px; flex:1;">
-                    {% if item.product.image and item.product.image != 'default.png' %}
-                    <img src="{{ item.product.image }}" alt="" class="cart-item-img">
-                    {% endif %}
-                    <div>
-                        <strong>{{ item.product.name }}</strong><br>
-                        <span style="color:var(--text-secondary); font-size:0.85rem;">
-                            {{ "{:,.0f}".format(item.product.price) }} FCFA
-                        </span>
+            {% set p = item.product %}
+            <div class="cart-item">
+                <a href="{{ url_for('product_detail', product_id=p.id) }}" class="cart-thumb">
+                    {% if p.image and p.image != 'default.png' %}<img src="{{ p.image }}" alt="">
+                    {% else %}<i class="fas fa-mobile-screen"></i>{% endif %}
+                </a>
+                <div class="cart-mid">
+                    {% if p.brand %}<span class="pc-brand">{{ p.brand }}</span>{% endif %}
+                    <a href="{{ url_for('product_detail', product_id=p.id) }}" class="cart-name"
+                       data-name-fr="{{ p.name }}" data-name-en="{{ p.name_en or p.name }}" data-name-ar="{{ p.name_ar or p.name }}">{{ p.name }}</a>
+                    <span class="cart-unit">{{ p.price|fcfa }}</span>
+
+                    <div class="cart-row">
+                        <form method="POST" action="{{ url_for('cart_update', product_id=p.id) }}" class="qty qty-auto" data-max="{{ p.stock }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="button" class="qty-btn" data-step="-1" aria-label="Moins" {{ 'disabled' if item.quantity <= 1 }}><i class="fas fa-minus"></i></button>
+                            <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ p.stock }}" inputmode="numeric" aria-label="Quantité">
+                            <button type="button" class="qty-btn" data-step="1" aria-label="Plus" {{ 'disabled' if item.quantity >= p.stock }}><i class="fas fa-plus"></i></button>
+                        </form>
+                        <strong class="cart-sub">{{ item.subtotal|fcfa }}</strong>
                     </div>
+                    {% if p.stock <= 5 %}<small class="cart-warn"><i class="fas fa-fire"></i> <span data-i18n="only_left">Plus que</span> {{ p.stock }} <span data-i18n="in_stock_count">en stock</span></small>{% endif %}
                 </div>
-
-                <form method="POST" action="{{ url_for('cart_update', product_id=item.product.id) }}"
-                      style="display:flex; align-items:center; gap:8px;">
+                <form method="POST" action="{{ url_for('cart_remove', product_id=p.id) }}" class="cart-del">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="number" name="quantity" value="{{ item.quantity }}" min="1"
-                           max="{{ item.product.stock }}" class="cart-qty-input">
-                    <button type="submit" class="btn btn-outline btn-sm" data-i18n="update_btn">Mettre à jour</button>
-                </form>
-
-                <strong>{{ "{:,.0f}".format(item.subtotal) }} FCFA</strong>
-
-                <form method="POST" action="{{ url_for('cart_remove', product_id=item.product.id) }}">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="cart-remove-btn" aria-label="Retirer">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                    <button type="submit" aria-label="Retirer"><i class="fas fa-trash-can"></i></button>
                 </form>
             </div>
             {% endfor %}
+            <a href="{{ url_for('products') }}" class="cart-continue"><i class="fas fa-arrow-left"></i> <span data-i18n="continue_shopping">Continuer mes achats</span></a>
+        </div>
 
-            <div class="cart-total-bar">
-                <h3><span data-i18n="cart_total">Total</span> : <span class="cart-total-amount">{{ "{:,.0f}".format(total) }} FCFA</span></h3>
-                <a href="{{ url_for('checkout') }}" class="btn btn-primary" data-i18n="validate_order_btn">Valider la commande</a>
+        <aside class="cart-summary">
+            <h2 data-i18n="summary">Récapitulatif</h2>
+            <div class="sum-row"><span data-i18n="subtotal">Sous-total</span><span>{{ total|fcfa }}</span></div>
+            <div class="sum-row"><span data-i18n="delivery">Livraison</span><span data-i18n="delivery_confirmed">Confirmée par WhatsApp</span></div>
+            <div class="sum-total"><span data-i18n="cart_total">Total</span><strong>{{ total|fcfa }}</strong></div>
+            <a href="{{ url_for('checkout') }}" class="btn btn-primary sum-cta"><i class="fas fa-lock"></i> <span data-i18n="validate_order_btn">Valider la commande</span></a>
+            <div class="sum-pay">
+                <span data-i18n="pay_with">Paiement par</span>
+                <img src="{{ url_for('static', filename='img/amanata.png') }}" alt="Amanata">
+                <img src="{{ url_for('static', filename='img/nita.png') }}" alt="Nita">
             </div>
-        </div>
-        {% else %}
-        <div class="account-empty">
-            <i class="fas fa-shopping-cart"></i>
-            <p><span data-i18n="cart_empty">Votre panier est vide.</span><br>
-                <a href="{{ url_for('products') }}" data-i18n="discover_products">Découvrir nos produits</a></p>
-        </div>
-        {% endif %}
+        </aside>
     </div>
-</section>
+
+    <!-- Barre fixe (mobile) -->
+    <div class="pd-sticky cart-sticky">
+        <div class="pd-sticky-price"><small data-i18n="cart_total">Total</small><strong>{{ total|fcfa }}</strong></div>
+        <a href="{{ url_for('checkout') }}" class="btn btn-primary"><i class="fas fa-lock"></i> <span data-i18n="checkout_short">Commander</span></a>
+    </div>
+    {% else %}
+    <div class="empty">
+        <span class="empty-ic"><i class="fas fa-bag-shopping"></i></span>
+        <h3 data-i18n="cart_empty">Votre panier est vide.</h3>
+        <p data-i18n="cart_empty_hint">Découvrez nos smartphones et accessoires.</p>
+        <a href="{{ url_for('products') }}" class="btn btn-primary" data-i18n="discover_products">Découvrir nos produits</a>
+    </div>
+    {% endif %}
+</div>
 {% endblock %}
