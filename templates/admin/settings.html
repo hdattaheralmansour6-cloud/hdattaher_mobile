@@ -8,6 +8,21 @@
     </div>
 </div>
 
+<!-- Vitesse du site : alléger les anciennes photos -->
+<div class="admin-card ax-speed">
+    <div class="admin-card-header">
+        <h3><i class="fas fa-bolt"></i> Vitesse du site</h3>
+    </div>
+    <div class="admin-card-body">
+        <p class="ax-speed-txt">Allège toutes les photos déjà en ligne (produits et bannières) et crée des petites
+            versions pour les listes : les pages s'ouvrent beaucoup plus vite, surtout en 3G.
+            <b>À faire une seule fois.</b> Les nouvelles photos sont allégées automatiquement.</p>
+        <div class="ax-speed-bar" id="spBar" hidden><span id="spFill"></span></div>
+        <p class="ax-speed-state" id="spState" hidden></p>
+        <button type="button" class="btn-admin primary" id="spBtn"><i class="fas fa-wand-magic-sparkles"></i> Optimiser les photos</button>
+    </div>
+</div>
+
 <form method="POST" action="{{ url_for('admin_settings') }}" enctype="multipart/form-data">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <!-- Infos Générales -->
@@ -138,4 +153,44 @@
         <i class="fas fa-save"></i> Sauvegarder les Paramètres
     </button>
 </form>
+{% endblock %}
+
+{% block scripts %}
+<style>
+.ax-speed-txt { color: var(--admin-text-sec); font-size: .86rem; line-height: 1.5; margin: 0 0 14px; }
+.ax-speed-txt b { color: var(--admin-text); }
+.ax-speed .btn-admin { width: auto; margin: 0 !important; }
+.ax-speed-bar { height: 10px; border-radius: 999px; background: rgba(255, 255, 255, .06); overflow: hidden; margin-bottom: 8px; }
+.ax-speed-bar span { display: block; height: 100%; width: 0; border-radius: 999px; background: var(--admin-gradient); transition: width .3s; }
+.ax-speed-state { font-size: .84rem; font-weight: 600; color: var(--admin-text); margin: 0 0 14px; }
+</style>
+<script>
+(function () {
+    var btn = document.getElementById('spBtn'), bar = document.getElementById('spBar'),
+        fill = document.getElementById('spFill'), state = document.getElementById('spState');
+    var changed = 0, errors = 0;
+    function step(start) {
+        axPost('{{ url_for('admin_optimize_photos') }}', { start: start }).then(function (r) {
+            changed += r.changed; errors += r.errors;
+            var pct = r.total ? Math.round(r.next / r.total * 100) : 100;
+            fill.style.width = pct + '%';
+            state.textContent = 'Photos vérifiées : ' + Math.min(r.next, r.total) + ' / ' + r.total + ' — allégées : ' + changed;
+            if (r.done) {
+                state.textContent = '✓ Terminé : ' + r.total + ' photo(s) vérifiée(s), ' + changed + ' allégée(s)' + (errors ? ', ' + errors + ' impossible(s) à lire' : '') + '.';
+                btn.disabled = false; btn.innerHTML = '<i class="fas fa-check"></i> Terminé';
+                axToast('Photos optimisées');
+            } else { step(r.next); }
+        }).catch(function () {
+            state.textContent = 'Connexion interrompue. Appuyez à nouveau pour reprendre.';
+            btn.disabled = false; btn.innerHTML = '<i class="fas fa-rotate-right"></i> Reprendre';
+            btn.dataset.start = start;
+        });
+    }
+    btn.addEventListener('click', function () {
+        btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Optimisation…';
+        bar.hidden = false; state.hidden = false;
+        step(parseInt(btn.dataset.start || '0', 10));
+    });
+})();
+</script>
 {% endblock %}
