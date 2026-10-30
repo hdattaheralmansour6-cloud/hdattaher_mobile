@@ -118,7 +118,7 @@ body.no-scroll { overflow: hidden; }
 /* ---------- Recherche plein écran ---------- */
 .sx {
   position: fixed;
-  inset: 0;
+  top: 0; right: 0; bottom: 0; left: 0;
   z-index: 3000;
   background: var(--bg);
   display: flex;
@@ -318,8 +318,8 @@ body.no-scroll { overflow: hidden; }
 .h-brand:active, .h-brand:hover { border-color: var(--primary); color: var(--primary); }
 
 .mini-card { flex: 0 0 128px; display: flex; flex-direction: column; gap: 2px; color: var(--text); text-decoration: none; scroll-snap-align: start; }
-.mini-img { aspect-ratio: 1; border-radius: 14px; background: var(--bg-card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 4px; color: var(--text-secondary); }
-.mini-img img { width: 80%; height: 80%; object-fit: contain; }
+.mini-img { position: relative; height: 128px; border-radius: 14px; background: var(--bg-card); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; overflow: hidden; margin-bottom: 4px; color: var(--text-secondary); }
+.mini-img img { width: 80%; height: 80%; max-width: none; object-fit: contain; }
 .mini-card small { font-size: .58rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--primary); }
 .mini-card b { font-size: .78rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mini-card span { font-size: .76rem; font-weight: 700; color: var(--primary); }
@@ -420,7 +420,7 @@ body.no-scroll { overflow: hidden; }
 .empty p { margin: 0 0 18px; font-size: .9rem; }
 
 /* ---------- Panneau du bas ---------- */
-.sheet-backdrop { position: fixed; inset: 0; z-index: 2500; background: rgba(0, 0, 0, .55); opacity: 0; transition: opacity .25s; }
+.sheet-backdrop { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 2500; background: rgba(0, 0, 0, .55); opacity: 0; transition: opacity .25s; }
 .sheet-backdrop.open { opacity: 1; }
 .sheet {
   position: fixed;
@@ -484,16 +484,14 @@ body.no-scroll { overflow: hidden; }
   border-radius: 24px;
   background: radial-gradient(circle at 50% 40%, rgba(212, 175, 55, .16), transparent 62%), var(--bg-secondary);
   border: 1px solid var(--border);
-  aspect-ratio: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  height: 0;
+  padding-top: 100%;
   overflow: hidden;
 }
-.pd-img-btn { width: 100%; height: 100%; border: none; background: none; padding: 0; cursor: zoom-in; display: flex; align-items: center; justify-content: center; }
-.pd-img-btn img { width: 78%; height: 78%; object-fit: contain; filter: drop-shadow(0 18px 24px rgba(0, 0, 0, .3)); }
+.pd-img-btn { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; background: none; padding: 0; cursor: zoom-in; }
+.pd-img-btn img { position: absolute; top: 11%; left: 11%; width: 78%; height: 78%; max-width: none; object-fit: contain; filter: drop-shadow(0 18px 24px rgba(0, 0, 0, .3)); }
 .pd-zoom-hint { position: absolute; left: 14px; bottom: 14px; width: 34px; height: 34px; border-radius: 50%; background: rgba(11, 11, 13, .6); color: #F1D88A; display: flex; align-items: center; justify-content: center; font-size: .8rem; }
-.pd-noimg { font-size: 5rem; color: var(--text-secondary); opacity: .4; }
+.pd-noimg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 5rem; color: var(--text-secondary); opacity: .4; }
 .pd-media-actions { position: absolute; top: 14px; right: 14px; display: flex; flex-direction: column; gap: 10px; }
 .pd-round {
   position: static !important;
@@ -595,10 +593,10 @@ body.no-scroll { overflow: hidden; }
   .pd-sticky-price strong { font-family: var(--serif, inherit); font-size: 1.05rem; color: var(--primary); white-space: nowrap; }
   .pd-sticky-wa { background: #25D366; color: #fff; }
   .pd, .cart { padding-bottom: 96px; }
-  body:has(.pd-sticky) .whatsapp-float { display: none !important; }
+  body.has-sticky .whatsapp-float { display: none !important; }
 }
 
-.zoom { position: fixed; inset: 0; z-index: 3500; background: rgba(0, 0, 0, .92); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .2s; }
+.zoom { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 3500; background: rgba(0, 0, 0, .92); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .2s; }
 .zoom.open { opacity: 1; }
 .zoom img { max-width: 94vw; max-height: 86vh; object-fit: contain; }
 .zoom-close { position: absolute; top: 16px; right: 16px; top: max(16px, env(safe-area-inset-top)); width: 42px; height: 42px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .25); background: rgba(255, 255, 255, .1); color: #fff; font-size: 1.1rem; cursor: pointer; }
@@ -688,3 +686,8 @@ body.no-scroll { overflow: hidden; }
 @media (max-width: 899px) {
   .whatsapp-float { right: 12px !important; width: 46px !important; height: 46px !important; font-size: 1.35rem !important; opacity: .95; }
 }
+
+/* Filet de sécurité : une photo ne dépasse jamais sa boîte */
+.pc-media, .pd-media, .mini-img, .cart-thumb, .sx-thumb { contain: paint; }
+.pc-card img, .cart-thumb img, .sx-thumb img, .mini-img img { max-height: 100%; }
+.h-rail .animate-on-scroll, .pc-grid .animate-on-scroll { opacity: 1 !important; transform: none !important; }
