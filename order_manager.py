@@ -86,14 +86,109 @@ def get_order_with_items(order_id):
     return order, (items or [])
 
 
+def _shift_stock(order_id, sign):
+    """Remet (+1) ou reprend (-1) le stock des produits d'une commande."""
+    try:
+        items = db.fetch_all('order_items', 'product_id, quantity', {'order_id': order_id}) or []
+    except Exception:
+        return
+    for it in items:
+        pid, qty = it.get('product_id'), int(it.get('quantity') or 0)
+        if not pid or qty <= 0:
+            continue
+        try:
+            row = db.fetch_one('products', 'stock', {'id': pid})
+            if row is None:
+                continue
+            new_stock = max(0, int(row.get('stock') or 0) + sign * qty)
+            db.update('products', {'stock': new_stock}, {'id': pid})
+        except Exception:
+            continue
+
+
 def update_order_status(order_id, new_status):
+    """
+    Change le statut d'une commande.
+    - Passage en « Annulée »  : le stock des produits est remis automatiquement.
+    - Sortie de « Annulée »   : le stock est repris (commande réactivée).
+    """
     if new_status not in ORDER_STATUSES:
         return False
+    current = db.fetch_one('orders', 'status', {'id': order_id})
+    if not current:
+        return False
+    old_status = current.get('status')
+    if old_status == new_status:
+        return True
     db.update('orders', {
         'status': new_status,
         'updated_at': datetime.utcnow().isoformat(),
     }, {'id': order_id})
+    if new_status == 'Annulée' and old_status != 'Annulée':
+        _shift_stock(order_id, +1)
+    elif old_status == 'Annulée' and new_status != 'Annulée':
+        _shift_stock(order_id, -1)
     return True
+
+
+# Étape suivante proposée en un clic dans l'admin
+NEXT_STATUS = {
+    'En attente': 'Confirmée',
+    'Confirmée': 'Préparation',
+    'Préparation': 'Expédiée',
+    'Expédiée': 'Livrée',
+}
+
+
+def get_admin_overview():
+    """Chiffres clés du tableau de bord (aujourd'hui, 7 jours, à traiter)."""
+    from datetime import timedelta
+    now = datetime.utcnow()
+    today = now.strftime('%Y-%m-%d')
+    d7 = (now - timedelta(days=7)).isoformat()
+    d14 = (now - timedelta(days=14)).isoformat()
+    try:
+        orders = db.fetch_all('orders', 'id, status, total, created_at',
+                              filters=[('created_at', 'gte', d14)]) or []
+    except Exception:
+        orders = []
+
+    def ventes(rows):
+        return [o for o in rows if o.get('status') in STATUTS_VENTE]
+
+    last7 = [o for o in orders if (o.get('created_at') or '') >= d7]
+    prev7 = [o for o in orders if (o.get('created_at') or '') < d7]
+    today_rows = [o for o in orders if (o.get('created_at') or '')[:10] == today]
+
+    ca7 = sum(float(o.get('total') or 0) for o in ventes(last7))
+    ca_prev = sum(float(o.get('total') or 0) for o in ventes(prev7))
+    evolution = None
+    if ca_prev > 0:
+        evolution = round((ca7 - ca_prev) / ca_prev * 100)
+
+    try:
+        pending = db.count('orders', {'status': 'En attente'})
+    except Exception:
+        pending = 0
+    try:
+        stock_alerts = db.fetch_all('products', 'id, name, stock, image',
+                                    filters=[('stock', 'lte', 5), ('is_active', 'eq', True)],
+                                    order=('stock', True)) or []
+    except Exception:
+        stock_alerts = []
+
+    nb7 = len(ventes(last7))
+    return {
+        'ca_today': sum(float(o.get('total') or 0) for o in ventes(today_rows)),
+        'orders_today': len(today_rows),
+        'ca_7': ca7,
+        'evolution_7': evolution,
+        'nb_7': nb7,
+        'panier_moyen': (ca7 / nb7) if nb7 else 0,
+        'pending': pending,
+        'stock_alerts': stock_alerts,
+        'out_of_stock': sum(1 for p in stock_alerts if (p.get('stock') or 0) == 0),
+    }
 
 
 def get_all_orders(status_filter=None):

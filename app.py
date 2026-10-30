@@ -32,7 +32,7 @@ from werkzeug.security import check_password_hash
 import cart as cart_module
 from order_manager import (create_order_from_cart, get_customer_orders, get_order_with_items,
                             update_order_status, get_all_orders, ORDER_STATUSES,
-                            get_dashboard_stats)
+                            get_dashboard_stats, get_admin_overview, NEXT_STATUS)
 from invoice_generator import generate_invoice_pdf
 # test redeploiement storage 2
 app = Flask(__name__)
@@ -180,10 +180,16 @@ def inject_globals():
     dynamic_css += '}\n'
     cart_count = cart_module.cart_item_count()
     pending_reset_count = 0
+    pending_orders_count = 0
     if session.get('logged_in'):
         pending_reset_count = count_pending_reset_requests()
+        try:
+            pending_orders_count = db.count('orders', {'status': 'En attente'})
+        except Exception:
+            pending_orders_count = 0
     return dict(settings=settings, categories=categories, dynamic_css=dynamic_css,
-                cart_count=cart_count, pending_reset_count=pending_reset_count)
+                cart_count=cart_count, pending_reset_count=pending_reset_count,
+                pending_orders_count=pending_orders_count)
 
 
 # ============================================================
@@ -617,7 +623,7 @@ def admin_dashboard():
     stats = {
         'total_products': db.count('products'),
         'active_products': db.count('products', {'is_active': True}),
-        'total_views': sum(p['views'] for p in db.fetch_all('products', 'views')),
+        'total_views': sum((p.get('views') or 0) for p in db.fetch_all('products', 'views')),
         'out_of_stock': db.count('products', {'stock': 0}),
         'total_categories': db.count('categories'),
         'promo_products': len(db.fetch_all('products', 'id', [('discount', 'gt', 0)])),
@@ -634,10 +640,18 @@ def admin_dashboard():
     top_viewed = db.fetch_all('products', '*', order=('views', False), limit=5)
 
     periode = request.args.get('periode', 30, type=int)
+    if periode not in (7, 30, 90):
+        periode = 30
     order_stats = get_dashboard_stats(days=periode)
+    overview = get_admin_overview()
+    try:
+        recent_orders = get_all_orders()[:6]
+    except Exception:
+        recent_orders = []
 
     return render_template('admin/dashboard.html', stats=stats, recent=recent, top_viewed=top_viewed,
-                            order_stats=order_stats, periode=periode)
+                            order_stats=order_stats, periode=periode, overview=overview,
+                            recent_orders=recent_orders, next_status=NEXT_STATUS)
 
 
 @app.route('/azawad/profile', methods=['GET', 'POST'])
@@ -735,7 +749,77 @@ def admin_products():
     for p in products_list:
         c = p.pop('categories', None)
         p['category_name'] = c['name'] if c else None
-    return render_template('admin/products.html', products=products_list)
+    counts = {
+        'all': len(products_list),
+        'active': sum(1 for p in products_list if p.get('is_active')),
+        'hidden': sum(1 for p in products_list if not p.get('is_active')),
+        'out': sum(1 for p in products_list if (p.get('stock') or 0) == 0),
+        'low': sum(1 for p in products_list if 0 < (p.get('stock') or 0) <= 5),
+        'promo': sum(1 for p in products_list if (p.get('discount') or 0) > 0),
+    }
+    return render_template('admin/products.html', products=products_list, counts=counts,
+                           filtre=request.args.get('filtre', 'all'))
+
+
+def _wants_json():
+    return request.headers.get('X-Requested-With') == 'fetch'
+
+
+@app.route('/azawad/product/stock/<product_id>', methods=['POST'])
+@login_required
+def admin_product_stock(product_id):
+    """Change le stock en un clic (+1 / -1) ou à une valeur précise."""
+    product = db.fetch_one('products', 'id, name, stock', {'id': product_id})
+    if not product:
+        return (jsonify(ok=False, error='introuvable'), 404) if _wants_json() else redirect(url_for('admin_products'))
+    if request.form.get('value', '') != '':
+        new_stock = safe_int(request.form.get('value'), product.get('stock') or 0)
+    else:
+        new_stock = (product.get('stock') or 0) + safe_int(request.form.get('delta'), 0)
+    new_stock = max(0, min(new_stock, 100000))
+    db.update('products', {'stock': new_stock}, {'id': product_id})
+    log_action('Stock modifié', f"{product['name']} : {product.get('stock') or 0} -> {new_stock}")
+    if _wants_json():
+        return jsonify(ok=True, stock=new_stock)
+    return redirect(request.referrer or url_for('admin_products'))
+
+
+@app.route('/azawad/product/visible/<product_id>', methods=['POST'])
+@login_required
+def admin_product_toggle(product_id):
+    """Affiche / masque un produit sur le site en un clic."""
+    product = db.fetch_one('products', 'id, name, is_active', {'id': product_id})
+    if not product:
+        return (jsonify(ok=False, error='introuvable'), 404) if _wants_json() else redirect(url_for('admin_products'))
+    new_state = not bool(product.get('is_active'))
+    db.update('products', {'is_active': new_state}, {'id': product_id})
+    log_action('Produit ' + ('affiché' if new_state else 'masqué'), product['name'])
+    if _wants_json():
+        return jsonify(ok=True, active=new_state)
+    flash(('Produit visible sur le site.' if new_state else 'Produit masqué du site.'), 'success')
+    return redirect(request.referrer or url_for('admin_products'))
+
+
+@app.route('/azawad/product/dupliquer/<product_id>', methods=['POST'])
+@login_required
+def admin_product_duplicate(product_id):
+    """Crée une copie (masquée) d'un produit puis ouvre sa fiche pour la modifier."""
+    product = db.fetch_one('products', '*', {'id': product_id})
+    if not product:
+        flash('Produit introuvable.', 'error')
+        return redirect(url_for('admin_products'))
+    copy = {k: v for k, v in product.items()
+            if k not in ('id', 'created_at', 'updated_at', 'views', 'categories')}
+    copy['name'] = (product.get('name') or 'Produit') + ' (copie)'
+    copy['is_active'] = False
+    copy['views'] = 0
+    rows = db.insert('products', copy)
+    new = rows[0] if isinstance(rows, list) and rows else rows
+    log_action('Produit dupliqué', product.get('name') or '')
+    flash('Copie créée (masquée du site). Modifiez-la puis rendez-la visible.', 'success')
+    if new and new.get('id'):
+        return redirect(url_for('admin_edit_product', product_id=new['id']))
+    return redirect(url_for('admin_products'))
 
 
 # ============================================================
@@ -772,6 +856,48 @@ def _brand_from_form():
     return raw if any(c.isupper() for c in raw) else raw.title()
 
 
+def _upload_product_image(file):
+    """
+    Envoie la photo d'un produit sur Supabase Storage et retourne son URL publique (ou None).
+    La photo est redressée (iPhone), réduite à 1400 px maximum et allégée en WEBP.
+    """
+    if not file or not file.filename or not allowed_file(file.filename):
+        return None
+    data = file.read()
+    if not data:
+        return None
+    content_type, ext = (file.content_type or 'image/jpeg'), None
+    try:
+        from PIL import Image, ImageOps
+        img = Image.open(io.BytesIO(data))
+        img = ImageOps.exif_transpose(img)
+        if img.mode not in ('RGB', 'RGBA'):
+            img = img.convert('RGBA' if 'A' in img.getbands() else 'RGB')
+        img.thumbnail((1400, 1400), Image.LANCZOS)
+        out = io.BytesIO()
+        img.save(out, 'WEBP', quality=86, method=4)
+        data, content_type, ext = out.getvalue(), 'image/webp', 'webp'
+    except Exception:
+        ext = (file.filename.rsplit('.', 1)[-1] or 'jpg').lower()
+    storage_filename = f"{int(time.time())}_{secrets.token_hex(5)}.{ext}"
+    sb = get_supabase()
+    sb.storage.from_('product-images').upload(
+        storage_filename, data, {'content-type': content_type, 'upsert': 'true'})
+    return sb.storage.from_('product-images').get_public_url(storage_filename)
+
+
+def _prices_from_form():
+    """Prix, ancien prix et réduction cohérents (réduction calculée depuis l'ancien prix)."""
+    price = max(0, safe_float(request.form.get('price'), 0))
+    old_price = max(0, safe_float(request.form.get('old_price'), 0))
+    discount = max(0, min(99, safe_int(request.form.get('discount'), 0)))
+    if old_price > price > 0:
+        discount = int(round((old_price - price) / old_price * 100))
+    elif old_price and old_price <= price:
+        old_price, discount = 0, 0
+    return price, old_price, discount
+
+
 @app.route('/azawad/product/add', methods=['GET', 'POST'])
 @login_required
 def admin_add_product():
@@ -791,33 +917,8 @@ def admin_add_product():
             flash('Le nom du produit est obligatoire.', 'error')
             return render_template('admin/product_form.html', product=None, categories=cats, action='add', brands=_brand_choices())
 
-        image_filename = 'default.png'
-
-        if 'image' in request.files:
-            file = request.files['image']
-
-            if file and file.filename and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-
-                if filename:
-                    timestamp = str(int(time.time()))
-                    storage_filename = f"{timestamp}_{filename}"
-
-                    file_bytes = file.read()
-                    sb = get_supabase()
-
-                    sb.storage.from_('product-images').upload(
-                        storage_filename,
-                        file_bytes,
-                        {
-                            'content-type': file.content_type,
-                            'upsert': 'true'
-                        }
-                    )
-
-                    image_filename = sb.storage.from_(
-                        'product-images'
-                    ).get_public_url(storage_filename)
+        image_filename = _upload_product_image(request.files.get('image')) or 'default.png'
+        price, old_price, discount = _prices_from_form()
 
         db.insert('products', {
             'name': name,
@@ -826,9 +927,9 @@ def admin_add_product():
             'description': description,
             'description_en': description_en,
             'description_ar': description_ar,
-            'price': safe_float(request.form.get('price'), 0),
-            'old_price': safe_float(request.form.get('old_price'), 0),
-            'discount': safe_int(request.form.get('discount'), 0),
+            'price': price,
+            'old_price': old_price,
+            'discount': discount,
             'stock': safe_int(request.form.get('stock'), 0),
             'category_id': request.form.get('category_id'),
             'image': image_filename,
@@ -867,36 +968,8 @@ def admin_edit_product(product_id):
             flash('Le nom est obligatoire.', 'error')
             return render_template('admin/product_form.html', product=product, categories=cats, action='edit', brands=_brand_choices())
 
-        image_filename = product['image']
-        if 'image' in request.files:
-            file = request.files['image']
-            if file and file.filename and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-
-                if filename:
-                    timestamp = str(int(time.time()))
-                    storage_filename = f"{timestamp}_{filename}"
-
-                    file_bytes = file.read()
-                    sb = get_supabase()
-
-                    sb.storage.from_('product-images').upload(
-                    storage_filename,
-                    file_bytes,
-                    {
-                        'content-type': file.content_type,
-                        'upsert': 'true'
-                    }
-                )
-
-                image_filename = sb.storage.from_(
-                    'product-images'
-                ).get_public_url(storage_filename)
-                
-                    
-                    
-                    
-                    
+        image_filename = _upload_product_image(request.files.get('image')) or product['image']
+        price, old_price, discount = _prices_from_form()
 
         db.update('products', {
             'name': name,
@@ -905,9 +978,9 @@ def admin_edit_product(product_id):
             'description': description,
             'description_en': description_en,
             'description_ar': description_ar,
-            'price': safe_float(request.form.get('price'), 0),
-            'old_price': safe_float(request.form.get('old_price'), 0),
-            'discount': safe_int(request.form.get('discount'), 0),
+            'price': price,
+            'old_price': old_price,
+            'discount': discount,
             'stock': safe_int(request.form.get('stock'), 0),
             'category_id': request.form.get('category_id'),
             'image': image_filename,
@@ -1168,6 +1241,8 @@ def admin_toggle_customer_block(customer_id):
 def admin_resolve_reset_request(request_id):
     db.update('password_resets', {'dismissed': True}, {'id': request_id})
     log_action('Code de réinitialisation marqué traité', f'ID: {request_id}')
+    if _wants_json():
+        return jsonify(ok=True)
     flash('Demande marquée comme traitée.', 'success')
     return redirect(url_for('admin_reset_requests'))
 
@@ -1397,9 +1472,16 @@ def admin_orders():
     if 'logged_in' not in session:
         return redirect(url_for('admin_login'))
     status_filter = request.args.get('status', '')
-    orders = get_all_orders(status_filter if status_filter else None)
+    if status_filter not in ORDER_STATUSES:
+        status_filter = ''
+    all_orders = get_all_orders()
+    counts = {s: 0 for s in ORDER_STATUSES}
+    for o in all_orders:
+        counts[o.get('status')] = counts.get(o.get('status'), 0) + 1
+    orders = [o for o in all_orders if not status_filter or o.get('status') == status_filter]
     return render_template('admin/orders.html', orders=orders, statuses=ORDER_STATUSES,
-                            status_filter=status_filter)
+                            status_filter=status_filter, counts=counts, total_count=len(all_orders),
+                            next_status=NEXT_STATUS)
 
 
 @app.route('/azawad/commande/<order_id>')
@@ -1415,7 +1497,7 @@ def admin_order_detail(order_id):
         rows = db.fetch_all('customers', filters={'id': order['customer_id']}, limit=1)
         customer = rows[0] if rows else None
     return render_template('admin/order_detail.html', order=order, items=items,
-                           statuses=ORDER_STATUSES, customer=customer)
+                           statuses=ORDER_STATUSES, customer=customer, next_status=NEXT_STATUS)
 
 
 @app.route('/azawad/commande/statut/<order_id>', methods=['POST'])
@@ -1425,7 +1507,10 @@ def admin_update_order_status(order_id):
     new_status = request.form.get('status', '')
     if update_order_status(order_id, new_status):
         log_action('Statut commande modifié', f'Commande: {order_id} -> {new_status}')
-        flash('Statut de la commande mis à jour.', 'success')
+        if new_status == 'Annulée':
+            flash('Commande annulée. Le stock des produits a été remis automatiquement.', 'success')
+        else:
+            flash(f'Commande passée en « {new_status} ».', 'success')
     else:
         flash('Statut invalide.', 'error')
     return redirect(request.referrer or url_for('admin_orders'))
@@ -1649,6 +1734,23 @@ def customer_avatar():
             pass
     flash('Photo de profil supprimée.' if new_url is None else 'Photo de profil mise à jour.', 'success')
     return redirect(url_for('customer_profile'))
+
+
+@app.template_filter('nombre')
+def nombre_filter(value):
+    try:
+        return f"{float(value or 0):,.0f}".replace(',', '\xa0')
+    except (TypeError, ValueError):
+        return value
+
+
+@app.template_filter('wa')
+def wa_filter(phone):
+    """Numéro pour les liens wa.me (ajoute 227 aux numéros nigériens à 8 chiffres)."""
+    digits = re.sub(r'\D', '', phone or '')
+    if len(digits) == 8:
+        digits = '227' + digits
+    return digits
 
 
 @app.template_filter('fcfa')
