@@ -21,10 +21,21 @@
                     <input type="text" name="name" class="form-control" value="{{ product.name if product else '' }}"
                         required>
                 </div>
-                <div class="form-group">
-                    <label>Marque</label>
-                    <input type="text" name="brand" class="form-control" value="{{ product.brand if product else '' }}"
-                        placeholder="Apple, Samsung...">
+                {% set cur_brand = ((product.brand if product else '') or '')|trim %}
+                {% set brand_list = brands|default([]) %}
+                {% set is_other = cur_brand and (cur_brand|lower) not in (brand_list|map('lower')|list) %}
+                <div class="form-group full-width">
+                    <label>Marque <small style="opacity:.6; font-weight:400;">— touchez pour choisir</small></label>
+                    <div class="brand-picker" id="brandPicker">
+                        <label class="brand-opt"><input type="radio" name="brand" value="" {{ 'checked' if not cur_brand }}><span>Aucune</span></label>
+                        {% for b in brand_list %}
+                        <label class="brand-opt"><input type="radio" name="brand" value="{{ b }}" {{ 'checked' if cur_brand|lower == b|lower }}><span>{{ b }}</span></label>
+                        {% endfor %}
+                        <label class="brand-opt brand-opt-other"><input type="radio" name="brand" value="__other__" {{ 'checked' if is_other }}><span><i class="fas fa-plus"></i> Autre</span></label>
+                    </div>
+                    <input type="text" name="brand_other" id="brandOther" class="form-control" maxlength="40"
+                           placeholder="Nom de la nouvelle marque" value="{{ cur_brand if is_other else '' }}"
+                           style="margin-top:10px; {{ '' if is_other else 'display:none;' }}">
                 </div>
                 <div class="form-group full-width">
                     <label>Description (Français)</label>
@@ -122,5 +133,38 @@
             reader.readAsDataURL(input.files[0]);
         }
     }
+</script>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<style>
+.brand-picker { display: flex; flex-wrap: wrap; gap: 8px; }
+.brand-opt { position: relative; cursor: pointer; margin: 0; }
+.brand-opt input { position: absolute; opacity: 0; pointer-events: none; }
+.brand-opt span {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 15px; border-radius: 999px;
+    border: 1px solid var(--admin-border); background: var(--admin-bg);
+    color: var(--admin-text); font-size: .88rem; font-weight: 600;
+    transition: var(--admin-transition);
+}
+.brand-opt input:checked + span { background: var(--admin-gradient); border-color: transparent; color: #fff; box-shadow: 0 6px 16px rgba(108, 99, 255, .35); }
+.brand-opt-other span { border-style: dashed; }
+</style>
+<script>
+(function () {
+    var other = document.getElementById('brandOther');
+    var picker = document.getElementById('brandPicker');
+    if (!other || !picker) return;
+    function sync() {
+        var sel = picker.querySelector('input[name=brand]:checked');
+        var isOther = sel && sel.value === '__other__';
+        other.style.display = isOther ? '' : 'none';
+        other.required = !!isOther;
+        if (isOther) other.focus();
+    }
+    picker.addEventListener('change', sync);
+})();
 </script>
 {% endblock %}
