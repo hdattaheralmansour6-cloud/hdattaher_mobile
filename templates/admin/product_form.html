@@ -15,8 +15,7 @@
 <div class="admin-header">
     <div>
         <h1>{% if action == 'add' %}Nouveau produit{% else %}{{ product.name }}{% endif %}</h1>
-        {% if action == 'edit' %}<span class="breadcrumb"><i class="fas fa-eye"></i> {{ product.views or 0 }} vues ·
-            <a href="{{ url_for('product_detail', product_id=product.id) }}" target="_blank" rel="noopener" class="ax-link">Voir sur le site</a></span>{% endif %}
+        {% if action == 'edit' %}<span class="breadcrumb"><i class="fas fa-eye"></i> {{ product.views or 0 }} vues</span>{% endif %}
     </div>
 </div>
 
