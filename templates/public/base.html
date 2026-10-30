@@ -33,8 +33,24 @@
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon/favicon-32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon/favicon-16.png') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon/apple-touch-icon.png') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=26">
+    <!-- Vitesse : connexions préparées à l'avance + icônes chargées sans bloquer l'affichage -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap"></noscript>
+    {% if config.SUPABASE_URL %}<link rel="preconnect" href="{{ config.SUPABASE_URL }}">{% endif %}
+    <link rel="preload" href="{{ url_for('static', filename='fonts/lora.woff') }}" as="font" type="font/woff" crossorigin>
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"></noscript>
+    <script>
+        // Photo miniature absente : on affiche la grande photo à la place
+        document.addEventListener('error', function (e) {
+            var t = e.target;
+            if (t && t.tagName === 'IMG' && t.getAttribute('data-full') && t.src !== t.getAttribute('data-full')) t.src = t.getAttribute('data-full');
+        }, true);
+    </script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=27">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}?v=4">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/shop.css') }}?v=4">
     <!-- CSS dynamique depuis les paramètres admin -->
@@ -451,7 +467,7 @@
         <i class="fab fa-whatsapp"></i>
     </a>
 
-    <script src="{{ url_for('static', filename='js/main.js') }}?v=32"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}?v=33"></script>
     <script>
         // ============ Mobile Menu ============
         function toggleMobileMenu() {

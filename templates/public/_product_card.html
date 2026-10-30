@@ -4,7 +4,7 @@
 <div class="pc-card{{ ' is-out' if not (p.stock and p.stock > 0) }}">
     <a href="{{ url_for('product_detail', product_id=p.id) }}" class="pc-media" aria-label="{{ p.name }}">
         {% if has_img %}
-        <img src="{{ p.image }}" alt="{{ p.name }}" loading="lazy">
+        <img src="{{ p.image|thumb }}" data-full="{{ p.image }}" alt="{{ p.name }}" loading="lazy" decoding="async">
         {% else %}
         <span class="pc-placeholder"><i class="fas fa-mobile-screen"></i></span>
         {% endif %}

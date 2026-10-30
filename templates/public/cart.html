@@ -15,7 +15,7 @@
             {% set p = item.product %}
             <div class="cart-item">
                 <a href="{{ url_for('product_detail', product_id=p.id) }}" class="cart-thumb">
-                    {% if p.image and p.image != 'default.png' %}<img src="{{ p.image }}" alt="">
+                    {% if p.image and p.image != 'default.png' %}<img src="{{ p.image|thumb }}" data-full="{{ p.image }}" alt="" decoding="async">
                     {% else %}<i class="fas fa-mobile-screen"></i>{% endif %}
                 </a>
                 <div class="cart-mid">
