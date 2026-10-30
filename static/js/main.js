@@ -8,19 +8,21 @@
 // ============================================================
 const ThemeManager = {
   init() {
-    const saved = localStorage.getItem('theme') || 'light';
+    // Thème Noir & Or : sombre par défaut (nouvelle clé pour repartir de zéro)
+    let saved = 'dark';
+    try { saved = localStorage.getItem('theme2') || 'dark'; } catch (e) {}
     this.set(saved);
     const btn = document.getElementById('themeToggle');
     if (btn) btn.addEventListener('click', () => this.toggle());
   },
   set(theme) {
     document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('theme', theme);
+    try { localStorage.setItem('theme2', theme); } catch (e) {}
     const icon = document.querySelector('#themeToggle i');
     if (icon) icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
   },
   toggle() {
-    const current = localStorage.getItem('theme') || 'light';
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
     this.set(current === 'dark' ? 'light' : 'dark');
   }
 };
@@ -74,6 +76,91 @@ const translations = {
     new_password_label: 'Nouveau mot de passe', reset_btn: 'Réinitialiser',
     member_since: 'Membre depuis', avatar_add: 'Ajouter une photo', avatar_change: 'Changer la photo', avatar_remove: 'Supprimer', stat_orders: 'Commandes', stat_in_progress: 'En cours', stat_delivered: 'Livrées', order_items_title: 'Articles', receipt_sent: 'Reçu de transfert envoyé', order_cancelled_note: 'Cette commande a été annulée.',
     auth_or: 'ou', create_account_btn: 'Créer un compte', perk_track: 'Suivi de vos commandes', perk_invoice: 'Factures PDF', perk_fast: 'Commande plus rapide', pw_min: '6 caractères minimum', pw_weak: 'Faible', pw_medium: 'Moyen', pw_strong: 'Fort', pw_match: 'Les mots de passe correspondent', pw_nomatch: 'Les mots de passe ne correspondent pas', fp_step1: 'Votre email', fp_step2: 'Code WhatsApp', fp_step3: 'Nouveau mot de passe', trust_secure: 'Compte sécurisé',
+    add_cart_short: 'Ajouter',
+    added_to_cart: "Ajouté au panier",
+    all: "Tout",
+    all_brands_short: "Toutes",
+    articles: "article(s)",
+    ask_whatsapp: "Demandez-nous sur WhatsApp",
+    ask_whatsapp_product: "Une question ? Écrivez-nous",
+    cancel: "Annuler",
+    cart_empty_hint: "Découvrez nos smartphones et accessoires.",
+    checkout_short: "Commander",
+    clear: "Effacer",
+    continue_shopping: "Continuer mes achats",
+    deals: "Offres du moment",
+    delivery: "Livraison",
+    delivery_confirmed: "Confirmée par WhatsApp",
+    description: "Description",
+    favorites_hint: "Touchez le cœur d'un produit pour le retrouver ici.",
+    featured_short: "Nos coups de cœur",
+    filters: "Filtres",
+    h_title1: "Le smartphone de vos rêves,",
+    h_title2: "livré au Niger.",
+    hello: "Bonjour",
+    link_copied: "Lien copié",
+    max: "Max",
+    min: "Min",
+    need_help: "Besoin d'aide pour choisir ?",
+    no_results: "Aucun produit trouvé.",
+    no_results_hint: "Essayez un autre mot ou retirez des filtres.",
+    notify_short: "Me prévenir",
+    notify_whatsapp: "Être prévenu du retour en stock",
+    only_left: "Plus que",
+    order_number: "Numéro de commande",
+    out_of_stock_long: "Rupture de stock",
+    pay_with: "Paiement par",
+    perk_delivery: "Livraison au Niger",
+    perk_delivery_d: "Rapide et suivie",
+    perk_original: "Produits authentiques",
+    perk_original_d: "Vérifiés avant envoi",
+    perk_payment: "Amanata & Nita",
+    perk_payment_t: "Paiement mobile",
+    price: "Prix",
+    price_fcfa: "Prix (FCFA)",
+    price_up: "Prix ↑",
+    price_down: "Prix ↓",
+    product_many: "produits",
+    product_one: "produit",
+    promo_only: "Seulement les promos",
+    promos: "Promos",
+    read_more: "Lire la suite",
+    recent_searches: "Recherches récentes",
+    recently_viewed: "Vus récemment",
+    search_ph: "iPhone, Samsung, écouteurs…",
+    see_all: "Tout voir",
+    see_all_results: "Voir tous les résultats",
+    shop_by_brand: "Par marque",
+    shop_title: "La boutique",
+    show_results: "Voir les produits",
+    subtotal: "Sous-total",
+    summary: "Récapitulatif",
+    tab_account: "Compte",
+    tab_cart: "Panier",
+    tab_favs: "Favoris",
+    tab_home: "Accueil",
+    tab_shop: "Boutique",
+    track_btn: "Voir ma commande",
+    track_hint: "Avec votre numéro de commande",
+    track_intro: "Entrez le numéro de commande et le téléphone utilisés lors de l'achat.",
+    track_missing: "Indiquez le numéro de commande et un téléphone valide.",
+    track_not_found: "Aucune commande ne correspond. Vérifiez le numéro et le téléphone.",
+    track_order: "Suivre ma commande",
+    track_question: "Une question sur cette commande ?",
+    track_where: "Le numéro figure sur la page de confirmation et dans « Mes commandes ».",
+    view_cart: "Voir le panier",
+    views_label: "Consultations",
+    welcome: "Bienvenue chez HDATTAHER",
+    why1_d: "Partout au Niger",
+    why1_t: "Livraison rapide",
+    why2_d: "Produits vérifiés",
+    why2_t: "100 % authentique",
+    why3_d: "Amanata & Nita",
+    why3_t: "Paiement sûr",
+    why4_d: "Réponse rapide",
+    why4_t: "Conseil WhatsApp",
+    write_us: "Écrivez-nous sur WhatsApp",
+    you_save: "Vous économisez",
     my_profile_tab: 'Mon profil', my_orders_tab: 'Mes commandes', logout_tab: 'Déconnexion',
     personal_info: 'Informations personnelles', address_label: 'Adresse', save_btn: 'Enregistrer',
     change_password_title: 'Changer le mot de passe', current_password_label: 'Mot de passe actuel',
@@ -170,6 +257,91 @@ const translations = {
     new_password_label: 'New password', reset_btn: 'Reset',
     member_since: 'Member since', avatar_add: 'Add a photo', avatar_change: 'Change photo', avatar_remove: 'Remove', stat_orders: 'Orders', stat_in_progress: 'In progress', stat_delivered: 'Delivered', order_items_title: 'Items', receipt_sent: 'Transfer receipt sent', order_cancelled_note: 'This order has been cancelled.',
     auth_or: 'or', create_account_btn: 'Create an account', perk_track: 'Track your orders', perk_invoice: 'PDF invoices', perk_fast: 'Faster checkout', pw_min: '6 characters minimum', pw_weak: 'Weak', pw_medium: 'Medium', pw_strong: 'Strong', pw_match: 'Passwords match', pw_nomatch: 'Passwords do not match', fp_step1: 'Your email', fp_step2: 'WhatsApp code', fp_step3: 'New password', trust_secure: 'Secure account',
+    add_cart_short: 'Add',
+    added_to_cart: "Added to cart",
+    all: "All",
+    all_brands_short: "All",
+    articles: "item(s)",
+    ask_whatsapp: "Ask us on WhatsApp",
+    ask_whatsapp_product: "A question? Message us",
+    cancel: "Cancel",
+    cart_empty_hint: "Discover our smartphones and accessories.",
+    checkout_short: "Checkout",
+    clear: "Clear",
+    continue_shopping: "Continue shopping",
+    deals: "Current deals",
+    delivery: "Delivery",
+    delivery_confirmed: "Confirmed on WhatsApp",
+    description: "Description",
+    favorites_hint: "Tap a product's heart to find it here.",
+    featured_short: "Our favourites",
+    filters: "Filters",
+    h_title1: "The smartphone of your dreams,",
+    h_title2: "delivered in Niger.",
+    hello: "Hello",
+    link_copied: "Link copied",
+    max: "Max",
+    min: "Min",
+    need_help: "Need help choosing?",
+    no_results: "No products found.",
+    no_results_hint: "Try another word or remove filters.",
+    notify_short: "Notify me",
+    notify_whatsapp: "Get notified when back in stock",
+    only_left: "Only",
+    order_number: "Order number",
+    out_of_stock_long: "Out of stock",
+    pay_with: "Pay with",
+    perk_delivery: "Delivery in Niger",
+    perk_delivery_d: "Fast and tracked",
+    perk_original: "Genuine products",
+    perk_original_d: "Checked before shipping",
+    perk_payment: "Amanata & Nita",
+    perk_payment_t: "Mobile payment",
+    price: "Price",
+    price_fcfa: "Price (FCFA)",
+    price_up: "Price ↑",
+    price_down: "Price ↓",
+    product_many: "products",
+    product_one: "product",
+    promo_only: "Deals only",
+    promos: "Deals",
+    read_more: "Read more",
+    recent_searches: "Recent searches",
+    recently_viewed: "Recently viewed",
+    search_ph: "iPhone, Samsung, earbuds…",
+    see_all: "See all",
+    see_all_results: "See all results",
+    shop_by_brand: "By brand",
+    shop_title: "The shop",
+    show_results: "Show products",
+    subtotal: "Subtotal",
+    summary: "Summary",
+    tab_account: "Account",
+    tab_cart: "Cart",
+    tab_favs: "Favourites",
+    tab_home: "Home",
+    tab_shop: "Shop",
+    track_btn: "Find my order",
+    track_hint: "With your order number",
+    track_intro: "Enter the order number and phone used when ordering.",
+    track_missing: "Enter the order number and a valid phone.",
+    track_not_found: "No matching order. Check the number and phone.",
+    track_order: "Track my order",
+    track_question: "A question about this order?",
+    track_where: "The number is on the confirmation page and in “My orders”.",
+    view_cart: "View cart",
+    views_label: "Views",
+    welcome: "Welcome to HDATTAHER",
+    why1_d: "Across Niger",
+    why1_t: "Fast delivery",
+    why2_d: "Checked products",
+    why2_t: "100% genuine",
+    why3_d: "Amanata & Nita",
+    why3_t: "Safe payment",
+    why4_d: "Quick reply",
+    why4_t: "WhatsApp advice",
+    write_us: "Message us on WhatsApp",
+    you_save: "You save",
     my_profile_tab: 'My profile', my_orders_tab: 'My orders', logout_tab: 'Logout',
     personal_info: 'Personal information', address_label: 'Address', save_btn: 'Save',
     change_password_title: 'Change password', current_password_label: 'Current password',
@@ -266,6 +438,91 @@ const translations = {
     new_password_label: 'كلمة المرور الجديدة', reset_btn: 'إعادة التعيين',
     member_since: 'عضو منذ', avatar_add: 'إضافة صورة', avatar_change: 'تغيير الصورة', avatar_remove: 'حذف', stat_orders: 'الطلبات', stat_in_progress: 'قيد التنفيذ', stat_delivered: 'تم التسليم', order_items_title: 'المنتجات', receipt_sent: 'تم إرسال إيصال التحويل', order_cancelled_note: 'تم إلغاء هذا الطلب.',
     auth_or: 'أو', create_account_btn: 'إنشاء حساب', perk_track: 'تتبع طلباتك', perk_invoice: 'فواتير PDF', perk_fast: 'طلب أسرع', pw_min: '6 أحرف على الأقل', pw_weak: 'ضعيفة', pw_medium: 'متوسطة', pw_strong: 'قوية', pw_match: 'كلمتا المرور متطابقتان', pw_nomatch: 'كلمتا المرور غير متطابقتين', fp_step1: 'بريدك الإلكتروني', fp_step2: 'رمز واتساب', fp_step3: 'كلمة مرور جديدة', trust_secure: 'حساب آمن',
+    add_cart_short: 'أضف',
+    added_to_cart: "تمت الإضافة إلى السلة",
+    all: "الكل",
+    all_brands_short: "الكل",
+    articles: "منتج(ات)",
+    ask_whatsapp: "اسألنا عبر واتساب",
+    ask_whatsapp_product: "لديك سؤال؟ راسلنا",
+    cancel: "إلغاء",
+    cart_empty_hint: "اكتشف هواتفنا وإكسسواراتنا.",
+    checkout_short: "اطلب الآن",
+    clear: "مسح",
+    continue_shopping: "متابعة التسوق",
+    deals: "عروض اللحظة",
+    delivery: "التوصيل",
+    delivery_confirmed: "يتم تأكيده عبر واتساب",
+    description: "الوصف",
+    favorites_hint: "اضغط على قلب المنتج لتجده هنا.",
+    featured_short: "اختياراتنا المميزة",
+    filters: "الفلاتر",
+    h_title1: "هاتف أحلامك،",
+    h_title2: "يصلك في النيجر.",
+    hello: "مرحبًا",
+    link_copied: "تم نسخ الرابط",
+    max: "الأقصى",
+    min: "الأدنى",
+    need_help: "تحتاج مساعدة في الاختيار؟",
+    no_results: "لم يتم العثور على منتجات.",
+    no_results_hint: "جرّب كلمة أخرى أو أزل بعض الفلاتر.",
+    notify_short: "أعلمني",
+    notify_whatsapp: "أعلمني عند توفره",
+    only_left: "متبقٍ",
+    order_number: "رقم الطلب",
+    out_of_stock_long: "نفد من المخزون",
+    pay_with: "الدفع عبر",
+    perk_delivery: "التوصيل في النيجر",
+    perk_delivery_d: "سريع ومتابع",
+    perk_original: "منتجات أصلية",
+    perk_original_d: "يتم فحصها قبل الإرسال",
+    perk_payment: "أمانة و نيتا",
+    perk_payment_t: "الدفع عبر الهاتف",
+    price: "السعر",
+    price_fcfa: "السعر (فرنك)",
+    price_up: "السعر ↑",
+    price_down: "السعر ↓",
+    product_many: "منتجات",
+    product_one: "منتج",
+    promo_only: "العروض فقط",
+    promos: "عروض",
+    read_more: "اقرأ المزيد",
+    recent_searches: "عمليات البحث الأخيرة",
+    recently_viewed: "شوهدت مؤخرًا",
+    search_ph: "آيفون، سامسونج، سماعات…",
+    see_all: "عرض الكل",
+    see_all_results: "عرض كل النتائج",
+    shop_by_brand: "حسب العلامة",
+    shop_title: "المتجر",
+    show_results: "عرض المنتجات",
+    subtotal: "المجموع الفرعي",
+    summary: "الملخص",
+    tab_account: "حسابي",
+    tab_cart: "السلة",
+    tab_favs: "المفضلة",
+    tab_home: "الرئيسية",
+    tab_shop: "المتجر",
+    track_btn: "عرض طلبي",
+    track_hint: "برقم طلبك",
+    track_intro: "أدخل رقم الطلب والهاتف المستخدمين عند الشراء.",
+    track_missing: "أدخل رقم الطلب ورقم هاتف صحيح.",
+    track_not_found: "لا يوجد طلب مطابق. تحقق من الرقم والهاتف.",
+    track_order: "تتبع طلبي",
+    track_question: "سؤال حول هذا الطلب؟",
+    track_where: "الرقم موجود في صفحة التأكيد وفي «طلباتي».",
+    view_cart: "عرض السلة",
+    views_label: "المشاهدات",
+    welcome: "مرحبًا بك في HDATTAHER",
+    why1_d: "في كل أنحاء النيجر",
+    why1_t: "توصيل سريع",
+    why2_d: "منتجات مفحوصة",
+    why2_t: "أصلي 100%",
+    why3_d: "أمانة و نيتا",
+    why3_t: "دفع آمن",
+    why4_d: "رد سريع",
+    why4_t: "نصيحة عبر واتساب",
+    write_us: "راسلنا عبر واتساب",
+    you_save: "توفّر",
     my_profile_tab: 'ملفي الشخصي', my_orders_tab: 'طلباتي', logout_tab: 'تسجيل الخروج',
     personal_info: 'المعلومات الشخصية', address_label: 'العنوان', save_btn: 'حفظ',
     change_password_title: 'تغيير كلمة المرور', current_password_label: 'كلمة المرور الحالية',
@@ -430,20 +687,19 @@ function initSearch() {
         fetch('/api/products?q=' + encodeURIComponent(q))
           .then(r => r.json())
           .then(data => {
-            if (data.length === 0) { results.style.display = 'none'; return; }
+            if (!data.length) { results.style.display = 'none'; return; }
             results.innerHTML = data.map(p => `
-              <a href="/product/${p.id}" class="search-result-item">
-                <span>${p.name}</span>
+              <a href="/product/${encodeURIComponent(p.id)}" class="search-result-item">
+                <span>${esc(p.name)}</span>
                 <span class="search-price">${formatPrice(p.price)}</span>
-              </a>
-            `).join('');
+              </a>`).join('');
             results.style.display = 'block';
-          });
+          })
+          .catch(() => { results.style.display = 'none'; });
       }, 300);
     });
     document.addEventListener('click', (e) => {
-      if (!input.contains(e.target) && !results.contains(e.target))
-        results.style.display = 'none';
+      if (!input.contains(e.target) && !results.contains(e.target)) results.style.display = 'none';
     });
   });
 }
@@ -548,6 +804,11 @@ function toggleFavorite(event, id, name, price, image) {
   });
 }
 
+// Bouton cœur : les infos du produit sont lues dans ses attributs data-*
+function toggleFavoriteBtn(event, btn) {
+  toggleFavorite(event, btn.dataset.favId, btn.dataset.favName, parseFloat(btn.dataset.favPrice) || 0, btn.dataset.favImage || '');
+}
+
 function updateFavCountBadges() {
   const count = Object.keys(getFavorites()).length;
   document.querySelectorAll('.fav-count-badge').forEach((el) => {
@@ -571,6 +832,8 @@ function renderFavoritesPage() {
   const emptyState = document.getElementById('favoritesEmpty');
   if (!container) return;
   const favs = Object.values(getFavorites());
+  const countText = document.getElementById('favCountText');
+  if (countText) countText.innerHTML = favs.length ? '<b>' + favs.length + '</b> ' + (favs.length === 1 ? t('product_one', 'produit') : t('product_many', 'produits')) : '';
   if (favs.length === 0) {
     container.style.display = 'none';
     if (emptyState) emptyState.style.display = 'block';
@@ -578,27 +841,22 @@ function renderFavoritesPage() {
   }
   if (emptyState) emptyState.style.display = 'none';
   container.style.display = 'grid';
-  container.innerHTML = favs.map((p) => `
-    <div class="product-card animate-on-scroll">
-      <a href="/product/${p.id}">
-        <div class="product-image">
-          ${p.image ? `<img src="${p.image}" alt="${p.name}" loading="lazy">` : `<div class="placeholder-icon">📱</div>`}
-        </div>
+  container.innerHTML = favs.map((p) => {
+    const id = esc(p.id), url = '/product/' + encodeURIComponent(p.id);
+    return `
+    <div class="pc-card">
+      <a href="${url}" class="pc-media">
+        ${p.image ? `<img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy">` : '<span class="pc-placeholder"><i class="fas fa-mobile-screen"></i></span>'}
       </a>
-      <div class="product-info">
-        <h3 class="product-name">${p.name}</h3>
-        <div class="product-price-row">
-          <span class="product-price">${formatPrice(p.price)}</span>
-        </div>
-        <div class="product-actions" style="margin-top:10px;">
-          <a href="/product/${p.id}" class="btn btn-outline btn-sm">Voir détails</a>
-          <button class="btn btn-danger btn-sm" onclick="toggleFavorite(event, '${p.id}'); renderFavoritesPage();">
-            <i class="fas fa-trash"></i>
-          </button>
-        </div>
+      <button type="button" class="pc-fav product-fav-btn active" data-fav-id="${id}" aria-label="Retirer"
+              onclick="toggleFavorite(event, this.dataset.favId); renderFavoritesPage();"><i class="fas fa-heart"></i></button>
+      <div class="pc-body">
+        <a href="${url}" class="pc-name">${esc(p.name)}</a>
+        <div class="pc-price"><strong>${formatPrice(p.price)}</strong></div>
+        <div class="pc-actions"><a href="${url}" class="pc-btn pc-btn-ghost">${esc(t('view_details', 'Voir détails'))}</a></div>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 // ============================================================
@@ -611,6 +869,340 @@ function toggleFooterAccordion(btn) {
   const wasOpen = col.classList.contains('open');
   document.querySelectorAll('.footer-col.open').forEach((c) => c.classList.remove('open'));
   if (!wasOpen) col.classList.add('open');
+}
+
+
+// ============================================================
+//  OUTILS
+// ============================================================
+function esc(v) {
+  return String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function t(key, fallback) {
+  let lang = 'fr';
+  try { lang = localStorage.getItem('lang') || 'fr'; } catch (e) {}
+  const dict = translations[lang] || translations.fr;
+  return (dict && dict[key]) || (translations.fr && translations.fr[key]) || fallback || key;
+}
+function store(key, val) {
+  try {
+    if (val === undefined) return JSON.parse(localStorage.getItem(key) || 'null');
+    localStorage.setItem(key, JSON.stringify(val));
+  } catch (e) { return null; }
+}
+
+// ============================================================
+//  MESSAGE « AJOUTÉ AU PANIER »
+// ============================================================
+let toastTimer = null;
+function showToast(text, withLink) {
+  const box = document.getElementById('toast');
+  if (!box) return;
+  document.getElementById('toastText').textContent = text;
+  const link = document.getElementById('toastLink');
+  if (link) link.hidden = !withLink;
+  box.hidden = false;
+  requestAnimationFrame(() => box.classList.add('show'));
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    box.classList.remove('show');
+    setTimeout(() => { box.hidden = true; }, 300);
+  }, 3200);
+}
+
+function setCartCount(n) {
+  document.querySelectorAll('.cart-count-badge').forEach(el => {
+    el.textContent = n;
+    el.hidden = !n;
+    el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump');
+  });
+}
+
+// Ajout au panier sans recharger la page (le formulaire marche aussi sans JavaScript)
+function initAjaxCart() {
+  document.addEventListener('submit', function (e) {
+    const form = e.target.closest('.pc-cart-form');
+    if (!form || !window.fetch) return;
+    e.preventDefault();
+    const btn = form.querySelector('button[type=submit]');
+    if (btn) btn.classList.add('is-busy');
+    fetch(form.action, {
+      method: 'POST',
+      body: new FormData(form),
+      headers: { 'X-Requested-With': 'fetch' },
+      credentials: 'same-origin'
+    })
+      .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(data => {
+        setCartCount(data.count || 0);
+        showToast(t('added_to_cart', 'Ajouté au panier'), true);
+        if (btn) { btn.classList.add('is-done'); setTimeout(() => btn.classList.remove('is-done'), 1400); }
+      })
+      .catch(() => form.submit())
+      .finally(() => { if (btn) btn.classList.remove('is-busy'); });
+  });
+}
+
+// ============================================================
+//  BOUTONS + / − (fiche produit et panier)
+// ============================================================
+function initQty() {
+  document.querySelectorAll('.qty').forEach(box => {
+    const input = box.querySelector('input[type=number]');
+    if (!input) return;
+    const max = parseInt(box.dataset.max || input.max || '99', 10) || 99;
+    const sync = () => {
+      const v = parseInt(input.value, 10) || 1;
+      box.querySelectorAll('.qty-btn').forEach(b => {
+        const step = parseInt(b.dataset.step, 10);
+        b.disabled = (step < 0 && v <= 1) || (step > 0 && v >= max);
+      });
+    };
+    box.querySelectorAll('.qty-btn').forEach(b => b.addEventListener('click', () => {
+      const v = Math.min(max, Math.max(1, (parseInt(input.value, 10) || 1) + parseInt(b.dataset.step, 10)));
+      if (String(v) === input.value) return;
+      input.value = v;
+      sync();
+      if (box.classList.contains('qty-auto')) { box.classList.add('is-busy'); box.submit(); }
+    }));
+    input.addEventListener('change', () => {
+      input.value = Math.min(max, Math.max(1, parseInt(input.value, 10) || 1));
+      sync();
+      if (box.classList.contains('qty-auto')) box.submit();
+    });
+    sync();
+  });
+}
+
+// ============================================================
+//  RECHERCHE PLEIN ÉCRAN
+// ============================================================
+const RECENT_SEARCH_KEY = 'hm_recent_searches';
+let sxTimer = null, sxLast = '';
+
+function openSearch() {
+  const box = document.getElementById('searchOverlay');
+  if (!box) { window.location.href = '/products'; return; }
+  box.hidden = false;
+  document.body.classList.add('no-scroll');
+  renderRecentSearches();
+  requestAnimationFrame(() => box.classList.add('open'));
+  setTimeout(() => { const i = document.getElementById('sxInput'); if (i) i.focus(); }, 60);
+}
+function closeSearch() {
+  const box = document.getElementById('searchOverlay');
+  if (!box) return;
+  box.classList.remove('open');
+  document.body.classList.remove('no-scroll');
+  setTimeout(() => { box.hidden = true; }, 220);
+}
+function saveRecentSearch(q) {
+  q = (q || '').trim();
+  if (q.length < 2) return;
+  const list = (store(RECENT_SEARCH_KEY) || []).filter(x => x.toLowerCase() !== q.toLowerCase());
+  list.unshift(q);
+  store(RECENT_SEARCH_KEY, list.slice(0, 8));
+}
+function clearRecentSearches() { store(RECENT_SEARCH_KEY, []); renderRecentSearches(); }
+function renderRecentSearches() {
+  const wrap = document.getElementById('sxRecent'), block = document.getElementById('sxRecentBlock');
+  if (!wrap || !block) return;
+  const list = store(RECENT_SEARCH_KEY) || [];
+  block.hidden = !list.length;
+  wrap.innerHTML = list.map(q => `<button type="button" class="sx-chip" data-q="${esc(q)}"><i class="fas fa-clock-rotate-left"></i> ${esc(q)}</button>`).join('');
+  wrap.querySelectorAll('.sx-chip').forEach(b => b.addEventListener('click', () => {
+    const i = document.getElementById('sxInput'); i.value = b.dataset.q; i.dispatchEvent(new Event('input'));
+  }));
+}
+function goSearch(q) {
+  saveRecentSearch(q);
+  window.location.href = '/products?search=' + encodeURIComponent(q);
+}
+function initSearchOverlay() {
+  const input = document.getElementById('sxInput');
+  if (!input) return;
+  const results = document.getElementById('sxResults'), idle = document.getElementById('sxIdle');
+  const empty = document.getElementById('sxEmpty'), all = document.getElementById('sxAll'), clear = document.getElementById('sxClear');
+  const lang = () => { try { return localStorage.getItem('lang') || 'fr'; } catch (e) { return 'fr'; } };
+
+  const show = (state) => {
+    idle.hidden = state !== 'idle';
+    results.hidden = state !== 'results';
+    empty.hidden = state !== 'empty';
+    all.hidden = state !== 'results';
+  };
+  input.addEventListener('input', () => {
+    const q = input.value.trim();
+    clear.hidden = !input.value;
+    clearTimeout(sxTimer);
+    if (q.length < 2) { show('idle'); return; }
+    results.innerHTML = '<div class="sx-loading"><span></span><span></span><span></span></div>';
+    show('results');
+    sxTimer = setTimeout(() => {
+      sxLast = q;
+      fetch('/api/products?q=' + encodeURIComponent(q))
+        .then(r => r.json())
+        .then(data => {
+          if (q !== sxLast) return;
+          if (!data.length) { show('empty'); return; }
+          results.innerHTML = data.map(p => {
+            const name = p['name_' + lang()] || p.name;
+            const old = p.old_price && p.old_price > p.price ? `<s>${formatPrice(p.old_price)}</s>` : '';
+            return `<a href="/product/${encodeURIComponent(p.id)}" class="sx-item" data-q="${esc(q)}">
+              <span class="sx-thumb">${p.image ? `<img src="${esc(p.image)}" alt="" loading="lazy">` : '<i class="fas fa-mobile-screen"></i>'}</span>
+              <span class="sx-txt"><small>${esc(p.brand || '')}</small><b>${esc(name)}</b>
+                <span class="sx-price">${formatPrice(p.price)} ${old}</span></span>
+              ${p.stock > 0 ? '' : `<span class="sx-out">${esc(t('out_of_stock', 'Rupture'))}</span>`}
+            </a>`;
+          }).join('');
+          results.querySelectorAll('.sx-item').forEach(a => a.addEventListener('click', () => saveRecentSearch(a.dataset.q)));
+          all.href = '/products?search=' + encodeURIComponent(q);
+          all.onclick = () => saveRecentSearch(q);
+          show('results');
+        })
+        .catch(() => show('empty'));
+    }, 250);
+  });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && input.value.trim()) { e.preventDefault(); goSearch(input.value.trim()); }
+  });
+  clear.addEventListener('click', () => { input.value = ''; input.dispatchEvent(new Event('input')); input.focus(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSearch(); });
+}
+
+// ============================================================
+//  PANNEAU QUI GLISSE DEPUIS LE BAS (filtres)
+// ============================================================
+function openSheet(id) {
+  const sheet = document.getElementById(id), back = document.getElementById(id + 'Backdrop');
+  if (!sheet) return;
+  sheet.hidden = false; if (back) back.hidden = false;
+  document.body.classList.add('no-scroll');
+  requestAnimationFrame(() => { sheet.classList.add('open'); if (back) back.classList.add('open'); });
+}
+function closeSheet(id) {
+  const sheet = document.getElementById(id), back = document.getElementById(id + 'Backdrop');
+  if (!sheet) return;
+  sheet.classList.remove('open'); if (back) back.classList.remove('open');
+  document.body.classList.remove('no-scroll');
+  setTimeout(() => { sheet.hidden = true; if (back) back.hidden = true; }, 250);
+}
+function initFilterSheet() {
+  const sheet = document.getElementById('filterSheet');
+  if (!sheet) return;
+  sheet.querySelectorAll('.preset').forEach(b => b.addEventListener('click', () => {
+    sheet.querySelector('[name=min_price]').value = b.dataset.min;
+    sheet.querySelector('[name=max_price]').value = b.dataset.max;
+    sheet.querySelectorAll('.preset').forEach(x => x.classList.toggle('on', x === b));
+  }));
+  // On n'envoie pas les champs vides (adresse plus propre)
+  sheet.addEventListener('submit', () => {
+    sheet.querySelectorAll('input').forEach(i => {
+      if ((i.type === 'number' || i.type === 'hidden') && !i.value) i.disabled = true;
+      if (i.type === 'radio' && i.checked && !i.value) i.disabled = true;
+    });
+  });
+}
+
+// ============================================================
+//  FICHE PRODUIT : zoom, partage, description, vus récemment
+// ============================================================
+function openZoom(src) {
+  const z = document.getElementById('zoom');
+  if (!z || !src) return;
+  document.getElementById('zoomImg').src = src;
+  z.hidden = false;
+  document.body.classList.add('no-scroll');
+  requestAnimationFrame(() => z.classList.add('open'));
+}
+function closeZoom() {
+  const z = document.getElementById('zoom');
+  if (!z) return;
+  z.classList.remove('open');
+  document.body.classList.remove('no-scroll');
+  setTimeout(() => { z.hidden = true; }, 200);
+}
+function shareProduct(name) {
+  const data = { title: name, text: name + ' — HDATTAHER MOBILE', url: window.location.href };
+  if (navigator.share) { navigator.share(data).catch(() => {}); return; }
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(window.location.href)
+      .then(() => showToast(t('link_copied', 'Lien copié'), false))
+      .catch(() => {});
+  }
+}
+
+const RECENT_VIEW_KEY = 'hm_recently_viewed';
+function rememberProduct() {
+  const el = document.querySelector('[data-recent-id]');
+  if (!el) return;
+  const item = { id: el.dataset.recentId, name: el.dataset.recentName, price: parseFloat(el.dataset.recentPrice) || 0,
+                 image: el.dataset.recentImage, brand: el.dataset.recentBrand };
+  const list = (store(RECENT_VIEW_KEY) || []).filter(x => x.id !== item.id);
+  list.unshift(item);
+  store(RECENT_VIEW_KEY, list.slice(0, 10));
+}
+function clearRecentlyViewed() {
+  store(RECENT_VIEW_KEY, []);
+  const sec = document.getElementById('recentSection');
+  if (sec) sec.hidden = true;
+}
+function renderRecentlyViewed() {
+  const sec = document.getElementById('recentSection'), rail = document.getElementById('recentRail');
+  if (!sec || !rail) return;
+  const list = store(RECENT_VIEW_KEY) || [];
+  if (!list.length) return;
+  rail.innerHTML = list.map(p => `
+    <a href="/product/${encodeURIComponent(p.id)}" class="mini-card">
+      <span class="mini-img">${p.image ? `<img src="${esc(p.image)}" alt="" loading="lazy">` : '<i class="fas fa-mobile-screen"></i>'}</span>
+      <small>${esc(p.brand || '')}</small>
+      <b>${esc(p.name)}</b>
+      <span>${formatPrice(p.price)}</span>
+    </a>`).join('');
+  sec.hidden = false;
+}
+function initDescription() {
+  const box = document.getElementById('pdDesc'), more = document.getElementById('pdMore');
+  if (box && more && box.scrollHeight > box.clientHeight + 8) more.hidden = false;
+}
+
+// ============================================================
+//  BANNIÈRES : glisser avec le doigt
+// ============================================================
+function initBannerSwipe() {
+  const track = document.getElementById('bannerTrack');
+  if (!track || track.children.length < 2) return;
+  let x0 = null, y0 = null;
+  track.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+  track.addEventListener('touchend', (e) => {
+    if (x0 === null) return;
+    const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) bannerCarouselGo(dx < 0 ? 1 : -1);
+    x0 = y0 = null;
+  }, { passive: true });
+}
+
+// Fiche produit : la barre d'achat fixe n'apparaît qu'une fois le bouton principal dépassé
+function initStickyBuy() {
+  const bar = document.querySelector('.pd-sticky');
+  if (!bar) return;
+  const target = document.getElementById('pdBuy') || document.querySelector('.pd-wa');
+  if (!target || !('IntersectionObserver' in window)) { bar.classList.add('show'); return; }
+  new IntersectionObserver((entries) => {
+    entries.forEach(e => bar.classList.toggle('show', !e.isIntersecting && e.boundingClientRect.top < 0));
+  }).observe(target);
+}
+
+function initShop() {
+  initAjaxCart();
+  initQty();
+  initSearchOverlay();
+  initFilterSheet();
+  initDescription();
+  initStickyBuy();
+  initBannerSwipe();
+  rememberProduct();
+  renderRecentlyViewed();
 }
 
 // ============================================================
@@ -630,4 +1222,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initCounters();
   initFavoriteButtons();
   renderFavoritesPage();
+  initShop();
 });
