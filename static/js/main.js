@@ -1,3 +1,9 @@
+// Miniature d'une photo optimisée (même nom + « _s ») — repli automatique sur la grande photo
+function thumbUrl(url) {
+  const m = /^(https?:\/\/.+\/product-images\/[A-Za-z_]*\d+_[0-9a-f]{10})\.webp(\?.*)?$/.exec(url || '');
+  return m ? m[1] + '_s.webp' : (url || '');
+}
+
 /**
  * HDATTAHER MOBILE - JavaScript Principal
  * Gère le thème, la langue, la navigation, les animations
@@ -848,7 +854,7 @@ function renderFavoritesPage() {
     return `
     <div class="pc-card">
       <a href="${url}" class="pc-media">
-        ${p.image ? `<img src="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy">` : '<span class="pc-placeholder"><i class="fas fa-mobile-screen"></i></span>'}
+        ${p.image ? `<img src="${esc(thumbUrl(p.image))}" data-full="${esc(p.image)}" alt="${esc(p.name)}" loading="lazy" decoding="async">` : '<span class="pc-placeholder"><i class="fas fa-mobile-screen"></i></span>'}
       </a>
       <button type="button" class="pc-fav product-fav-btn active" data-fav-id="${id}" aria-label="Retirer"
               onclick="toggleFavorite(event, this.dataset.favId); renderFavoritesPage();"><i class="fas fa-heart"></i></button>
@@ -1051,7 +1057,7 @@ function initSearchOverlay() {
             const name = p['name_' + lang()] || p.name;
             const old = p.old_price && p.old_price > p.price ? `<s>${formatPrice(p.old_price)}</s>` : '';
             return `<a href="/product/${encodeURIComponent(p.id)}" class="sx-item" data-q="${esc(q)}">
-              <span class="sx-thumb">${p.image ? `<img src="${esc(p.image)}" alt="" loading="lazy">` : '<i class="fas fa-mobile-screen"></i>'}</span>
+              <span class="sx-thumb">${p.image ? `<img src="${esc(p.thumb || thumbUrl(p.image))}" data-full="${esc(p.image)}" alt="" loading="lazy" decoding="async">` : '<i class="fas fa-mobile-screen"></i>'}</span>
               <span class="sx-txt"><small>${esc(p.brand || '')}</small><b>${esc(name)}</b>
                 <span class="sx-price">${formatPrice(p.price)} ${old}</span></span>
               ${p.stock > 0 ? '' : `<span class="sx-out">${esc(t('out_of_stock', 'Rupture'))}</span>`}
@@ -1156,7 +1162,7 @@ function renderRecentlyViewed() {
   if (!list.length) return;
   rail.innerHTML = list.map(p => `
     <a href="/product/${encodeURIComponent(p.id)}" class="mini-card">
-      <span class="mini-img">${p.image ? `<img src="${esc(p.image)}" alt="" loading="lazy">` : '<i class="fas fa-mobile-screen"></i>'}</span>
+      <span class="mini-img">${p.image ? `<img src="${esc(thumbUrl(p.image))}" data-full="${esc(p.image)}" alt="" loading="lazy" decoding="async">` : '<i class="fas fa-mobile-screen"></i>'}</span>
       <small>${esc(p.brand || '')}</small>
       <b>${esc(p.name)}</b>
       <span>${formatPrice(p.price)}</span>
