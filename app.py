@@ -5,6 +5,7 @@ Propriétaire : Hdattaher | Localisation : Niger
 """
 import os
 import io
+import re
 import time
 import secrets
 from urllib.parse import quote, urlparse
@@ -304,7 +305,9 @@ def index():
     # Stats
     total_products = db.count('products', {'is_active': True})
     all_prods = db.fetch_all('products', 'brand', {'is_active': True})
-    unique_brands = len(set(p['brand'] for p in all_prods if p.get('brand')))
+    brand_names = sorted({p['brand'].strip() for p in all_prods if p.get('brand') and p['brand'].strip()},
+                         key=str.lower)
+    unique_brands = len(brand_names)
 
     stats = {
         'total_products': total_products,
@@ -315,7 +318,13 @@ def index():
     banners = db.fetch_all('banners', '*', {'is_active': True}, order=('sort_order', True))
 
     return render_template('public/index.html', featured=featured, latest=latest,
-                           promos=promos, stats=stats, banners=banners)
+                           promos=promos, stats=stats, banners=banners, brands=brand_names)
+
+
+def _clean_search(text, limit=60):
+    """Garde un texte de recherche sûr pour les filtres Supabase (.or_/ilike)."""
+    text = re.sub(r'[,()%*\\:"\']', ' ', text or '')
+    return ' '.join(text.split())[:limit]
 
 
 @app.route('/products')
@@ -324,7 +333,7 @@ def products():
     sb = get_supabase()
 
     category_id = request.args.get('category', default=None, type=str)
-    search = request.args.get('search', default='', type=str).strip()
+    search = _clean_search(request.args.get('search', default='', type=str))
     min_price = request.args.get('min_price', default=None, type=float)
     max_price = request.args.get('max_price', default=None, type=float)
     brand = request.args.get('brand', default='', type=str).strip()
@@ -350,6 +359,10 @@ def products():
         query = query.or_(
             f'name.ilike.%{search}%,brand.ilike.%{search}%,description.ilike.%{search}%'
         )
+
+    promo_only = request.args.get('promo') == '1'
+    if promo_only:
+        query = query.gt('discount', 0)
 
     if min_price is not None:
         query = query.gte('price', min_price)
@@ -386,7 +399,7 @@ def products():
                            all_brands=all_brands,
                            current_category=category_id,
                            current_brand=brand,
-                           search=search, sort=sort,
+                           search=search, sort=sort, promo_only=promo_only,
                            min_price=min_price, max_price=max_price)
 
 
@@ -480,6 +493,37 @@ def new_arrivals():
                            min_price=None, max_price=None)
 
 
+def _digits(text):
+    return re.sub(r'\D', '', text or '')[-8:]
+
+
+@app.route('/suivi-commande', methods=['GET', 'POST'])
+def order_tracking():
+    """Le client suit sa commande avec son numéro de commande + son téléphone."""
+    order, items, error = None, [], None
+    number = request.values.get('numero', '').strip().upper().lstrip('#')
+    phone = request.values.get('telephone', '').strip()
+    if request.method == 'POST':
+        if not number or len(_digits(phone)) < 8:
+            error = 'missing'
+        else:
+            try:
+                rows = db.fetch_all('orders', filters={'order_number': number}, limit=1)
+            except Exception:
+                rows = []
+            found = rows[0] if rows else None
+            if found and _digits(found.get('shipping_phone')) == _digits(phone):
+                order = found
+                try:
+                    items = db.fetch_all('order_items', filters={'order_id': found['id']}) or []
+                except Exception:
+                    items = []
+            else:
+                error = 'not_found'
+    return render_template('public/order_tracking.html', order=order, items=items,
+                           error=error, numero=number, telephone=phone)
+
+
 @app.route('/contact')
 def contact():
     """Page contact"""
@@ -487,15 +531,25 @@ def contact():
 
 @app.route('/api/products')
 def api_products():
-    search = request.args.get('q', '')
-    if search:
-        sb = get_supabase()
-        r = sb.table('products').select('id, name, price, image, discount') \
+    search = _clean_search(request.args.get('q', ''))
+    if len(search) < 2:
+        return jsonify([])
+    sb = get_supabase()
+    try:
+        r = sb.table('products').select('id, name, name_en, name_ar, brand, price, old_price, image, discount, stock') \
             .eq('is_active', True) \
             .or_(f'name.ilike.%{search}%,brand.ilike.%{search}%') \
-            .limit(10).execute()
-        return jsonify(r.data or [])
-    return jsonify([])
+            .order('views', desc=True).limit(12).execute()
+        rows = r.data or []
+    except Exception:
+        rows = []
+    for p in rows:
+        img = p.get('image')
+        if not img or img == 'default.png':
+            p['image'] = ''
+        elif not img.startswith('http'):
+            p['image'] = sb.storage.from_('product-images').get_public_url(img)
+    return jsonify(rows)
 
 
 # ============================================================
@@ -1182,9 +1236,15 @@ def cart_view():
 @app.route('/panier/ajouter/<product_id>', methods=['POST'])
 def cart_add(product_id):
     quantity = request.form.get('quantity', 1, type=int) or 1
+    quantity = max(1, min(quantity, 20))
     cart_module.add_to_cart(product_id, quantity)
+    if request.headers.get('X-Requested-With') == 'fetch':
+        return jsonify(ok=True, count=cart_module.cart_item_count())
     flash('Produit ajouté au panier.', 'success')
-    return redirect(request.referrer or url_for('products'))
+    ref = request.referrer or ''
+    if not ref or urlparse(ref).netloc not in ('', request.host):
+        ref = url_for('products')
+    return redirect(ref)
 
 
 @app.route('/panier/modifier/<product_id>', methods=['POST'])
