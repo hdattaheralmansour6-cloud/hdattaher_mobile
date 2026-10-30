@@ -103,21 +103,6 @@
     </section>
     {% endif %}
 
-    <!-- ===== Vedettes ===== -->
-    {% if featured %}
-    <section class="h-sec">
-        <div class="h-head">
-            <h2><i class="fas fa-crown"></i> <span data-i18n="featured_short">Nos coups de cœur</span></h2>
-            <a href="{{ url_for('featured_products') }}" data-i18n="see_all">Tout voir</a>
-        </div>
-        <div class="h-rail">
-            {% for p in featured %}
-            <div class="h-rail-item">{% with featured = true %}{% include "public/_product_card.html" %}{% endwith %}</div>
-            {% endfor %}
-        </div>
-    </section>
-    {% endif %}
-
     <!-- ===== Nouveautés ===== -->
     {% if latest %}
     <section class="h-sec">

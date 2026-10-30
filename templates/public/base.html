@@ -36,7 +36,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=26">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}?v=4">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/shop.css') }}?v=2">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/shop.css') }}?v=4">
     <!-- CSS dynamique depuis les paramètres admin -->
     <style>
         {
@@ -118,7 +118,6 @@
         <ul class="nav-links-desktop">
             <li><a href="{{ url_for('index') }}" data-i18n="home">Accueil</a></li>
             <li><a href="{{ url_for('products') }}" data-i18n="products">Produits</a></li>
-            <li><a href="{{ url_for('featured_products') }}" data-i18n="featured_products">En Vedette</a></li>
             <li><a href="{{ url_for('new_arrivals') }}" data-i18n="new_arrivals">Nouveautés</a></li>
             <li><a href="{{ url_for('about') }}" data-i18n="about">À propos</a></li>
             <li><a href="{{ url_for('contact') }}" data-i18n="contact">Contact</a></li>
@@ -201,11 +200,6 @@
             <a href="{{ url_for('products') }}" class="mobile-menu-link">
                 <div class="mobile-link-icon"><i class="fas fa-th-large"></i></div>
                 <span data-i18n="products">Produits</span>
-                <i class="fas fa-chevron-right mobile-link-arrow"></i>
-            </a>
-            <a href="{{ url_for('featured_products') }}" class="mobile-menu-link">
-                <div class="mobile-link-icon"><i class="fas fa-star"></i></div>
-                <span data-i18n="featured">Produits en Vedette</span>
                 <i class="fas fa-chevron-right mobile-link-arrow"></i>
             </a>
             <a href="{{ url_for('new_arrivals') }}" class="mobile-menu-link">
@@ -336,7 +330,6 @@
                 <ul class="footer-links footer-accordion-content">
                     <li><a href="{{ url_for('index') }}" data-i18n="home">Accueil</a></li>
                     <li><a href="{{ url_for('products') }}" data-i18n="products">Produits</a></li>
-                    <li><a href="{{ url_for('featured_products') }}" data-i18n="featured_products">Produits en Vedette</a></li>
                     <li><a href="{{ url_for('new_arrivals') }}" data-i18n="new_arrivals">Nouveautés</a></li>
                     <li><a href="{{ url_for('order_tracking') }}" data-i18n="track_order">Suivre ma commande</a></li>
                     <li><a href="{{ url_for('about') }}" data-i18n="about">À propos</a></li>
@@ -424,7 +417,7 @@
     <nav class="tabbar" aria-label="Navigation">
         <a href="{{ url_for('index') }}" class="{{ 'on' if ep == 'index' }}">
             <i class="fas fa-house"></i><span data-i18n="tab_home">Accueil</span></a>
-        <a href="{{ url_for('products') }}" class="{{ 'on' if ep in ('products', 'product_detail', 'featured_products', 'new_arrivals') }}">
+        <a href="{{ url_for('products') }}" class="{{ 'on' if ep in ('products', 'product_detail', 'new_arrivals') }}">
             <i class="fas fa-store"></i><span data-i18n="tab_shop">Boutique</span></a>
         <a href="{{ url_for('cart_view') }}" class="{{ 'on' if ep in ('cart_view', 'checkout') }}">
             <span class="tab-ic"><i class="fas fa-bag-shopping"></i>

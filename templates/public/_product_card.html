@@ -1,7 +1,7 @@
 {# Carte produit commune. Variables : p (produit), featured (bool, optionnel) #}
 {% set wa = settings.get('whatsapp', '22791720755')|replace('+', '')|replace(' ', '') %}
 {% set has_img = p.image and p.image != 'default.png' %}
-<div class="pc-card{{ ' pc-featured' if featured }}{{ ' is-out' if not (p.stock and p.stock > 0) }}">
+<div class="pc-card{{ ' is-out' if not (p.stock and p.stock > 0) }}">
     <a href="{{ url_for('product_detail', product_id=p.id) }}" class="pc-media" aria-label="{{ p.name }}">
         {% if has_img %}
         <img src="{{ p.image }}" alt="{{ p.name }}" loading="lazy">
@@ -10,7 +10,6 @@
         {% endif %}
 
         <span class="pc-badges">
-            {% if featured %}<span class="pc-badge pc-badge-star"><i class="fas fa-star"></i></span>{% endif %}
             {% if p.discount and p.discount > 0 %}<span class="pc-badge pc-badge-promo">-{{ p.discount }}%</span>{% endif %}
         </span>
 

@@ -55,7 +55,7 @@
     {% if products %}
     <div class="pc-grid">
         {% for p in products %}
-        {% with featured = p.is_featured %}{% include "public/_product_card.html" %}{% endwith %}
+        {% with featured = false %}{% include "public/_product_card.html" %}{% endwith %}
         {% endfor %}
     </div>
     {% else %}
