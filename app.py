@@ -8,6 +8,8 @@ import io
 import re
 import time
 import secrets
+import copy
+import tempfile
 from urllib.parse import quote, urlparse
 from datetime import datetime, timedelta
 from functools import wraps
@@ -143,7 +145,74 @@ def login_required(f):
     return decorated_function
 
 
-@cache.memoize(timeout=120)
+# ============================================================
+#  CACHE RAPIDE (partagé entre les 2 workers de Render)
+#  Les données de la boutique sont gardées 60 s en mémoire pour éviter de
+#  redemander la même chose à Supabase à chaque visite. Dès qu'une
+#  modification est faite (admin, commande…), tout le cache est vidé
+#  pour les deux workers grâce à un petit fichier « tampon » partagé.
+# ============================================================
+_CACHE_STAMP_FILE = os.path.join(tempfile.gettempdir(), 'hm_shop_cache_stamp')
+_shop_cache = {}
+_shop_cache_seen = [None]
+
+
+def _read_cache_stamp():
+    try:
+        with open(_CACHE_STAMP_FILE) as f:
+            return f.read()
+    except OSError:
+        return ''
+
+
+def clear_shop_cache():
+    """Vide le cache de la boutique (ce worker + les autres)."""
+    _shop_cache.clear()
+    stamp = f'{time.time()}-{secrets.token_hex(4)}'
+    try:
+        with open(_CACHE_STAMP_FILE, 'w') as f:
+            f.write(stamp)
+        _shop_cache_seen[0] = stamp
+    except OSError:
+        pass
+
+
+def shop_cached(ttl=60):
+    """Garde le résultat d'une fonction en mémoire pendant `ttl` secondes."""
+    def deco(fn):
+        @wraps(fn)
+        def wrapper(*args):
+            stamp = _read_cache_stamp()
+            if stamp != _shop_cache_seen[0]:
+                _shop_cache.clear()
+                _shop_cache_seen[0] = stamp
+            key = (fn.__name__,) + tuple(args)
+            now = time.monotonic()
+            hit = _shop_cache.get(key)
+            if hit and now < hit[0]:
+                return copy.deepcopy(hit[1])
+            value = fn(*args)
+            # Résultat vide (souvent un souci réseau passager) : gardé 5 s seulement
+            life = ttl if value else 5
+            if len(_shop_cache) > 400:
+                _shop_cache.clear()
+            _shop_cache[key] = (now + life, copy.deepcopy(value))
+            return value
+        return wrapper
+    return deco
+
+
+@app.after_request
+def _clear_cache_after_changes(response):
+    """Après toute modification réussie (admin, commande, compte), on vide le cache."""
+    if request.method != 'GET' and response.status_code < 400:
+        path = request.path or ''
+        if not path.startswith(('/panier', '/api', '/suivi-commande', '/static')):
+            clear_shop_cache()
+    return response
+
+
+@shop_cached(120)
 def get_settings():
     return get_settings_dict()
 
@@ -162,7 +231,7 @@ def log_action(action, details=''):
         pass
 
 
-@cache.memoize(timeout=120)
+@shop_cached(120)
 def get_categories_list():
     return db.fetch_all('categories', '*',
                         filters={'is_active': True},
@@ -234,6 +303,12 @@ def make_session_permanent():
 #  ROUTES PUBLIQUES
 # ============================================================
 
+@app.route('/ping')
+def ping():
+    """Petite page ultra-légère : sert à garder le site réveillé (UptimeRobot, cron-job.org…)."""
+    return Response('ok', mimetype='text/plain', headers={'Cache-Control': 'no-store'})
+
+
 @app.route('/robots.txt')
 def robots_txt():
     lines = [
@@ -279,56 +354,105 @@ def sitemap_xml():
     return Response('\n'.join(xml_parts), mimetype='application/xml')
 
 
-@app.route('/')
-def index():
-    """Page d'accueil"""
+def _fix_cat_and_image(rows):
+    """Nom de catégorie à plat + URL publique de l'image."""
     sb = get_supabase()
+    for p in rows:
+        cat = p.pop('categories', None)
+        p['category_name'] = cat['name'] if cat else None
+        if p.get('image') and not p['image'].startswith('http'):
+            p['image'] = sb.storage.from_('product-images').get_public_url(p['image'])
+    return rows
 
+
+@shop_cached(60)
+def _brand_names():
+    """Liste des marques des produits en ligne (sans doublons)."""
+    rows = db.fetch_all('products', 'brand', {'is_active': True})
+    seen = {}
+    for p in rows:
+        b = ' '.join((p.get('brand') or '').split())
+        if b and b.lower() not in seen:
+            seen[b.lower()] = b if any(ch.isupper() for ch in b) else b.title()
+    return sorted(seen.values(), key=str.lower)
+
+
+@shop_cached(60)
+def _home_data():
+    sb = get_supabase()
     # Derniers produits
     r = sb.table('products').select('*, categories(name)') \
         .eq('is_active', True) \
         .order('created_at', desc=True).limit(8).execute()
-    latest = r.data or []
+    latest = _fix_cat_and_image(r.data or [])
 
     # Promotions
     r = sb.table('products').select('*, categories(name)') \
         .eq('is_active', True).gt('discount', 0) \
         .order('discount', desc=True).limit(4).execute()
-    promos = r.data or []
+    promos = _fix_cat_and_image(r.data or [])
 
-    # Adapter le format category_name pour les templates
-    for lst in [latest, promos]:
-        for p in lst:
-            cat = p.pop('categories', None)
-            p['category_name'] = cat['name'] if cat else None
-
-    # Stats
     total_products = db.count('products', {'is_active': True})
-    all_prods = db.fetch_all('products', 'brand', {'is_active': True})
-    _seen = {}
-    for p in all_prods:
-        b = ' '.join((p.get('brand') or '').split())
-        if b and b.lower() not in _seen:
-            _seen[b.lower()] = b if any(ch.isupper() for ch in b) else b.title()
-    brand_names = sorted(_seen.values(), key=str.lower)
-    unique_brands = len(brand_names)
+    banners = db.fetch_all('banners', '*', {'is_active': True}, order=('sort_order', True))
+    return {'latest': latest, 'promos': promos, 'total_products': total_products, 'banners': banners}
 
+
+@app.route('/')
+def index():
+    """Page d'accueil"""
+    data = _home_data()
+    brand_names = _brand_names()
     stats = {
-        'total_products': total_products,
-        'total_brands': unique_brands,
+        'total_products': data['total_products'],
+        'total_brands': len(brand_names),
         'happy_clients': 1000,
     }
-
-    banners = db.fetch_all('banners', '*', {'is_active': True}, order=('sort_order', True))
-
-    return render_template('public/index.html', latest=latest,
-                           promos=promos, stats=stats, banners=banners, brands=brand_names)
+    return render_template('public/index.html', latest=data['latest'],
+                           promos=data['promos'], stats=stats, banners=data['banners'],
+                           brands=brand_names)
 
 
 def _clean_search(text, limit=60):
     """Garde un texte de recherche sûr pour les filtres Supabase (.or_/ilike)."""
     text = re.sub(r'[,()%*\\:"\']', ' ', text or '')
     return ' '.join(text.split())[:limit]
+
+
+@shop_cached(60)
+def _product_list(category_id, search, promo_only, min_price, max_price, brand, sort):
+    """Produits filtrés et triés (gardés 60 s par combinaison de filtres)."""
+    sb = get_supabase()
+    # Catégorie « Promotions » = produits en réduction
+    promo_cat = next((c for c in get_categories_list() if c.get('name') == 'Promotions'), None)
+    promo_category_id = promo_cat['id'] if promo_cat else None
+
+    query = sb.table('products').select('*, categories(name)').eq('is_active', True)
+    if category_id:
+        if category_id == promo_category_id:
+            query = query.gt('discount', 0)
+        else:
+            query = query.eq('category_id', category_id)
+    if search:
+        query = query.or_(
+            f'name.ilike.%{search}%,brand.ilike.%{search}%,description.ilike.%{search}%'
+        )
+    if promo_only:
+        query = query.gt('discount', 0)
+    if min_price is not None:
+        query = query.gte('price', min_price)
+    if max_price is not None:
+        query = query.lte('price', max_price)
+    if brand:
+        query = query.ilike('brand', re.sub(r'[%_\\]', '', brand))
+
+    sort_map = {
+        'price_asc': ('price', False),
+        'price_desc': ('price', True),
+        'popular': ('views', True),
+        'newest': ('created_at', True),
+    }
+    col, desc = sort_map[sort]
+    return _fix_cat_and_image(query.order(col, desc=desc).execute().data or [])
 
 
 @app.route('/products')
@@ -347,60 +471,10 @@ def products():
     if sort not in allowed_sorts:
         sort = 'newest'
 
-    # Promotions cat
-    promo_cat = db.fetch_one('categories', 'id', {'name': 'Promotions'})
-    promo_category_id = promo_cat['id'] if promo_cat else None
-
-    query = sb.table('products').select('*, categories(name)').eq('is_active', True)
-
-    if category_id:
-        if category_id == promo_category_id:
-            query = query.gt('discount', 0)
-        else:
-            query = query.eq('category_id', category_id)
-
-    if search:
-        query = query.or_(
-            f'name.ilike.%{search}%,brand.ilike.%{search}%,description.ilike.%{search}%'
-        )
-
     promo_only = request.args.get('promo') == '1'
-    if promo_only:
-        query = query.gt('discount', 0)
-
-    if min_price is not None:
-        query = query.gte('price', min_price)
-    if max_price is not None:
-        query = query.lte('price', max_price)
-    if brand:
-        query = query.ilike('brand', re.sub(r'[%_\\]', '', brand))
-
-    sort_map = {
-        'price_asc': ('price', False),
-        'price_desc': ('price', True),
-        'popular': ('views', True),
-        'newest': ('created_at', True),
-    }
-    col, desc = sort_map[sort]
-    query = query.order(col, desc=desc)
-
-    result = query.execute()
-    products_list = result.data or []
-
-    for p in products_list:
-        cat = p.pop('categories', None)
-        p['category_name'] = cat['name'] if cat else None
-        
-        if p.get('image') and not p['image'].startswith('http'):
-            p['image'] = sb.storage.from_('product-images').get_public_url(p['image'])
-    all_categories = db.fetch_all('categories', '*', {'is_active': True}, order=('sort_order', True))
-    all_brands_rows = db.fetch_all('products', 'brand', {'is_active': True})
-    _seen = {}
-    for row in all_brands_rows:
-        b = ' '.join((row.get('brand') or '').split())
-        if b and b.lower() not in _seen:
-            _seen[b.lower()] = b if any(ch.isupper() for ch in b) else b.title()
-    all_brands = sorted(_seen.values(), key=str.lower)
+    products_list = _product_list(category_id or '', search, promo_only, min_price, max_price, brand, sort)
+    all_categories = get_categories_list()
+    all_brands = _brand_names()
 
     return render_template('public/products.html',
                            products=products_list,
@@ -412,44 +486,39 @@ def products():
                            min_price=min_price, max_price=max_price)
 
 
-@app.route('/product/<product_id>')
-def product_detail(product_id):
-    """Page détail d'un produit"""
+@shop_cached(60)
+def _product_page_data(product_id):
+    """Produit + produits similaires (gardés 60 s)."""
     sb = get_supabase()
     r = sb.table('products').select('*, categories(name)').eq('id', product_id).execute()
-    product = r.data[0] if r.data else None
-
-    if not product:
-        flash('Produit introuvable.', 'error')
-        return redirect(url_for('products'))
-
-    cat = product.pop('categories', None)
-    product['category_name'] = cat['name'] if cat else None
-    if product.get('image') and not product['image'].startswith('http'):
-        product['image'] = sb.storage.from_('product-images').get_public_url(product['image'])
-    # Enregistrer la vue (le trigger Postgres incrémente automatiquement views)
-    ip = request.remote_addr
-    ua = request.headers.get('User-Agent', '')[:200]
-    try:
-        db.insert('product_views', {
-            'product_id': product_id,
-            'ip_address': ip,
-            'user_agent': ua
-        })
-    except Exception:
-        pass
-
-    # Produits similaires
+    if not r.data:
+        return None
+    product = _fix_cat_and_image([r.data[0]])[0]
     r2 = sb.table('products').select('*, categories(name)') \
         .eq('category_id', product['category_id']) \
         .neq('id', product_id) \
         .eq('is_active', True).limit(4).execute()
-    related = r2.data or []
-    for p in related:
-        c = p.pop('categories', None)
-        p['category_name'] = c['name'] if c else None
-        if p.get('image') and not p['image'].startswith('http'):
-            p['image'] = sb.storage.from_('product-images').get_public_url(p['image'])
+    return {'product': product, 'related': _fix_cat_and_image(r2.data or [])}
+
+
+@app.route('/product/<product_id>')
+def product_detail(product_id):
+    """Page détail d'un produit"""
+    data = _product_page_data(str(product_id))
+    if not data:
+        flash('Produit introuvable.', 'error')
+        return redirect(url_for('products'))
+    product, related = data['product'], data['related']
+
+    # Enregistrer la vue (le trigger Postgres incrémente automatiquement views)
+    try:
+        db.insert('product_views', {
+            'product_id': product_id,
+            'ip_address': request.remote_addr,
+            'user_agent': request.headers.get('User-Agent', '')[:200]
+        })
+    except Exception:
+        pass
     return render_template('public/product_detail.html', product=product, related=related)
 
 
@@ -473,20 +542,21 @@ def featured_products():
 @app.route('/new-arrivals')
 def new_arrivals():
     """Nouvelles arrivages"""
+    return render_template('public/products.html',
+                           products=_new_arrivals_list(),
+                           all_categories=get_categories_list(),
+                           page_title='Nouvelles Arrivages 🆕',
+                           current_category=None, search='', sort='newest',
+                           min_price=None, max_price=None)
+
+
+@shop_cached(60)
+def _new_arrivals_list():
     sb = get_supabase()
     r = sb.table('products').select('*, categories(name)') \
         .eq('is_active', True).eq('is_new', True) \
         .order('created_at', desc=True).execute()
-    products_list = r.data or []
-    for p in products_list:
-        cat = p.pop('categories', None)
-        p['category_name'] = cat['name'] if cat else None
-    return render_template('public/products.html',
-                           products=products_list,
-                           all_categories=db.fetch_all('categories', '*', {'is_active': True}, order=('sort_order', True)),
-                           page_title='Nouvelles Arrivages 🆕',
-                           current_category=None, search='', sort='newest',
-                           min_price=None, max_price=None)
+    return _fix_cat_and_image(r.data or [])
 
 
 def _digits(text):
@@ -525,11 +595,8 @@ def contact():
     """Page contact"""
     return render_template('public/contact.html')
 
-@app.route('/api/products')
-def api_products():
-    search = _clean_search(request.args.get('q', ''))
-    if len(search) < 2:
-        return jsonify([])
+@shop_cached(60)
+def _search_suggestions(search):
     sb = get_supabase()
     try:
         r = sb.table('products').select('id, name, name_en, name_ar, brand, price, old_price, image, discount, stock') \
@@ -545,7 +612,16 @@ def api_products():
             p['image'] = ''
         elif not img.startswith('http'):
             p['image'] = sb.storage.from_('product-images').get_public_url(img)
-    return jsonify(rows)
+        p['thumb'] = thumb_url(p['image'])
+    return rows
+
+
+@app.route('/api/products')
+def api_products():
+    search = _clean_search(request.args.get('q', '')).lower()
+    if len(search) < 2:
+        return jsonify([])
+    return jsonify(_search_suggestions(search))
 
 
 # ============================================================
@@ -800,6 +876,89 @@ def admin_product_toggle(product_id):
     return redirect(request.referrer or url_for('admin_products'))
 
 
+def _download_image(url, limit=15 * 1024 * 1024):
+    from urllib.request import Request, urlopen
+    req = Request(url, headers={'User-Agent': 'HDATTAHER-MOBILE/1.0'})
+    with urlopen(req, timeout=20) as r:
+        data = r.read(limit + 1)
+    if len(data) > limit:
+        raise ValueError('image trop lourde')
+    return data
+
+
+def _image_exists(url):
+    from urllib.request import Request, urlopen
+    try:
+        with urlopen(Request(url, method='HEAD', headers={'User-Agent': 'HDATTAHER-MOBILE/1.0'}), timeout=10) as r:
+            return r.status == 200
+    except Exception:
+        return False
+
+
+def _photo_jobs():
+    """Toutes les photos du site à vérifier (produits puis bannières), dans un ordre fixe."""
+    bucket = get_supabase().storage.from_('product-images')
+    jobs = []
+    for table in ('products', 'banners'):
+        for row in sorted(db.fetch_all(table, 'id, image') or [], key=lambda r: str(r.get('id'))):
+            img = (row.get('image') or '').strip()
+            if not img or img == 'default.png':
+                continue
+            if not img.startswith('http'):
+                img = bucket.get_public_url(img)
+            jobs.append((table, row['id'], img))
+    return jobs
+
+
+@app.route('/azawad/photos/optimiser', methods=['POST'])
+@login_required
+def admin_optimize_photos():
+    """
+    Allège les anciennes photos par petits paquets (appelé plusieurs fois par la page Paramètres).
+    Produits : grande photo WEBP + miniature. Bannières : WEBP 1600 px.
+    Les anciens fichiers ne sont pas supprimés (aucun risque de photo cassée).
+    """
+    start = max(0, safe_int(request.form.get('start'), 0))
+    jobs = _photo_jobs()
+    batch = jobs[start:start + 4]
+    bucket = get_supabase().storage.from_('product-images')
+    changed = errors = 0
+    for table, row_id, url in batch:
+        try:
+            already = _THUMB_RE.match(url)
+            if table == 'banners':
+                if already:
+                    continue
+                data = _download_image(url)
+                _webp_bytes(data, 64)  # vérifie que c'est bien une image
+                new_url = _store_image(data, 1600, 'banner_')
+                db.update('banners', {'image': new_url}, {'id': row_id})
+                changed += 1
+            elif already:
+                small = thumb_url(url)
+                if _image_exists(small):
+                    continue
+                data = _download_image(url)
+                name = small.split('/product-images/', 1)[1].split('?', 1)[0]
+                bucket.upload(name, _webp_bytes(data, THUMB_PX, 80), {'content-type': 'image/webp', 'upsert': 'true'})
+                changed += 1
+            else:
+                data = _download_image(url)
+                _webp_bytes(data, 64)
+                new_url = _store_image(data, 1400, '', True)
+                db.update('products', {'image': new_url}, {'id': row_id})
+                changed += 1
+        except Exception as e:
+            errors += 1
+            app.logger.warning('Optimisation photo %s %s : %s', table, row_id, e)
+    nxt = start + len(batch)
+    if changed:
+        clear_shop_cache()
+    if nxt >= len(jobs):
+        log_action('Photos optimisées', f'{len(jobs)} photo(s) vérifiée(s)')
+    return jsonify(ok=True, total=len(jobs), next=nxt, done=nxt >= len(jobs), changed=changed, errors=errors)
+
+
 @app.route('/azawad/product/dupliquer/<product_id>', methods=['POST'])
 @login_required
 def admin_product_duplicate(product_id):
@@ -856,34 +1015,74 @@ def _brand_from_form():
     return raw if any(c.isupper() for c in raw) else raw.title()
 
 
-def _upload_product_image(file):
+# ============================================================
+#  PHOTOS : optimisation + miniatures (site plus rapide)
+#  - grande photo : WEBP, 1400 px max (produits) / 1600 px (bannières)
+#  - miniature    : WEBP 480 px, même nom + « _s » (utilisée dans les listes)
+# ============================================================
+THUMB_PX = 480
+_THUMB_RE = re.compile(r'^(https?://.+/product-images/[A-Za-z_]*\d+_[0-9a-f]{10})\.webp(\?.*)?$')
+
+
+def thumb_url(url):
+    """URL de la miniature d'une photo optimisée (sinon l'URL d'origine)."""
+    m = _THUMB_RE.match(url or '')
+    return m.group(1) + '_s.webp' if m else (url or '')
+
+
+@app.template_filter('thumb')
+def thumb_filter(url):
+    return thumb_url(url)
+
+
+def _webp_bytes(data, max_px, quality=84):
+    """Redresse (iPhone), réduit et compresse une image en WEBP."""
+    from PIL import Image, ImageOps
+    img = Image.open(io.BytesIO(data))
+    img = ImageOps.exif_transpose(img)
+    if img.mode not in ('RGB', 'RGBA'):
+        img = img.convert('RGBA' if 'A' in img.getbands() else 'RGB')
+    img.thumbnail((max_px, max_px), Image.LANCZOS)
+    out = io.BytesIO()
+    img.save(out, 'WEBP', quality=quality, method=4)
+    return out.getvalue()
+
+
+def _store_image(data, max_px=1400, prefix='', with_thumb=False, fallback_name=''):
     """
-    Envoie la photo d'un produit sur Supabase Storage et retourne son URL publique (ou None).
-    La photo est redressée (iPhone), réduite à 1400 px maximum et allégée en WEBP.
+    Optimise puis envoie une image sur Supabase Storage. Retourne l'URL publique (ou None).
+    Si l'image ne peut pas être lue par Pillow, elle est envoyée telle quelle.
     """
-    if not file or not file.filename or not allowed_file(file.filename):
-        return None
-    data = file.read()
     if not data:
         return None
-    content_type, ext = (file.content_type or 'image/jpeg'), None
+    bucket = get_supabase().storage.from_('product-images')
+    base = f"{prefix}{int(time.time())}_{secrets.token_hex(5)}"
     try:
-        from PIL import Image, ImageOps
-        img = Image.open(io.BytesIO(data))
-        img = ImageOps.exif_transpose(img)
-        if img.mode not in ('RGB', 'RGBA'):
-            img = img.convert('RGBA' if 'A' in img.getbands() else 'RGB')
-        img.thumbnail((1400, 1400), Image.LANCZOS)
-        out = io.BytesIO()
-        img.save(out, 'WEBP', quality=86, method=4)
-        data, content_type, ext = out.getvalue(), 'image/webp', 'webp'
+        full = _webp_bytes(data, max_px, 86 if max_px <= 1400 else 84)
     except Exception:
-        ext = (file.filename.rsplit('.', 1)[-1] or 'jpg').lower()
-    storage_filename = f"{int(time.time())}_{secrets.token_hex(5)}.{ext}"
-    sb = get_supabase()
-    sb.storage.from_('product-images').upload(
-        storage_filename, data, {'content-type': content_type, 'upsert': 'true'})
-    return sb.storage.from_('product-images').get_public_url(storage_filename)
+        ext = (fallback_name.rsplit('.', 1)[-1] if '.' in fallback_name else 'jpg').lower()
+        name = f"{base}.{ext}"
+        bucket.upload(name, data, {'content-type': f'image/{"jpeg" if ext == "jpg" else ext}', 'upsert': 'true'})
+        return bucket.get_public_url(name)
+    if with_thumb:
+        try:
+            bucket.upload(f"{base}_s.webp", _webp_bytes(data, THUMB_PX, 80),
+                          {'content-type': 'image/webp', 'upsert': 'true'})
+        except Exception:
+            pass  # sans miniature, le site affiche simplement la grande photo
+    bucket.upload(f"{base}.webp", full, {'content-type': 'image/webp', 'upsert': 'true'})
+    return bucket.get_public_url(f"{base}.webp")
+
+
+def _upload_image_field(file, max_px=1400, prefix='', with_thumb=False):
+    if not file or not file.filename or not allowed_file(file.filename):
+        return None
+    return _store_image(file.read(), max_px, prefix, with_thumb, file.filename)
+
+
+def _upload_product_image(file):
+    """Photo d'un produit : grande photo + miniature. Retourne l'URL publique (ou None)."""
+    return _upload_image_field(file, 1400, '', True)
 
 
 def _prices_from_form():
@@ -1040,21 +1239,7 @@ def admin_add_banner():
         sort_order = safe_int(request.form.get('sort_order'), 0)
         is_active = bool(request.form.get('is_active'))
 
-        image_filename = None
-        if 'image' in request.files:
-            file = request.files['image']
-            if file and file.filename and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                if filename:
-                    timestamp = str(int(time.time()))
-                    storage_filename = f"{timestamp}_{filename}"
-                    file_bytes = file.read()
-                    sb = get_supabase()
-                    sb.storage.from_('product-images').upload(
-                        storage_filename, file_bytes,
-                        {'content-type': file.content_type, 'upsert': 'true'}
-                    )
-                    image_filename = sb.storage.from_('product-images').get_public_url(storage_filename)
+        image_filename = _upload_image_field(request.files.get('image'), 1600, 'banner_')
 
         if not image_filename:
             flash("Une image est obligatoire pour une bannière.", 'error')
@@ -1098,21 +1283,7 @@ def admin_edit_banner(banner_id):
         sort_order = safe_int(request.form.get('sort_order'), 0)
         is_active = bool(request.form.get('is_active'))
 
-        image_filename = banner['image']
-        if 'image' in request.files:
-            file = request.files['image']
-            if file and file.filename and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                if filename:
-                    timestamp = str(int(time.time()))
-                    storage_filename = f"{timestamp}_{filename}"
-                    file_bytes = file.read()
-                    sb = get_supabase()
-                    sb.storage.from_('product-images').upload(
-                        storage_filename, file_bytes,
-                        {'content-type': file.content_type, 'upsert': 'true'}
-                    )
-                    image_filename = sb.storage.from_('product-images').get_public_url(storage_filename)
+        image_filename = _upload_image_field(request.files.get('image'), 1600, 'banner_') or banner['image']
 
         db.update('banners', {
             'title': title,
@@ -1170,7 +1341,7 @@ def admin_add_category():
             'icon': request.form.get('icon', 'fas fa-box'),
         })
         log_action('Ajout catégorie', f'Catégorie: {name}')
-        cache.delete_memoized(get_categories_list)
+        clear_shop_cache()
         flash('Catégorie ajoutée!', 'success')
     except Exception:
         flash('Erreur: catégorie existe déjà.', 'error')
@@ -1184,7 +1355,7 @@ def admin_delete_category(cat_id):
     cat_name = cat['name'] if cat else 'Inconnue'
     db.delete('categories', {'id': cat_id})
     log_action('Suppression catégorie', f'Catégorie: {cat_name}')
-    cache.delete_memoized(get_categories_list)
+    clear_shop_cache()
     flash('Catégorie supprimée.', 'success')
     return redirect(url_for('admin_categories'))
 
@@ -1270,23 +1441,12 @@ def admin_settings():
         db.upsert('settings', {'key': 'dark_mode', 'value': dark_mode}, on_conflict='key')
 
         # Upload image de la page À propos (stockée sur Supabase Storage)
-        if 'about_image' in request.files:
-            about_file = request.files['about_image']
-            if about_file and about_file.filename and allowed_file(about_file.filename):
-                filename = secure_filename(about_file.filename)
-                if filename:
-                    storage_filename = f"about_{int(time.time())}_{filename}"
-                    file_bytes = about_file.read()
-                    sb = get_supabase()
-                    sb.storage.from_('product-images').upload(
-                        storage_filename, file_bytes,
-                        {'content-type': about_file.content_type, 'upsert': 'true'}
-                    )
-                    about_url = sb.storage.from_('product-images').get_public_url(storage_filename)
-                    db.upsert('settings', {'key': 'about_image', 'value': about_url}, on_conflict='key')
+        about_url = _upload_image_field(request.files.get('about_image'), 1400, 'about_')
+        if about_url:
+            db.upsert('settings', {'key': 'about_image', 'value': about_url}, on_conflict='key')
 
         log_action('Modification paramètres', 'Paramètres mis à jour')
-        cache.delete_memoized(get_settings)
+        clear_shop_cache()
         flash('Paramètres sauvegardés!', 'success')
         return redirect(url_for('admin_settings'))
 
