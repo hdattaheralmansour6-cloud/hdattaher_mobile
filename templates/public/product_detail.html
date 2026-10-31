@@ -35,6 +35,7 @@
 {% block content %}
 {% set wa = settings.get('whatsapp', '22791720755')|replace('+', '')|replace(' ', '') %}
 {% set has_img = product.image and product.image != 'default.png' %}
+{% set in_stock = product.stock and product.stock > 0 %}
 {% set saving = (product.old_price - product.price) if (product.old_price and product.old_price > product.price) else 0 %}
 <div class="pd" data-recent-id="{{ product.id }}" data-recent-name="{{ product.name }}" data-recent-price="{{ product.price }}"
      data-recent-image="{{ product.image if has_img else '' }}" data-recent-brand="{{ product.brand or '' }}">
