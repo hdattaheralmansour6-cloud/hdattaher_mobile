@@ -1,0 +1,2 @@
+Lora (Cyreal) et Poppins (Indian Type Foundry) : polices libres sous licence SIL Open Font License 1.1
+https://openfontlicense.org — utilisées pour les factures PDF.
