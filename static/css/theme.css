@@ -534,3 +534,34 @@ h1, h2,
     #0E0E11 !important;
 }
 :root[data-theme="dark"] .footer-top { background: transparent !important; }
+
+/* ============================================================
+   LOGO HM (monogramme or métallique)
+   ============================================================ */
+.logo-mark { position: relative; display: inline-flex; flex-shrink: 0; width: 46px; height: 46px; border-radius: 12px; overflow: hidden;
+  filter: drop-shadow(0 6px 14px rgba(212, 175, 55, .28)); transition: transform .35s cubic-bezier(.2, .8, .2, 1); }
+.logo-mark .hm-logo { width: 100%; height: 100%; display: block; }
+.logo-mark::after { content: ''; position: absolute; inset: -20% auto -20% -80%; width: 45%; transform: skewX(-20deg);
+  background: linear-gradient(90deg, transparent, rgba(255, 246, 214, .55), transparent); animation: hmShine 6s ease-in-out infinite; pointer-events: none; }
+@keyframes hmShine { 0%, 72% { left: -80%; } 88%, 100% { left: 140%; } }
+.nav-logo:hover .logo-mark { transform: rotate(-4deg) scale(1.05); }
+@media (prefers-reduced-motion: reduce) { .logo-mark::after { animation: none; display: none; } }
+
+.logo-word b {
+  letter-spacing: .07em;
+  background: linear-gradient(180deg, #FFF4C9 0%, #E9CF7E 35%, #B8892E 62%, #F3D98A 100%);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.logo-word small { display: flex; align-items: center; gap: 6px; font-weight: 600; letter-spacing: .5em; padding-left: .5em;
+  color: #C9B98A; -webkit-text-fill-color: #C9B98A; margin-top: 5px; }
+.logo-word small i { display: block; height: 1px; flex: 1; min-width: 8px; background: linear-gradient(90deg, transparent, #D4AF37); }
+.logo-word small i:last-child { background: linear-gradient(90deg, #D4AF37, transparent); }
+[data-theme="light"] .logo-word b { background: linear-gradient(180deg, #C99A35 0%, #8A6420 100%); -webkit-background-clip: text; background-clip: text; }
+[data-theme="light"] .logo-word small { color: #8A7A55; -webkit-text-fill-color: #8A7A55; }
+.mobile-menu-header .logo-mark { width: 38px; height: 38px; border-radius: 10px; }
+.footer-brand-v2 .logo-mark { width: 52px; height: 52px; border-radius: 14px; }
+@media (max-width: 768px) {
+  .logo-mark { width: 40px; height: 40px; border-radius: 10.5px; }
+  .logo-word small { font-size: .5rem; letter-spacing: .42em; }
+}
+@media (max-width: 400px) { .logo-mark { width: 36px; height: 36px; border-radius: 9.5px; } }

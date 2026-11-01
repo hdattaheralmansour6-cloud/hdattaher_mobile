@@ -9,7 +9,7 @@
     <title>{% block title %}Admin{% endblock %} - HDATTAHER MOBILE</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v=3">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin2.css') }}?v=2">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin2.css') }}?v=3">
 </head>
 
 {% set ep = request.endpoint or '' %}
@@ -32,7 +32,7 @@
 <body class="admin-body ax">
     <!-- ===== Barre du haut (mobile) ===== -->
     <header class="ax-top">
-        <a href="{{ url_for('admin_dashboard') }}" class="ax-logo" aria-label="Tableau de bord">HM</a>
+        <a href="{{ url_for('admin_dashboard') }}" class="ax-logo" aria-label="Tableau de bord"><img src="{{ url_for('static', filename='img/logo-hm.svg') }}" alt="HM" width="40" height="40"></a>
         <div class="ax-top-title">
             <b>{% block top_title %}{{ self.title() }}{% endblock %}</b>
             <small>Espace admin</small>
@@ -45,7 +45,7 @@
         <!-- ===== Menu latéral (ordinateur) ===== -->
         <aside class="admin-sidebar ax-side" id="adminSidebar">
             <div class="ax-side-brand">
-                <span class="ax-logo">HM</span>
+                <span class="ax-logo"><img src="{{ url_for('static', filename='img/logo-hm.svg') }}" alt="HM" width="40" height="40"></span>
                 <div><b>HDATTAHER</b><small>Espace admin</small></div>
             </div>
             <nav class="sidebar-nav">

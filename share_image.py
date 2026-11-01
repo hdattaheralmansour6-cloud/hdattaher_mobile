@@ -99,6 +99,12 @@ def _wrap(draw, text, font, max_width, max_lines):
 
 def _brand_badge(img, x, y, size=64):
     """Petit logo « HM » noir et or, comme dans l'en-tête du site."""
+    try:
+        logo = Image.open(os.path.join(_IMG_DIR, 'logo-hm.png')).convert('RGBA').resize((size, size), Image.LANCZOS)
+        img.paste(logo, (x, y), logo)
+        return
+    except Exception:
+        pass
     d = ImageDraw.Draw(img)
     d.rounded_rectangle((x, y, x + size, y + size), radius=int(size * .28), fill=BG, outline=GOLD, width=3)
     f = _font(int(size * .42), bold=True)

@@ -209,13 +209,17 @@ def generate_invoice_pdf(order, items, settings=None):
 
         # Monogramme HM
         bx, by, bs = MARGIN, PAGE_H - 13 * mm - 15 * mm, 15 * mm
-        canv.setStrokeColor(GOLD)
-        canv.setLineWidth(1.1)
-        canv.setFillColor(INK_2)
-        canv.roundRect(bx, by, bs, bs, 3.6 * mm, stroke=1, fill=1)
-        canv.setFillColor(GOLD)
-        canv.setFont(F['Serif-Bold'], 15)
-        canv.drawCentredString(bx + bs / 2, by + bs / 2 - 5.2, 'HM')
+        logo_png = os.path.join(IMG_DIR, 'logo-hm.png')
+        if os.path.isfile(logo_png):
+            canv.drawImage(logo_png, bx, by, bs, bs, mask='auto')
+        else:
+            canv.setStrokeColor(GOLD)
+            canv.setLineWidth(1.1)
+            canv.setFillColor(INK_2)
+            canv.roundRect(bx, by, bs, bs, 3.6 * mm, stroke=1, fill=1)
+            canv.setFillColor(GOLD)
+            canv.setFont(F['Serif-Bold'], 15)
+            canv.drawCentredString(bx + bs / 2, by + bs / 2 - 5.2, 'HM')
 
         # Nom de la boutique
         words = site_name.upper().split()

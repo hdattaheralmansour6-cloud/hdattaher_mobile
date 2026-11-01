@@ -319,7 +319,7 @@ def _share_version(*parts):
 
 
 def _product_share_version(p):
-    return _share_version('v2', p.get('name'), p.get('brand'), p.get('price'), p.get('old_price'),
+    return _share_version('v3', p.get('name'), p.get('brand'), p.get('price'), p.get('old_price'),
                           p.get('discount'), p.get('image'), (p.get('stock') or 0) > 0)
 
 
@@ -328,7 +328,7 @@ def _home_share_version():
         latest = _home_data()['latest']
     except Exception:
         latest = []
-    return _share_version('v2', *[(x.get('id'), x.get('image')) for x in latest[:3]])
+    return _share_version('v3', *[(x.get('id'), x.get('image')) for x in latest[:3]])
 
 
 @app.template_global()

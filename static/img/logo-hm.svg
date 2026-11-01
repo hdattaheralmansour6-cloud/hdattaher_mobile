@@ -1,0 +1,26 @@
+<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><defs>
+<linearGradient id="mD" gradientUnits="userSpaceOnUse" x1="10" y1="12" x2="54" y2="52">
+ <stop offset="0" stop-color="#FFF4C9"/><stop offset=".2" stop-color="#EBCB72"/><stop offset=".42" stop-color="#A87A22"/>
+ <stop offset=".52" stop-color="#C99A35"/><stop offset=".72" stop-color="#F6DE94"/><stop offset="1" stop-color="#8C6418"/></linearGradient>
+<linearGradient id="rD" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="64" y2="64">
+ <stop offset="0" stop-color="#F7E3A1"/><stop offset=".35" stop-color="#B8892E"/><stop offset=".5" stop-color="#FCEBB0"/>
+ <stop offset=".68" stop-color="#C99A35"/><stop offset="1" stop-color="#7A5512"/></linearGradient>
+<radialGradient id="kD" cx=".5" cy=".35" r=".75"><stop offset="0" stop-color="#2A2A31"/><stop offset=".6" stop-color="#121215"/><stop offset="1" stop-color="#040405"/></radialGradient>
+<linearGradient id="glD" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".16"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+</defs>
+<rect x="1.5" y="1.5" width="61" height="61" rx="16" fill="url(#rD)"/>
+<rect x="3.6" y="3.6" width="56.8" height="56.8" rx="14" fill="url(#kD)"/>
+<rect x="7.2" y="7.2" width="49.6" height="49.6" rx="10.5" fill="none" stroke="url(#rD)" stroke-width=".7" opacity=".7"/>
+<path d="M32 4.6l1.8 2.6L32 9.8l-1.8-2.6Z M32 54.2l1.8 2.6L32 59.4l-1.8-2.6Z" fill="url(#rD)"/>
+<g transform="translate(32 32) scale(0.9) translate(-32 -32)" stroke-linecap="butt" stroke-linejoin="miter" fill="none"><g stroke="#000" opacity=".55" transform="translate(.7 1)"><path d="M16 18v28M28 18v28M46 18v28" stroke-width="4.4"/>
+<path d="M16 31.6h12" stroke-width="2.6"/>
+<path d="M29.4 18.6 37 35.4 44.6 18.6" stroke-width="2.5"/>
+<path d="M12.6 18.1h6.8M24.6 18.1h4.8M44.6 18.1h4.8M12.6 45.9h6.8M24.6 45.9h6.8M42.6 45.9h6.8" stroke-width="1.5"/></g><g stroke="#FFF7DA" opacity=".55" transform="translate(-.35 -.45)"><path d="M16 18v28M28 18v28M46 18v28" stroke-width="4.4"/>
+<path d="M16 31.6h12" stroke-width="2.6"/>
+<path d="M29.4 18.6 37 35.4 44.6 18.6" stroke-width="2.5"/>
+<path d="M12.6 18.1h6.8M24.6 18.1h4.8M44.6 18.1h4.8M12.6 45.9h6.8M24.6 45.9h6.8M42.6 45.9h6.8" stroke-width="1.5"/></g><g stroke="url(#mD)"><path d="M16 18v28M28 18v28M46 18v28" stroke-width="4.4"/>
+<path d="M16 31.6h12" stroke-width="2.6"/>
+<path d="M29.4 18.6 37 35.4 44.6 18.6" stroke-width="2.5"/>
+<path d="M12.6 18.1h6.8M24.6 18.1h4.8M44.6 18.1h4.8M12.6 45.9h6.8M24.6 45.9h6.8M42.6 45.9h6.8" stroke-width="1.5"/></g></g>
+<rect x="3.6" y="3.6" width="56.8" height="26" rx="14" fill="url(#glD)"/>
+</svg>
