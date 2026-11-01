@@ -94,13 +94,41 @@
             <input type="hidden" name="discount" id="fDisc" value="{{ product.discount if product else 0 }}">
             <div class="ax-promo-hint" id="promoHint" hidden></div>
 
-            <div class="form-group">
+            <div class="form-group" id="stockGroup" {{ 'hidden' if variants }}>
                 <label>Stock disponible</label>
                 <div class="ax-stepper ax-stepper-lg" id="stockStepper">
                     <button type="button" data-d="-1" aria-label="Moins"><i class="fas fa-minus"></i></button>
                     <input type="number" name="stock" id="fStock" value="{{ product.stock if product else 1 }}" min="0" inputmode="numeric">
                     <button type="button" data-d="1" aria-label="Plus"><i class="fas fa-plus"></i></button>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Versions (stockage / couleur) -->
+    <section class="admin-card">
+        <div class="admin-card-header"><h3><i class="fas fa-layer-group"></i> Versions</h3></div>
+        <div class="admin-card-body">
+            <label class="ax-toggle-row" style="padding-top:0;">
+                <span><b>Plusieurs versions</b><small>Ex : 128 Go / 256 Go, Noir / Bleu — chaque version a son stock (et son prix si besoin)</small></span>
+                <span class="ax-switch"><input type="checkbox" name="has_variants" id="hasVariants" value="1" {{ 'checked' if variants }}><span></span></span>
+            </label>
+            <div id="variantBox" {{ '' if variants else 'hidden' }}>
+                <div class="ax-form-2">
+                    <div class="form-group">
+                        <label for="vStorages">Stockages <small class="ax-muted">— séparés par des virgules</small></label>
+                        <input type="text" id="vStorages" class="form-control" placeholder="Ex : 128 Go, 256 Go">
+                    </div>
+                    <div class="form-group">
+                        <label for="vColors">Couleurs <small class="ax-muted">— séparées par des virgules</small></label>
+                        <input type="text" id="vColors" class="form-control" placeholder="Ex : Noir, Bleu, Blanc">
+                    </div>
+                </div>
+                <button type="button" class="btn-admin" id="vGen"><i class="fas fa-table-cells"></i> Créer le tableau des versions</button>
+                <small class="ax-muted vt-help">Laissez un seul des deux champs vide si le produit n'a que des stockages (ou que des couleurs).</small>
+
+                <div class="vt" id="vTable"></div>
+                <div class="vt-total" id="vTotal"></div>
             </div>
         </div>
     </section>
@@ -139,6 +167,18 @@
     border: 1px solid var(--admin-border); background: var(--admin-bg); color: var(--admin-text); font-size: .88rem; font-weight: 600; transition: var(--admin-transition); }
 .brand-opt input:checked + span { background: var(--admin-gradient); border-color: transparent; color: var(--on-gold); box-shadow: 0 6px 16px rgba(212, 175, 55, .3); }
 .brand-opt-other span { border-style: dashed; }
+.vt-help { display: block; margin-top: 8px; }
+.vt { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.vt-row { display: grid; grid-template-columns: 1fr auto; gap: 8px 10px; align-items: center; padding: 12px; border-radius: 14px;
+    border: 1px solid var(--admin-border); background: var(--admin-bg); }
+.vt-row b { font-size: .95rem; }
+.vt-row .vt-del { background: none; border: none; color: #F87171; font-size: 1rem; cursor: pointer; padding: 6px; }
+.vt-fields { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.vt-fields label { display: flex; flex-direction: column; gap: 4px; font-size: .74rem; color: var(--admin-text-sec); margin: 0; }
+.vt-fields .form-control { margin: 0; }
+.vt-row.is-zero { border-color: rgba(248, 113, 113, .45); }
+.vt-total { margin-top: 10px; font-size: .88rem; color: var(--admin-text-sec); }
+.vt-total b { color: var(--admin-text); }
 </style>
 <script>
 (function () {
@@ -182,8 +222,74 @@
         b.addEventListener('click', function () { st.value = Math.max(0, (parseInt(st.value, 10) || 0) + parseInt(b.dataset.d, 10)); });
     });
 
+    // ===== Versions (stockage / couleur) =====
+    var VARIANTS = {{ (variants or [])|tojson }};
+    var hasV = document.getElementById('hasVariants'), vBox = document.getElementById('variantBox'),
+        stockGroup = document.getElementById('stockGroup'), vTable = document.getElementById('vTable'), vTotal = document.getElementById('vTotal'),
+        vS = document.getElementById('vStorages'), vC = document.getElementById('vColors');
+    function esc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+    function split(v) { var seen = {}; return v.split(',').map(function (x) { return x.trim(); }).filter(function (x) { var k = x.toLowerCase(); if (!x || seen[k]) return false; seen[k] = 1; return true; }); }
+    function current() {
+        var out = {};
+        vTable.querySelectorAll('.vt-row').forEach(function (r) {
+            out[(r.dataset.s + '|' + r.dataset.c).toLowerCase()] = { price: r.querySelector('[name=v_price]').value, stock: r.querySelector('[name=v_stock]').value };
+        });
+        return out;
+    }
+    function row(sto, col, price, stock) {
+        var label = [sto, col].filter(Boolean).join(' · ');
+        var d = document.createElement('div');
+        d.className = 'vt-row'; d.dataset.s = sto || ''; d.dataset.c = col || '';
+        d.innerHTML = '<b>' + esc(label) + '</b><button type="button" class="vt-del" aria-label="Retirer"><i class="fas fa-xmark"></i></button>' +
+            '<input type="hidden" name="v_storage" value="' + esc(sto) + '"><input type="hidden" name="v_color" value="' + esc(col) + '">' +
+            '<div class="vt-fields"><label>Stock<input type="number" name="v_stock" class="form-control" min="0" inputmode="numeric" value="' + esc(stock == null ? 1 : stock) + '"></label>' +
+            '<label>Prix (vide = prix normal)<input type="number" name="v_price" class="form-control" min="0" inputmode="numeric" value="' + esc(price || '') + '" placeholder="' + esc(price_.value || '') + '"></label></div>';
+        d.querySelector('.vt-del').addEventListener('click', function () { d.remove(); total(); });
+        d.querySelector('[name=v_stock]').addEventListener('input', total);
+        vTable.appendChild(d);
+    }
+    var price_ = document.getElementById('fPrice');
+    function total() {
+        var t = 0, n = 0;
+        vTable.querySelectorAll('.vt-row').forEach(function (r) {
+            var s = parseInt(r.querySelector('[name=v_stock]').value, 10) || 0; t += s; n++;
+            r.classList.toggle('is-zero', s === 0);
+        });
+        vTotal.innerHTML = n ? (n + ' version(s) · stock total <b>' + t + '</b>') : 'Touchez « Créer le tableau des versions ».';
+    }
+    function generate() {
+        var ss = split(vS.value), cs = split(vC.value), keep = current();
+        if (!ss.length && !cs.length) { alert('Écrivez au moins un stockage ou une couleur.'); return; }
+        vTable.innerHTML = '';
+        (ss.length ? ss : ['']).forEach(function (s) {
+            (cs.length ? cs : ['']).forEach(function (c) {
+                var old = keep[(s + '|' + c).toLowerCase()] || {};
+                row(s, c, old.price, old.stock);
+            });
+        });
+        total();
+    }
+    document.getElementById('vGen').addEventListener('click', generate);
+    hasV.addEventListener('change', function () {
+        vBox.hidden = !hasV.checked; stockGroup.hidden = hasV.checked;
+        if (hasV.checked && !vTable.children.length) vS.focus();
+    });
+    if (VARIANTS.length) {
+        var ss = [], cs = [];
+        VARIANTS.forEach(function (v) {
+            if (v.storage && ss.indexOf(v.storage) < 0) ss.push(v.storage);
+            if (v.color && cs.indexOf(v.color) < 0) cs.push(v.color);
+            row(v.storage || '', v.color || '', v.price ? Math.round(v.price) : '', v.stock);
+        });
+        vS.value = ss.join(', '); vC.value = cs.join(', ');
+    }
+    total();
+
     // Bouton en chargement (évite les doubles envois pendant l'envoi de la photo)
-    document.getElementById('productForm').addEventListener('submit', function () {
+    document.getElementById('productForm').addEventListener('submit', function (e) {
+        if (hasV.checked && !vTable.querySelector('.vt-row')) {
+            e.preventDefault(); alert('Créez le tableau des versions, ou désactivez « Plusieurs versions ».'); return;
+        }
         var b = document.getElementById('saveBtn');
         setTimeout(function () { b.disabled = true; b.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enregistrement…'; }, 10);
     });

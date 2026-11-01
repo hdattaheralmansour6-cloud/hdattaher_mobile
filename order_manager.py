@@ -5,6 +5,7 @@ import secrets
 from datetime import datetime
 
 from database import db, get_supabase
+from shop_extras import change_variant_stock
 
 ORDER_STATUSES = ['En attente', 'Confirmée', 'Préparation', 'Expédiée', 'Livrée', 'Annulée']
 
@@ -16,10 +17,10 @@ def generate_order_number():
 
 
 def create_order_from_cart(customer_id, cart_items, shipping_name, shipping_phone, shipping_address, notes='',
-                           payment_method=None, payment_proof=None):
+                           payment_method=None, payment_proof=None, delivery_zone=None, delivery_fee=0):
     """
     Crée une commande à partir des articles du panier (déjà validés/enrichis
-    par cart.get_cart_details). Diminue le stock de chaque produit commandé.
+    par cart.get_cart_details). Diminue le stock de chaque produit (ou version) commandé.
     Retourne (order, error).
     """
     if not cart_items:
@@ -29,15 +30,19 @@ def create_order_from_cart(customer_id, cart_items, shipping_name, shipping_phon
 
     # Vérification finale du stock (au cas où il aurait changé depuis l'affichage du panier)
     for item in cart_items:
-        product_id = item['product']['id']
-        fresh = sb.table('products').select('stock').eq('id', product_id).execute()
+        name = item['product']['name'] + (f" ({item['label']})" if item.get('label') else '')
+        if item.get('variant_id'):
+            fresh = sb.table('product_variants').select('stock').eq('id', item['variant_id']).execute()
+        else:
+            fresh = sb.table('products').select('stock').eq('id', item['product']['id']).execute()
         current_stock = fresh.data[0]['stock'] if fresh.data else 0
         if current_stock < item['quantity']:
-            return None, f"Stock insuffisant pour \"{item['product']['name']}\" (disponible : {current_stock})."
+            return None, f"Stock insuffisant pour \"{name}\" (disponible : {current_stock})."
 
-    total = sum(item['subtotal'] for item in cart_items)
+    delivery_fee = max(0, float(delivery_fee or 0))
+    total = sum(item['subtotal'] for item in cart_items) + delivery_fee
 
-    order = db.insert('orders', {
+    data = {
         'order_number': generate_order_number(),
         'customer_id': customer_id,
         'status': 'En attente',
@@ -48,26 +53,35 @@ def create_order_from_cart(customer_id, cart_items, shipping_name, shipping_phon
         'notes': notes,
         'payment_method': payment_method,
         'payment_proof': payment_proof,
-    })
+    }
+    if delivery_zone:
+        data.update(delivery_zone=delivery_zone, delivery_fee=delivery_fee)
+    order = db.insert('orders', data)
 
     if not order:
         return None, "Erreur lors de la création de la commande."
 
     for item in cart_items:
         product = item['product']
-        db.insert('order_items', {
+        line = {
             'order_id': order['id'],
             'product_id': product['id'],
-            'product_name': product['name'],
+            'product_name': product['name'] + (f" — {item['label']}" if item.get('label') else ''),
             'quantity': item['quantity'],
-            'unit_price': product['price'],
+            'unit_price': item.get('unit_price', product['price']),
             'subtotal': item['subtotal'],
-        })
+        }
+        if item.get('variant_id'):
+            line['variant_id'] = item['variant_id']
+        db.insert('order_items', line)
 
         # Baisse automatique du stock (le produit passe en "Rupture"
         # tout seul dès que le stock atteint 0, l'affichage est dynamique)
-        new_stock = max(0, product.get('stock', 0) - item['quantity'])
-        db.update('products', {'stock': new_stock}, {'id': product['id']})
+        if item.get('variant_id'):
+            change_variant_stock(item['variant_id'], -item['quantity'])
+        else:
+            new_stock = max(0, product.get('stock', 0) - item['quantity'])
+            db.update('products', {'stock': new_stock}, {'id': product['id']})
 
     return order, None
 
@@ -87,16 +101,21 @@ def get_order_with_items(order_id):
 
 
 def _shift_stock(order_id, sign):
-    """Remet (+1) ou reprend (-1) le stock des produits d'une commande."""
+    """Remet (+1) ou reprend (-1) le stock des produits (ou versions) d'une commande."""
     try:
-        items = db.fetch_all('order_items', 'product_id, quantity', {'order_id': order_id}) or []
+        items = db.fetch_all('order_items', 'product_id, quantity, variant_id', {'order_id': order_id}) or []
     except Exception:
-        return
+        try:
+            items = db.fetch_all('order_items', 'product_id, quantity', {'order_id': order_id}) or []
+        except Exception:
+            return
     for it in items:
         pid, qty = it.get('product_id'), int(it.get('quantity') or 0)
         if not pid or qty <= 0:
             continue
         try:
+            if it.get('variant_id') and change_variant_stock(it['variant_id'], sign * qty):
+                continue
             row = db.fetch_one('products', 'stock', {'id': pid})
             if row is None:
                 continue

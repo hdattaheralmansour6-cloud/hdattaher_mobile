@@ -213,6 +213,11 @@ def generate_invoice_pdf(order, items, settings=None):
                      Paragraph(_money(it.get('unit_price')), s_cell_r),
                      Paragraph(_e(it.get('quantity', 0)), s_cell_r),
                      Paragraph(f"<b>{_money(it.get('subtotal'))}</b>", s_cell_r)])
+    if order.get('delivery_zone'):
+        data.append([Paragraph(f"Livraison — {_e(order.get('delivery_zone'))}", s_norm),
+                     Paragraph(_money(order.get('delivery_fee') or 0), s_cell_r),
+                     Paragraph('1', s_cell_r),
+                     Paragraph(f"<b>{_money(order.get('delivery_fee') or 0)}</b>", s_cell_r)])
     tbl = Table(data, colWidths=[CONTENT_W - 100 * mm, 34 * mm, 16 * mm, 50 * mm], repeatRows=1)
     tbl.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), TEXT),

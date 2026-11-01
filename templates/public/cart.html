@@ -22,20 +22,21 @@
                     {% if p.brand %}<span class="pc-brand">{{ p.brand }}</span>{% endif %}
                     <a href="{{ url_for('product_detail', product_id=p.id) }}" class="cart-name"
                        data-name-fr="{{ p.name }}" data-name-en="{{ p.name_en or p.name }}" data-name-ar="{{ p.name_ar or p.name }}">{{ p.name }}</a>
-                    <span class="cart-unit">{{ p.price|fcfa }}</span>
+                    {% if item.label %}<span class="cart-variant" dir="auto">{{ item.label }}</span>{% endif %}
+                    <span class="cart-unit">{{ item.unit_price|fcfa }}</span>
 
                     <div class="cart-row">
-                        <form method="POST" action="{{ url_for('cart_update', product_id=p.id) }}" class="qty qty-auto" data-max="{{ p.stock }}">
+                        <form method="POST" action="{{ url_for('cart_update', product_id=item.key) }}" class="qty qty-auto" data-max="{{ item.available }}">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="button" class="qty-btn" data-step="-1" aria-label="Moins" {{ 'disabled' if item.quantity <= 1 }}><i class="fas fa-minus"></i></button>
-                            <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ p.stock }}" inputmode="numeric" aria-label="Quantité">
-                            <button type="button" class="qty-btn" data-step="1" aria-label="Plus" {{ 'disabled' if item.quantity >= p.stock }}><i class="fas fa-plus"></i></button>
+                            <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ item.available }}" inputmode="numeric" aria-label="Quantité">
+                            <button type="button" class="qty-btn" data-step="1" aria-label="Plus" {{ 'disabled' if item.quantity >= item.available }}><i class="fas fa-plus"></i></button>
                         </form>
                         <strong class="cart-sub">{{ item.subtotal|fcfa }}</strong>
                     </div>
-                    {% if p.stock <= 5 %}<small class="cart-warn"><i class="fas fa-fire"></i> <span data-i18n="only_left">Plus que</span> {{ p.stock }} <span data-i18n="in_stock_count">en stock</span></small>{% endif %}
+                    {% if item.available <= 5 %}<small class="cart-warn"><i class="fas fa-fire"></i> <span data-i18n="only_left">Plus que</span> {{ item.available }} <span data-i18n="in_stock_count">en stock</span></small>{% endif %}
                 </div>
-                <form method="POST" action="{{ url_for('cart_remove', product_id=p.id) }}" class="cart-del">
+                <form method="POST" action="{{ url_for('cart_remove', product_id=item.key) }}" class="cart-del">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" aria-label="Retirer"><i class="fas fa-trash-can"></i></button>
                 </form>
@@ -47,7 +48,7 @@
         <aside class="cart-summary">
             <h2 data-i18n="summary">Récapitulatif</h2>
             <div class="sum-row"><span data-i18n="subtotal">Sous-total</span><span>{{ total|fcfa }}</span></div>
-            <div class="sum-row"><span data-i18n="delivery">Livraison</span><span data-i18n="delivery_confirmed">Confirmée par WhatsApp</span></div>
+            <div class="sum-row"><span data-i18n="delivery">Livraison</span><span data-i18n="delivery_next">Choisie à l'étape suivante</span></div>
             <div class="sum-total"><span data-i18n="cart_total">Total</span><strong>{{ total|fcfa }}</strong></div>
             <a href="{{ url_for('checkout') }}" class="btn btn-primary sum-cta"><i class="fas fa-lock"></i> <span data-i18n="validate_order_btn">Valider la commande</span></a>
             <div class="sum-pay">

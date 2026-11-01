@@ -20,6 +20,12 @@
                         <strong>{{ item.subtotal|fcfa }}</strong>
                     </div>
                     {% endfor %}
+                    {% if order.delivery_zone %}
+                    <div class="account-order-row">
+                        <span><span data-i18n="delivery_fee">Livraison</span> · {{ order.delivery_zone }}</span>
+                        <strong>{{ (order.delivery_fee or 0)|fcfa }}</strong>
+                    </div>
+                    {% endif %}
                     <div class="account-order-row" style="border-bottom:none;">
                         <strong data-i18n="cart_total">Total</strong>
                         <strong>{{ order.total|fcfa }}</strong>

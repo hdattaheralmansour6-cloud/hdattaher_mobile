@@ -37,6 +37,14 @@
 {% set has_img = product.image and product.image != 'default.png' %}
 {% set in_stock = product.stock and product.stock > 0 %}
 {% set saving = (product.old_price - product.price) if (product.old_price and product.old_price > product.price) else 0 %}
+{% set storages = [] %}{% set colors = [] %}
+{% for v in variants %}
+    {% if v.storage and v.storage not in storages %}{% set _ = storages.append(v.storage) %}{% endif %}
+    {% if v.color and v.color not in colors %}{% set _ = colors.append(v.color) %}{% endif %}
+{% endfor %}
+{% macro stars(avg, size='') -%}
+<span class="rv-stars {{ size }}" aria-label="{{ avg }} / 5">{% for i in range(1, 6) %}<i class="fas {{ 'fa-star' if avg >= i - 0.25 else ('fa-star-half-stroke' if avg >= i - 0.75 else 'fa-star off') }}"></i>{% endfor %}</span>
+{%- endmacro %}
 <div class="pd" data-recent-id="{{ product.id }}" data-recent-name="{{ product.name }}" data-recent-price="{{ product.price }}"
      data-recent-image="{{ product.image if has_img else '' }}" data-recent-brand="{{ product.brand or '' }}">
 
@@ -73,15 +81,38 @@
         <div class="pd-info">
             {% if product.brand %}<a href="{{ url_for('products', brand=product.brand) }}" class="pd-brand">{{ product.brand }}</a>{% endif %}
             <h1 class="pd-title" data-name-fr="{{ product.name }}" data-name-en="{{ product.name_en or product.name }}" data-name-ar="{{ product.name_ar or product.name }}">{{ product.name }}</h1>
+            {% if product.rating_count %}
+            <a href="#avis" class="pd-rating">{{ stars(product.rating_avg|float) }} <b>{{ '%.1f'|format(product.rating_avg|float) }}</b>
+                <span>({{ product.rating_count }} <span data-i18n="reviews_word">avis</span>)</span></a>
+            {% endif %}
 
             <div class="pd-price">
-                <strong>{{ product.price|fcfa }}</strong>
+                <strong id="pdPrice">{{ product.price|fcfa }}</strong>
                 {% if saving %}<s>{{ product.old_price|fcfa }}</s>{% endif %}
             </div>
             {% if saving %}<div class="pd-save"><i class="fas fa-tag"></i> <span data-i18n="you_save">Vous économisez</span> {{ saving|fcfa }}</div>{% endif %}
 
+            {% if variants %}
+            <!-- Versions (stockage / couleur) -->
+            <div class="pd-opts" id="pdOpts">
+                {% if storages %}
+                <div class="pd-opt">
+                    <div class="pd-opt-t"><span data-i18n="opt_storage">Stockage</span> : <b data-show="s" dir="auto"></b></div>
+                    <div class="pd-chips">{% for x in storages %}<button type="button" class="pd-chip" dir="auto" data-g="s" data-v="{{ x }}">{{ x }}</button>{% endfor %}</div>
+                </div>
+                {% endif %}
+                {% if colors %}
+                <div class="pd-opt">
+                    <div class="pd-opt-t"><span data-i18n="opt_color">Couleur</span> : <b data-show="c" dir="auto"></b></div>
+                    <div class="pd-chips">{% for x in colors %}<button type="button" class="pd-chip" dir="auto" data-g="c" data-v="{{ x }}">{{ x }}</button>{% endfor %}</div>
+                </div>
+                {% endif %}
+            </div>
+            <script type="application/json" id="pdVariants">{{ variants|tojson }}</script>
+            {% endif %}
+
             <!-- Stock -->
-            <div class="pd-stock {{ 'out' if not in_stock else ('low' if product.stock <= 5 else 'ok') }}">
+            <div id="pdStock" class="pd-stock {{ 'out' if not in_stock else ('low' if product.stock <= 5 else 'ok') }}">
                 {% if not in_stock %}
                 <i class="fas fa-circle-xmark"></i> <span data-i18n="out_of_stock_long">Rupture de stock</span>
                 {% elif product.stock <= 5 %}
@@ -96,6 +127,7 @@
             {% if in_stock %}
             <form method="POST" action="{{ url_for('cart_add', product_id=product.id) }}" class="pd-buy pc-cart-form" id="pdBuy">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                {% if variants %}<input type="hidden" name="variant_id" id="pdVariant" value="">{% endif %}
                 <div class="qty" data-max="{{ [product.stock, 20]|min }}">
                     <button type="button" class="qty-btn" data-step="-1" aria-label="Moins"><i class="fas fa-minus"></i></button>
                     <input type="number" name="quantity" value="1" min="1" max="{{ [product.stock, 20]|min }}" inputmode="numeric" aria-label="Quantité">
@@ -136,6 +168,58 @@
         </div>
     </div>
 
+    <!-- Avis clients -->
+    <section class="pd-reviews" id="avis">
+        <div class="h-head"><h2 data-i18n="reviews_title">Avis clients</h2></div>
+        <div class="rv-wrap">
+            <div class="rv-summary">
+                {% if product.rating_count %}
+                <strong>{{ '%.1f'|format(product.rating_avg|float) }}</strong>
+                {{ stars(product.rating_avg|float, 'lg') }}
+                <small>{{ product.rating_count }} <span data-i18n="reviews_word">avis</span></small>
+                {% else %}
+                <span class="rv-empty-ic"><i class="far fa-star"></i></span>
+                <p data-i18n="reviews_none">Aucun avis pour le moment. Soyez le premier !</p>
+                {% endif %}
+            </div>
+
+            <div class="rv-side">
+                {% if reviews %}
+                <ul class="rv-list">
+                    {% for r in reviews %}
+                    <li>
+                        <div class="rv-top"><b>{{ r.name }}</b>{{ stars(r.rating or 0) }}</div>
+                        {% if r.comment %}<p>{{ r.comment }}</p>{% endif %}
+                        <small>{{ (r.created_at or '')[:10] }}</small>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+
+                {% if already_reviewed %}
+                <p class="rv-note"><i class="fas fa-circle-check"></i> <span data-i18n="review_thanks">Merci, votre avis sur ce produit a bien été reçu.</span></p>
+                {% elif can_review %}
+                <form method="POST" action="{{ url_for('product_review', product_id=product.id) }}" class="rv-form">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <b data-i18n="review_write">Donner mon avis</b>
+                    <div class="rv-pick" role="radiogroup">
+                        {% for i in range(5, 0, -1) %}
+                        <input type="radio" name="rating" id="rv{{ i }}" value="{{ i }}" required>
+                        <label for="rv{{ i }}" aria-label="{{ i }} / 5"><i class="fas fa-star"></i></label>
+                        {% endfor %}
+                    </div>
+                    <textarea name="comment" rows="3" maxlength="600" data-i18n-placeholder="review_placeholder" placeholder="Qu'avez-vous pensé du produit ? (facultatif)"></textarea>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> <span data-i18n="review_send">Envoyer mon avis</span></button>
+                    <small data-i18n="review_pending_note">Votre avis sera publié après vérification.</small>
+                </form>
+                {% else %}
+                <a href="{{ url_for('customer_login', next=request.path ~ '#avis') }}" class="rv-login">
+                    <i class="fas fa-user"></i> <span data-i18n="review_login">Connectez-vous pour donner votre avis</span></a>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
     <!-- Produits similaires -->
     {% if related %}
     <section class="h-sec pd-related">
@@ -153,7 +237,7 @@
 <div class="pd-sticky">
     <div class="pd-sticky-price">
         <small data-i18n="price">Prix</small>
-        <strong>{{ product.price|fcfa }}</strong>
+        <strong id="pdStickyPrice">{{ product.price|fcfa }}</strong>
     </div>
     {% if in_stock %}
     <button type="button" class="btn btn-primary" onclick="document.querySelector('#pdBuy .pd-add').click()">
@@ -163,6 +247,72 @@
        target="_blank" rel="noopener" class="btn pd-sticky-wa"><i class="fab fa-whatsapp"></i> <span data-i18n="notify_short">Me prévenir</span></a>
     {% endif %}
 </div>
+
+{% if variants %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var V = JSON.parse(document.getElementById('pdVariants').textContent || '[]');
+    if (!V.length) return;
+    var tr = function (k, f) { return window.t ? t(k, f) : f; };
+    var money = function (n) { return new Intl.NumberFormat('fr-FR').format(Math.round(n)).replace(/\u202f|\u00a0/g, '\u00a0') + ' FCFA'; };
+    var hasS = !!document.querySelector('.pd-chip[data-g=s]'), hasC = !!document.querySelector('.pd-chip[data-g=c]');
+    var sel = { s: null, c: null };
+    var find = function (s, c) { return V.find(function (v) { return (!hasS || v.storage === s) && (!hasC || v.color === c); }); };
+    var first = V.find(function (v) { return v.stock > 0; }) || V[0];
+    sel.s = first.storage; sel.c = first.color;
+    var input = document.getElementById('pdVariant'), add = document.querySelector('#pdBuy .pd-add'),
+        qtyBox = document.querySelector('#pdBuy .qty'), qty = qtyBox && qtyBox.querySelector('input'),
+        stock = document.getElementById('pdStock');
+
+    function render() {
+        var v = find(sel.s, sel.c);
+        document.querySelectorAll('.pd-chip').forEach(function (b) {
+            var g = b.dataset.g, val = b.dataset.v;
+            b.classList.toggle('on', sel[g] === val);
+            var other = g === 's' ? find(val, sel.c) : find(sel.s, val);
+            b.classList.toggle('is-na', !other || other.stock <= 0);
+        });
+        document.querySelectorAll('[data-show]').forEach(function (el) { el.textContent = sel[el.dataset.show] || ''; });
+        var price = v ? v.final_price : 0;
+        ['pdPrice', 'pdStickyPrice'].forEach(function (id) { var el = document.getElementById(id); if (el && v) el.textContent = money(price); });
+        var st = v ? v.stock : 0;
+        if (input) input.value = v ? v.id : '';
+        if (add) { add.disabled = st <= 0; }
+        if (qtyBox && qty) {
+            var mx = Math.max(1, Math.min(st, 20));
+            qtyBox.dataset.max = mx; qty.max = mx;
+            if ((parseInt(qty.value, 10) || 1) > mx) qty.value = mx;
+            qtyBox.querySelectorAll('.qty-btn').forEach(function (b) {
+                var step = parseInt(b.dataset.step, 10), q = parseInt(qty.value, 10) || 1;
+                b.disabled = (step < 0 && q <= 1) || (step > 0 && q >= mx);
+            });
+        }
+        if (stock) {
+            stock.className = 'pd-stock ' + (st <= 0 ? 'out' : (st <= 5 ? 'low' : 'ok'));
+            stock.innerHTML = st <= 0
+                ? '<i class="fas fa-circle-xmark"></i> <span data-i18n="variant_out">' + tr('variant_out', 'Indisponible dans cette version') + '</span>'
+                : (st <= 5 ? '<i class="fas fa-fire"></i> <span data-i18n="only_left">' + tr('only_left', 'Plus que') + '</span> ' + st + ' <span data-i18n="in_stock_count">' + tr('in_stock_count', 'en stock') + '</span>'
+                           : '<i class="fas fa-circle-check"></i> <span data-i18n="in_stock">' + tr('in_stock', 'En stock') + '</span>')
+                + (st > 0 ? '<div class="pd-stock-bar"><span style="width:' + Math.min(st * 10, 100) + '%"></span></div>' : '');
+        }
+    }
+    document.querySelectorAll('.pd-chip').forEach(function (b) {
+        b.addEventListener('click', function () {
+            var g = b.dataset.g; sel[g] = b.dataset.v;
+            var v = find(sel.s, sel.c);
+            if (!v || v.stock <= 0) {
+                // On garde le choix touché et on prend la meilleure version qui va avec
+                var alt = V.filter(function (x) { return (g === 's' ? x.storage : x.color) === sel[g]; })
+                           .sort(function (a, b2) { return (b2.stock > 0) - (a.stock > 0); })[0];
+                if (alt) { sel.s = alt.storage; sel.c = alt.color; }
+            }
+            render();
+        });
+    });
+    render();
+});
+</script>
+{% endif %}
 
 <!-- Zoom photo -->
 <div class="zoom" id="zoom" hidden onclick="closeZoom()">

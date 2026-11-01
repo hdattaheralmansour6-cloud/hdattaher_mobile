@@ -92,6 +92,7 @@
                 <div><dt>Livrer à</dt><dd>{{ order.shipping_name or '—' }}</dd></div>
                 <div><dt>Téléphone</dt><dd>{{ order.shipping_phone or '—' }}</dd></div>
                 <div><dt>Adresse</dt><dd>{{ order.shipping_address or '—' }}</dd></div>
+                {% if order.delivery_zone %}<div><dt>Zone</dt><dd>{{ order.delivery_zone }} · {{ (order.delivery_fee or 0)|fcfa }}</dd></div>{% endif %}
                 {% if order.notes %}<div><dt>Note du client</dt><dd>{{ order.notes }}</dd></div>{% endif %}
             </dl>
             {% if phone %}
@@ -136,6 +137,13 @@
                 {% if item.product_id %}<a href="{{ url_for('admin_edit_product', product_id=item.product_id) }}" class="ax-link">Produit</a>{% endif %}</span>
         </div>
         {% endfor %}
+        {% if order.delivery_zone %}
+        <div class="ax-row">
+            <span class="ax-thumb"><i class="fas fa-truck-fast"></i></span>
+            <span class="ax-row-main"><b>Livraison</b><small>{{ order.delivery_zone }}</small></span>
+            <span class="ax-row-side"><b>{{ (order.delivery_fee or 0)|fcfa }}</b></span>
+        </div>
+        {% endif %}
         <div class="ax-total"><span>Total</span><b>{{ order.total|fcfa }}</b></div>
     </div>
 </section>

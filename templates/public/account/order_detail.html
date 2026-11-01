@@ -68,6 +68,15 @@
             <strong class="acc-item-price">{{ item.subtotal|fcfa }}</strong>
         </div>
         {% endfor %}
+        {% if order.delivery_zone %}
+        <div class="acc-item">
+            <div class="acc-item-name">
+                <strong data-i18n="delivery_fee">Livraison</strong>
+                <small>{{ order.delivery_zone }}</small>
+            </div>
+            <strong class="acc-item-price">{{ (order.delivery_fee or 0)|fcfa }}</strong>
+        </div>
+        {% endif %}
         <div class="acc-total">
             <span data-i18n="cart_total">Total</span>
             <strong>{{ order.total|fcfa }}</strong>
@@ -83,6 +92,7 @@
             <p class="acc-info"><i class="fas fa-user"></i> {{ order.shipping_name }}</p>
             <p class="acc-info" dir="ltr"><i class="fas fa-phone"></i> {{ order.shipping_phone }}</p>
             <p class="acc-info"><i class="fas fa-map-pin"></i> {{ order.shipping_address }}</p>
+            {% if order.delivery_zone %}<p class="acc-info"><i class="fas fa-truck-fast"></i> {{ order.delivery_zone }}</p>{% endif %}
         </section>
 
         {% if order.payment_method %}

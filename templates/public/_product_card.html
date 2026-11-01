@@ -31,13 +31,24 @@
         <a href="{{ url_for('product_detail', product_id=p.id) }}" class="pc-name"
            data-name-fr="{{ p.name }}" data-name-en="{{ p.name_en or p.name }}" data-name-ar="{{ p.name_ar or p.name }}">{{ p.name }}</a>
 
+        {% if p.rating_count %}
+        <div class="pc-rating"><i class="fas fa-star"></i> {{ '%.1f'|format(p.rating_avg|float) }} <small>({{ p.rating_count }})</small></div>
+        {% endif %}
         <div class="pc-price">
             <strong>{{ p.price|fcfa }}</strong>
             {% if p.old_price and p.old_price > p.price %}<s>{{ p.old_price|fcfa }}</s>{% endif %}
         </div>
 
         <div class="pc-actions">
-            {% if p.stock and p.stock > 0 %}
+            {% if p.stock and p.stock > 0 and p.has_variants %}
+            <a href="{{ url_for('product_detail', product_id=p.id) }}" class="pc-btn pc-btn-cart">
+                <i class="fas fa-sliders"></i> <span data-i18n="choose_version">Choisir</span>
+            </a>
+            <a href="https://wa.me/{{ wa }}?text={{ ('Bonjour, je veux acheter ' ~ p.name)|urlencode }}"
+               target="_blank" rel="noopener" class="pc-btn pc-btn-wa" aria-label="WhatsApp">
+                <i class="fab fa-whatsapp"></i>
+            </a>
+            {% elif p.stock and p.stock > 0 %}
             <form method="POST" action="{{ url_for('cart_add', product_id=p.id) }}" class="pc-cart-form">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <input type="hidden" name="quantity" value="1">

@@ -752,3 +752,61 @@ body.no-scroll { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .banner-carousel, .banner-slide::after, .banner-carousel::before, .banner-caption h3 { animation: none; }
 }
+
+/* ============================================================
+   VERSIONS (stockage / couleur) · AVIS CLIENTS · PANIER
+   ============================================================ */
+.pd-rating { display: inline-flex; align-items: center; gap: 6px; margin: -2px 0 10px; font-size: .85rem; color: var(--text-secondary); text-decoration: none; }
+.pd-rating b { color: var(--text); }
+.rv-stars { display: inline-flex; gap: 2px; color: var(--gold, #D4AF37); font-size: .8rem; }
+.rv-stars .off { color: var(--border); }
+.rv-stars.lg { font-size: 1.15rem; gap: 4px; }
+
+.pd-opts { display: flex; flex-direction: column; gap: 14px; margin: 18px 0 4px; }
+.pd-opt-t { font-size: .84rem; color: var(--text-secondary); margin-bottom: 8px; }
+.pd-opt-t b { color: var(--text); }
+.pd-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.pd-chip { min-height: 42px; padding: 0 16px; border-radius: 12px; border: 1.5px solid var(--border); background: var(--bg-card); color: var(--text);
+    font-family: inherit; font-weight: 600; font-size: .9rem; cursor: pointer; transition: border-color .15s, background .15s; }
+.pd-chip.on { border-color: var(--gold, #D4AF37); background: rgba(212, 175, 55, .12); color: var(--text); box-shadow: 0 0 0 1px var(--gold, #D4AF37) inset; }
+.pd-chip.is-na { opacity: .45; text-decoration: line-through; }
+.pd-chip.on.is-na { opacity: .8; }
+.pd-add:disabled { opacity: .5; cursor: not-allowed; }
+
+.pc-rating { display: flex; align-items: center; gap: 4px; font-size: .76rem; font-weight: 700; color: var(--text); margin: 2px 0 2px; }
+.pc-rating i { color: var(--gold, #D4AF37); font-size: .72rem; }
+.pc-rating small { color: var(--text-secondary); font-weight: 500; }
+a.pc-btn-cart { text-decoration: none; }
+
+.cart-variant { display: inline-block; align-self: flex-start; margin: 2px 0; padding: 2px 9px; border-radius: 999px; font-size: .74rem; font-weight: 700;
+    background: rgba(212, 175, 55, .12); color: var(--gold-dark, #A67C2E); }
+[data-theme="dark"] .cart-variant { color: #E8C86E; }
+
+.pd-reviews { margin-top: 36px; scroll-margin-top: 90px; }
+.rv-wrap { display: grid; gap: 16px; }
+@media (min-width: 860px) { .rv-wrap { grid-template-columns: 260px 1fr; align-items: start; } }
+.rv-summary { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 22px 16px; border-radius: 18px;
+    border: 1px solid var(--border); background: var(--bg-card); }
+.rv-summary strong { font-size: 2.6rem; line-height: 1; color: var(--text); }
+.rv-summary small, .rv-summary p { color: var(--text-secondary); font-size: .86rem; margin: 0; }
+.rv-empty-ic { font-size: 1.8rem; color: var(--gold, #D4AF37); }
+.rv-side { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.rv-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.rv-list li { padding: 14px 16px; border-radius: 16px; border: 1px solid var(--border); background: var(--bg-card); }
+.rv-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.rv-top b { color: var(--text); font-size: .92rem; }
+.rv-list p { margin: 8px 0 6px; color: var(--text); font-size: .9rem; line-height: 1.55; overflow-wrap: anywhere; }
+.rv-list small { color: var(--text-secondary); font-size: .74rem; }
+.rv-form { display: flex; flex-direction: column; gap: 10px; padding: 16px; border-radius: 18px; border: 1px solid var(--border); background: var(--bg-card); }
+.rv-form b { color: var(--text); }
+.rv-form textarea { width: 100%; box-sizing: border-box; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: transparent;
+    color: var(--text); font-family: inherit; font-size: 16px; resize: vertical; }
+.rv-form small { color: var(--text-secondary); font-size: .76rem; }
+.rv-pick { display: inline-flex; flex-direction: row-reverse; justify-content: flex-end; gap: 6px; }
+.rv-pick input { position: absolute; opacity: 0; pointer-events: none; }
+.rv-pick label { font-size: 1.7rem; color: var(--border); cursor: pointer; transition: color .12s, transform .12s; margin: 0; }
+.rv-pick label:hover, .rv-pick label:hover ~ label, .rv-pick input:checked ~ label { color: var(--gold, #D4AF37); }
+.rv-pick input:focus-visible + label { outline: 2px solid var(--gold, #D4AF37); border-radius: 4px; }
+.rv-login, .rv-note { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 16px; border-radius: 14px;
+    border: 1.5px dashed var(--border); color: var(--text); font-weight: 600; font-size: .88rem; text-decoration: none; margin: 0; text-align: center; }
+.rv-note i { color: #22C55E; }

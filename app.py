@@ -37,6 +37,8 @@ from order_manager import (create_order_from_cart, get_customer_orders, get_orde
                             update_order_status, get_all_orders, ORDER_STATUSES,
                             get_dashboard_stats, get_admin_overview, NEXT_STATUS)
 from invoice_generator import generate_invoice_pdf
+from shop_extras import (get_zones, get_zone, get_variants, variant_label, variant_price, save_variants,
+                         remove_variants, sync_product_stock, get_reviews, refresh_rating, count_pending_reviews)
 # test redeploiement storage 2
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -251,15 +253,17 @@ def inject_globals():
     cart_count = cart_module.cart_item_count()
     pending_reset_count = 0
     pending_orders_count = 0
+    pending_reviews_count = 0
     if session.get('logged_in'):
         pending_reset_count = count_pending_reset_requests()
+        pending_reviews_count = count_pending_reviews()
         try:
             pending_orders_count = db.count('orders', {'status': 'En attente'})
         except Exception:
             pending_orders_count = 0
     return dict(settings=settings, categories=categories, dynamic_css=dynamic_css,
                 cart_count=cart_count, pending_reset_count=pending_reset_count,
-                pending_orders_count=pending_orders_count)
+                pending_orders_count=pending_orders_count, pending_reviews_count=pending_reviews_count)
 
 
 # ============================================================
@@ -585,7 +589,12 @@ def _product_page_data(product_id):
         .eq('category_id', product['category_id']) \
         .neq('id', product_id) \
         .eq('is_active', True).limit(4).execute()
-    return {'product': product, 'related': _fix_cat_and_image(r2.data or [])}
+    variants = get_variants(product_id) if product.get('has_variants') else []
+    for v in variants:
+        v['label'] = variant_label(v)
+        v['final_price'] = variant_price(product, v)
+    return {'product': product, 'related': _fix_cat_and_image(r2.data or []),
+            'variants': variants, 'reviews': get_reviews(product_id)}
 
 
 @app.route('/product/<product_id>')
@@ -606,7 +615,50 @@ def product_detail(product_id):
         })
     except Exception:
         pass
-    return render_template('public/product_detail.html', product=product, related=related)
+    can_review = already_reviewed = False
+    if current_user.is_authenticated:
+        can_review = True
+        try:
+            already_reviewed = bool(db.fetch_one('reviews', 'id', {'product_id': product['id'],
+                                                                   'customer_id': current_user.id}))
+        except Exception:
+            already_reviewed = False
+    return render_template('public/product_detail.html', product=product, related=related,
+                           variants=data.get('variants') or [], reviews=data.get('reviews') or [],
+                           can_review=can_review, already_reviewed=already_reviewed)
+
+
+@app.route('/product/<product_id>/avis', methods=['POST'])
+@customer_login_required
+def product_review(product_id):
+    """Un client connecté donne son avis (publié après validation dans l'admin)."""
+    product = db.fetch_one('products', 'id, name', {'id': product_id})
+    if not product:
+        flash('Produit introuvable.', 'error')
+        return redirect(url_for('products'))
+    back = url_for('product_detail', product_id=product_id) + '#avis'
+    rating = safe_int(request.form.get('rating'), 0)
+    comment = ' '.join((request.form.get('comment') or '').split())[:600]
+    if rating < 1 or rating > 5:
+        flash('Choisissez une note de 1 à 5 étoiles.', 'error')
+        return redirect(back)
+    try:
+        if db.fetch_one('reviews', 'id', {'product_id': product_id, 'customer_id': current_user.id}):
+            flash('Vous avez déjà donné votre avis sur ce produit. Merci !', 'info')
+            return redirect(back)
+        rows = db.fetch_all('customers', 'full_name', {'id': current_user.id}, limit=1)
+        name = ((rows[0].get('full_name') if rows else '') or 'Client').strip()
+        parts = name.split()
+        if len(parts) > 1:
+            name = parts[0] + ' ' + parts[-1][0].upper() + '.'
+        db.insert('reviews', {'product_id': product_id, 'customer_id': current_user.id,
+                              'name': name[:60], 'rating': rating, 'comment': comment,
+                              'is_approved': False})
+    except Exception:
+        flash("Impossible d'enregistrer votre avis pour le moment. Réessayez plus tard.", 'error')
+        return redirect(back)
+    flash('Merci ! Votre avis sera publié après vérification.', 'success')
+    return redirect(back)
 
 
 @app.route('/about')
@@ -932,9 +984,14 @@ def _wants_json():
 @login_required
 def admin_product_stock(product_id):
     """Change le stock en un clic (+1 / -1) ou à une valeur précise."""
-    product = db.fetch_one('products', 'id, name, stock', {'id': product_id})
+    product = db.fetch_one('products', '*', {'id': product_id})
     if not product:
         return (jsonify(ok=False, error='introuvable'), 404) if _wants_json() else redirect(url_for('admin_products'))
+    if product.get('has_variants'):
+        # Le stock se règle version par version dans la fiche du produit
+        if _wants_json():
+            return jsonify(ok=False, error='variantes'), 400
+        return redirect(url_for('admin_edit_product', product_id=product_id))
     if request.form.get('value', '') != '':
         new_stock = safe_int(request.form.get('value'), product.get('stock') or 0)
     else:
@@ -1061,6 +1118,11 @@ def admin_product_duplicate(product_id):
     copy['views'] = 0
     rows = db.insert('products', copy)
     new = rows[0] if isinstance(rows, list) and rows else rows
+    if new and new.get('id') and product.get('has_variants'):
+        try:
+            save_variants(new['id'], get_variants(product_id))
+        except Exception:
+            pass
     log_action('Produit dupliqué', product.get('name') or '')
     flash('Copie créée (masquée du site). Modifiez-la puis rendez-la visible.', 'success')
     if new and new.get('id'):
@@ -1184,6 +1246,36 @@ def _prices_from_form():
     return price, old_price, discount
 
 
+def _variants_from_form():
+    """Versions saisies dans le tableau de la fiche produit (None = produit simple)."""
+    if not request.form.get('has_variants'):
+        return None
+    f = request.form
+    storages, colors = f.getlist('v_storage'), f.getlist('v_color')
+    prices, stocks = f.getlist('v_price'), f.getlist('v_stock')
+    rows = []
+    for i in range(min(len(storages), len(colors), len(prices), len(stocks), 60)):
+        if not (storages[i].strip() or colors[i].strip()):
+            continue
+        rows.append({'storage': storages[i], 'color': colors[i],
+                     'price': max(0, safe_float(prices[i], 0)), 'stock': max(0, safe_int(stocks[i], 0))})
+    return rows or None
+
+
+def _apply_variants(product_id, rows, had_variants):
+    """Enregistre (ou retire) les versions d'un produit. Retourne un message d'erreur ou None."""
+    try:
+        if rows:
+            save_variants(product_id, rows)
+        elif had_variants:
+            remove_variants(product_id)
+        return None
+    except Exception as e:
+        app.logger.warning('Variantes %s : %s', product_id, e)
+        return ("Les versions (stockage / couleur) n'ont pas pu être enregistrées : "
+                "lancez d'abord la mise à jour SQL dans Supabase.")
+
+
 @app.route('/azawad/product/add', methods=['GET', 'POST'])
 @login_required
 def admin_add_product():
@@ -1206,7 +1298,8 @@ def admin_add_product():
         image_filename = _upload_product_image(request.files.get('image')) or 'default.png'
         price, old_price, discount = _prices_from_form()
 
-        db.insert('products', {
+        variant_rows = _variants_from_form()
+        new_product = db.insert('products', {
             'name': name,
             'name_en': name_en,
             'name_ar': name_ar,
@@ -1222,8 +1315,9 @@ def admin_add_product():
             'brand': _brand_from_form(),
             'is_new': bool(request.form.get('is_new')),
         })
+        problem = _apply_variants(new_product['id'], variant_rows, False) if (new_product and variant_rows) else None
         log_action('Ajout produit', f'Produit: {name}')
-        flash('Produit ajouté avec succès!', 'success')
+        flash(problem or 'Produit ajouté avec succès!', 'warning' if problem else 'success')
         return redirect(url_for('admin_products'))
 
     return render_template('admin/product_form.html', product=None, categories=cats, action='add', brands=_brand_choices())
@@ -1256,6 +1350,7 @@ def admin_edit_product(product_id):
 
         image_filename = _upload_product_image(request.files.get('image')) or product['image']
         price, old_price, discount = _prices_from_form()
+        variant_rows = _variants_from_form()
 
         db.update('products', {
             'name': name,
@@ -1274,11 +1369,14 @@ def admin_edit_product(product_id):
             'is_new': bool(request.form.get('is_new')),
             'is_active': bool(request.form.get('is_active')),
         }, {'id': product_id})
+        problem = _apply_variants(product_id, variant_rows, bool(product.get('has_variants')))
         log_action('Modification produit', f'Produit: {name}')
-        flash('Produit modifié avec succès!', 'success')
+        flash(problem or 'Produit modifié avec succès!', 'warning' if problem else 'success')
         return redirect(url_for('admin_products'))
 
-    return render_template('admin/product_form.html', product=product, categories=cats, action='edit', brands=_brand_choices())
+    variants = get_variants(product_id) if product.get('has_variants') else []
+    return render_template('admin/product_form.html', product=product, categories=cats, action='edit',
+                           brands=_brand_choices(), variants=variants)
 
 
 @app.route('/azawad/product/delete/<product_id>', methods=['POST'])
@@ -1447,6 +1545,119 @@ def admin_delete_category(cat_id):
     return redirect(url_for('admin_categories'))
 
 
+# ============================================================
+#  ZONES DE LIVRAISON
+# ============================================================
+
+@app.route('/azawad/livraison')
+@login_required
+def admin_zones():
+    return render_template('admin/zones.html', zones=get_zones(active_only=False))
+
+
+@app.route('/azawad/livraison/ajouter', methods=['POST'])
+@login_required
+def admin_add_zone():
+    name = ' '.join(request.form.get('name', '').split())[:60]
+    if not name:
+        flash('Le nom de la zone est obligatoire.', 'error')
+        return redirect(url_for('admin_zones'))
+    try:
+        db.insert('delivery_zones', {
+            'name': name,
+            'name_en': auto_translate(name, 'en'),
+            'name_ar': auto_translate(name, 'ar'),
+            'fee': max(0, safe_float(request.form.get('fee'), 0)),
+            'delay': ' '.join(request.form.get('delay', '').split())[:40] or None,
+            'sort_order': len(get_zones(active_only=False)) + 1,
+            'is_active': True,
+        })
+        log_action('Ajout zone de livraison', name)
+        flash(f'Zone « {name} » ajoutée.', 'success')
+    except Exception:
+        flash("Impossible d'ajouter la zone : lancez d'abord la mise à jour SQL dans Supabase.", 'error')
+    return redirect(url_for('admin_zones'))
+
+
+@app.route('/azawad/livraison/modifier/<zone_id>', methods=['POST'])
+@login_required
+def admin_edit_zone(zone_id):
+    zone = get_zone(zone_id)
+    if not zone:
+        flash('Zone introuvable.', 'error')
+        return redirect(url_for('admin_zones'))
+    if request.form.get('toggle'):
+        active = zone.get('is_active') is not False
+        db.update('delivery_zones', {'is_active': not active}, {'id': zone_id})
+        flash('Zone ' + ('masquée.' if active else 'remise en ligne.'), 'success')
+    else:
+        db.update('delivery_zones', {
+            'fee': max(0, safe_float(request.form.get('fee'), zone.get('fee') or 0)),
+            'delay': ' '.join(request.form.get('delay', '').split())[:40] or None,
+        }, {'id': zone_id})
+        flash(f"Zone « {zone['name']} » mise à jour.", 'success')
+    log_action('Zone de livraison modifiée', zone['name'])
+    return redirect(url_for('admin_zones'))
+
+
+@app.route('/azawad/livraison/supprimer/<zone_id>', methods=['POST'])
+@login_required
+def admin_delete_zone(zone_id):
+    zone = get_zone(zone_id)
+    if zone:
+        db.delete('delivery_zones', {'id': zone_id})
+        log_action('Suppression zone de livraison', zone['name'])
+        flash(f"Zone « {zone['name']} » supprimée.", 'success')
+    return redirect(url_for('admin_zones'))
+
+
+# ============================================================
+#  AVIS CLIENTS (modération)
+# ============================================================
+
+@app.route('/azawad/avis')
+@login_required
+def admin_reviews():
+    try:
+        rows = db.fetch_all('reviews', '*', order=('created_at', False), limit=200) or []
+    except Exception:
+        rows = None
+    names = {}
+    if rows:
+        try:
+            ids = list({r['product_id'] for r in rows})
+            res = get_supabase().table('products').select('id, name, image').in_('id', ids).execute()
+            names = {str(p['id']): p for p in (res.data or [])}
+        except Exception:
+            names = {}
+    pending = [r for r in (rows or []) if not r.get('is_approved')]
+    published = [r for r in (rows or []) if r.get('is_approved')]
+    return render_template('admin/reviews.html', pending=pending, published=published,
+                           products=names, missing_table=rows is None)
+
+
+@app.route('/azawad/avis/<review_id>', methods=['POST'])
+@login_required
+def admin_review_action(review_id):
+    review = db.fetch_one('reviews', '*', {'id': review_id})
+    if not review:
+        flash('Avis introuvable.', 'error')
+        return redirect(url_for('admin_reviews'))
+    action = request.form.get('action')
+    if action == 'approve':
+        db.update('reviews', {'is_approved': True}, {'id': review_id})
+        flash('Avis publié sur le site.', 'success')
+    elif action == 'hide':
+        db.update('reviews', {'is_approved': False}, {'id': review_id})
+        flash('Avis retiré du site.', 'success')
+    elif action == 'delete':
+        db.delete('reviews', {'id': review_id})
+        flash('Avis supprimé.', 'success')
+    refresh_rating(review['product_id'])
+    log_action('Avis client', f"{action} - {review.get('name')} ({review.get('rating')}/5)")
+    return redirect(url_for('admin_reviews'))
+
+
 @app.route('/azawad/reinitialisations')
 @login_required
 def admin_reset_requests():
@@ -1581,7 +1792,19 @@ def cart_view():
 def cart_add(product_id):
     quantity = request.form.get('quantity', 1, type=int) or 1
     quantity = max(1, min(quantity, 20))
-    cart_module.add_to_cart(product_id, quantity)
+    variant_id = (request.form.get('variant_id') or '').strip() or None
+    if not variant_id:
+        try:
+            prod = db.fetch_one('products', 'id, has_variants', {'id': product_id})
+        except Exception:
+            prod = None
+        if prod and prod.get('has_variants'):
+            # Produit à plusieurs versions : le client doit choisir sur la fiche produit
+            if request.headers.get('X-Requested-With') == 'fetch':
+                return jsonify(ok=False, choose=url_for('product_detail', product_id=product_id)), 400
+            flash('Choisissez d\'abord la version (stockage / couleur).', 'info')
+            return redirect(url_for('product_detail', product_id=product_id))
+    cart_module.add_to_cart(product_id, quantity, variant_id)
     if request.headers.get('X-Requested-With') == 'fetch':
         return jsonify(ok=True, count=cart_module.cart_item_count())
     flash('Produit ajouté au panier.', 'success')
@@ -1654,9 +1877,12 @@ def checkout():
     rows = db.fetch_all('customers', filters={'id': current_user.id}, limit=1)
     customer = rows[0] if rows else {}
 
+    zones = get_zones()
+
     def _render(**extra):
         return render_template('public/checkout.html', items=items, total=total, customer=customer,
-                               payment_number=Config.PAYMENT_NUMBER,
+                               payment_number=Config.PAYMENT_NUMBER, zones=zones,
+                               selected_zone=request.form.get('zone_id', ''),
                                payment_methods=Config.PAYMENT_METHODS, **extra)
 
     if request.method == 'POST':
@@ -1674,6 +1900,13 @@ def checkout():
             flash('Veuillez remplir toutes les informations de livraison.', 'error')
             return _render(selected_method=payment_method, notes=notes)
 
+        zone = None
+        if zones:
+            zone = next((z for z in zones if str(z['id']) == request.form.get('zone_id', '')), None)
+            if not zone:
+                flash('Veuillez choisir votre zone de livraison.', 'error')
+                return _render(selected_method=payment_method, notes=notes)
+
         if payment_method not in Config.PAYMENT_METHODS:
             flash('Veuillez choisir un moyen de paiement (Amana ou Nita).', 'error')
             return _render(notes=notes)
@@ -1685,7 +1918,9 @@ def checkout():
 
         order, error = create_order_from_cart(
             current_user.id, items, shipping_name, shipping_phone, shipping_address, notes,
-            payment_method=payment_method, payment_proof=proof_url
+            payment_method=payment_method, payment_proof=proof_url,
+            delivery_zone=zone['name'] if zone else None,
+            delivery_fee=float(zone.get('fee') or 0) if zone else 0
         )
 
         if error:
@@ -1852,7 +2087,9 @@ def customer_login():
             login_user(Customer(row), remember=True)
             update_customer_last_login(row['id'])
             flash('Connexion réussie !', 'success')
-            next_page = request.args.get('next')
+            next_page = request.args.get('next') or ''
+            if not next_page.startswith('/') or next_page.startswith('//'):
+                next_page = ''  # on ne renvoie que vers une page du site
             return redirect(next_page or url_for('customer_profile'))
         else:
             flash('Email ou mot de passe incorrect.', 'error')

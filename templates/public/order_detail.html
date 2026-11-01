@@ -37,6 +37,12 @@
             <strong>{{ "{:,.0f}".format(item.subtotal) }} FCFA</strong>
         </div>
         {% endfor %}
+        {% if order.delivery_zone %}
+        <div class="account-order-row">
+            <span><span data-i18n="delivery_fee">Livraison</span> · {{ order.delivery_zone }}</span>
+            <strong>{{ "{:,.0f}".format(order.delivery_fee or 0) }} FCFA</strong>
+        </div>
+        {% endif %}
         <div class="account-order-row" style="border-bottom:none;">
             <strong data-i18n="cart_total">Total</strong>
             <strong>{{ "{:,.0f}".format(order.total) }} FCFA</strong>

@@ -1,0 +1,72 @@
+{% extends "admin/base.html" %}
+{% block title %}Avis clients{% endblock %}
+
+{% macro stars(n) -%}
+<span class="rv-stars" aria-label="{{ n }} sur 5">{% for i in range(1, 6) %}<i class="fas fa-star {{ '' if i <= n else 'off' }}"></i>{% endfor %}</span>
+{%- endmacro %}
+
+{% macro review_card(r, pending) %}
+{% set p = products.get(r.product_id|string) %}
+<article class="rv-card">
+    <div class="rv-head">
+        <span class="ax-thumb">{% if p and p.image and p.image != 'default.png' %}<img src="{{ p.image|thumb }}" alt="">{% else %}<i class="fas fa-mobile-screen"></i>{% endif %}</span>
+        <div class="ax-row-main">
+            <b>{{ p.name if p else 'Produit supprimé' }}</b>
+            <small>{{ r.name }} · {{ (r.created_at or '')[:10] }}</small>
+        </div>
+        {{ stars(r.rating or 0) }}
+    </div>
+    {% if r.comment %}<p class="rv-text">« {{ r.comment }} »</p>{% else %}<p class="rv-text ax-muted">Note sans commentaire.</p>{% endif %}
+    <div class="rv-actions">
+        <form method="POST" action="{{ url_for('admin_review_action', review_id=r.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% if pending %}
+            <button type="submit" name="action" value="approve" class="btn-admin primary"><i class="fas fa-check"></i> Publier</button>
+            {% else %}
+            <button type="submit" name="action" value="hide" class="btn-admin"><i class="fas fa-eye-slash"></i> Retirer du site</button>
+            {% endif %}
+            <button type="submit" name="action" value="delete" class="btn-admin danger" onclick="return confirm('Supprimer cet avis ?');"><i class="fas fa-trash"></i></button>
+        </form>
+        {% if p %}<a href="{{ url_for('product_detail', product_id=p.id) }}#avis" target="_blank" class="ax-link">Voir sur le site</a>{% endif %}
+    </div>
+</article>
+{% endmacro %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <div>
+        <h1>Avis clients</h1>
+        <span class="breadcrumb">Un avis n'apparaît sur le site qu'après votre accord</span>
+    </div>
+</div>
+
+{% if missing_table %}
+<div class="ax-empty"><i class="fas fa-database"></i>Lancez d'abord la mise à jour SQL dans Supabase pour activer les avis.</div>
+{% else %}
+<section class="admin-card">
+    <div class="admin-card-header"><h3><i class="fas fa-hourglass-half"></i> À valider</h3><small class="ax-muted">{{ pending|length }}</small></div>
+    {% for r in pending %}{{ review_card(r, true) }}{% else %}
+    <p class="ax-empty-line">Aucun avis en attente. 👍</p>
+    {% endfor %}
+</section>
+
+<section class="admin-card">
+    <div class="admin-card-header"><h3><i class="fas fa-star"></i> Publiés</h3><small class="ax-muted">{{ published|length }}</small></div>
+    {% for r in published %}{{ review_card(r, false) }}{% else %}
+    <p class="ax-empty-line">Aucun avis publié pour l'instant.</p>
+    {% endfor %}
+</section>
+{% endif %}
+
+<style>
+.rv-card { padding: 14px 16px; border-bottom: 1px solid rgba(255, 255, 255, .05); }
+.rv-card:last-child { border-bottom: none; }
+.rv-head { display: flex; align-items: center; gap: 12px; }
+.rv-head .ax-thumb img { width: 100%; height: 100%; object-fit: contain; }
+.rv-stars { display: inline-flex; gap: 2px; color: #E8C86E; font-size: .85rem; flex-shrink: 0; }
+.rv-stars .off { color: rgba(255, 255, 255, .15); }
+.rv-text { margin: 10px 0; font-size: .92rem; line-height: 1.5; overflow-wrap: anywhere; }
+.rv-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.rv-actions form { display: flex; gap: 8px; margin: 0; }
+</style>
+{% endblock %}

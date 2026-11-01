@@ -15,6 +15,16 @@
 .pay-number span{flex:1 1 100%;font-size:.85rem;color:var(--text-secondary);}
 .pay-number strong{font-size:1.5rem;letter-spacing:1px;flex:1;}
 .pay-copy{border:none;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer;background:#D4AF37;color:#fff;}
+.zone-list{display:flex;flex-direction:column;gap:8px;}
+.zone-opt{position:relative;cursor:pointer;margin:0;}
+.zone-opt input{position:absolute;opacity:0;pointer-events:none;}
+.zone-opt > span{display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:14px;border:2px solid var(--border);transition:.2s;}
+.zone-opt i{color:#D4AF37;width:18px;text-align:center;}
+.zone-opt b{flex:1;font-weight:700;min-width:0;}
+.zone-opt small{display:block;font-weight:500;color:var(--text-secondary);font-size:.8rem;}
+.zone-opt em{font-style:normal;font-weight:800;white-space:nowrap;}
+.zone-opt input:checked + span{border-color:#D4AF37;background:rgba(212,175,55,.12);}
+.co-label{display:block;font-size:.8rem;color:var(--text-secondary);font-weight:500;}
 </style>
 {% endblock %}
 
@@ -30,18 +40,43 @@
                 <h2 data-i18n="order_summary">Récapitulatif</h2>
                 {% for item in items %}
                 <div class="account-order-row">
-                    <span>{{ item.product.name }} × {{ item.quantity }}</span>
+                    <span>{{ item.product.name }} × {{ item.quantity }}{% if item.label %} <small class="co-label" dir="auto">{{ item.label }}</small>{% endif %}</span>
                     <strong>{{ item.subtotal|fcfa }}</strong>
                 </div>
                 {% endfor %}
+                {% if zones %}
+                <div class="account-order-row">
+                    <span data-i18n="delivery_fee">Livraison</span>
+                    <strong id="coFee" data-i18n="choose_zone_short">À choisir</strong>
+                </div>
+                {% endif %}
                 <div class="account-order-row" style="border-bottom:none;">
                     <strong data-i18n="cart_total">Total</strong>
-                    <strong>{{ total|fcfa }}</strong>
+                    <strong class="co-total">{{ total|fcfa }}</strong>
                 </div>
             </div>
 
             <form method="POST" enctype="multipart/form-data" style="display:contents;">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                {% if zones %}
+                <div class="account-card account-section">
+                    <h2 data-i18n="delivery_zone_title">Zone de livraison</h2>
+                    <p class="pay-help" data-i18n="delivery_zone_help">Choisissez où vous livrer : le prix de la livraison s'ajoute au total.</p>
+                    <div class="zone-list">
+                        {% for z in zones %}
+                        <label class="zone-opt">
+                            <input type="radio" name="zone_id" value="{{ z.id }}" data-fee="{{ (z.fee or 0)|int }}" required
+                                   {% if selected_zone == z.id|string or (zones|length == 1) %}checked{% endif %}>
+                            <span><i class="fas fa-location-dot"></i>
+                                <b><span data-name-fr="{{ z.name }}" data-name-en="{{ z.name_en or z.name }}" data-name-ar="{{ z.name_ar or z.name }}">{{ z.name }}</span>
+                                    {% if z.delay %}<small dir="auto">{{ z.delay }}</small>{% endif %}</b>
+                                <em dir="ltr">{% if (z.fee or 0) > 0 %}{{ z.fee|fcfa }}{% else %}<span data-i18n="free">Gratuit</span>{% endif %}</em></span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
 
                 <div class="account-card account-section">
                     <h2 data-i18n="pay_title">Paiement</h2>
@@ -49,7 +84,7 @@
 
                     <div class="pay-amount">
                         <span data-i18n="pay_amount_label">Montant à envoyer</span>
-                        <strong>{{ total|fcfa }}</strong>
+                        <strong class="co-total">{{ total|fcfa }}</strong>
                     </div>
 
                     <div class="account-field">
@@ -118,6 +153,18 @@
         function done(){var o=btn.textContent;btn.textContent='✓';setTimeout(function(){btn.textContent=o;},1500);}
         if(navigator.clipboard){navigator.clipboard.writeText(t).then(done,done);}else{done();}
     });}
+    // Livraison : le total se met à jour selon la zone choisie
+    var base={{ total|int }}, fee=document.getElementById('coFee');
+    function money(n){return new Intl.NumberFormat('fr-FR').format(Math.round(n)).replace(/\u202f|\u00a0/g,' ')+' FCFA';}
+    function zoneSync(){
+        var z=document.querySelector('input[name=zone_id]:checked');
+        if(!fee) return;
+        var f=z?parseInt(z.dataset.fee,10)||0:0;
+        if(z){fee.removeAttribute('data-i18n');if(f){fee.textContent=money(f);}else{fee.innerHTML='<span data-i18n="free">'+(window.t?t('free','Gratuit'):'Gratuit')+'</span>';}}
+        document.querySelectorAll('.co-total').forEach(function(el){el.textContent=money(base+f);});
+    }
+    document.querySelectorAll('input[name=zone_id]').forEach(function(r){r.addEventListener('change',zoneSync);});
+    zoneSync();
     var inp=document.getElementById('payment_proof'),img=document.getElementById('payProofPreview');
     if(inp&&img){inp.addEventListener('change',function(){
         var f=inp.files&&inp.files[0];

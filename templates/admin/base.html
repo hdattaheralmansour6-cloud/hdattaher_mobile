@@ -19,13 +19,15 @@
     ('admin_products', 'Produits', 'fa-box', ['admin_products', 'admin_add_product', 'admin_edit_product']),
     ('admin_customers', 'Clients', 'fa-users', ['admin_customers']),
     ('admin_categories', 'Catégories', 'fa-layer-group', ['admin_categories']),
+    ('admin_zones', 'Livraison', 'fa-truck-fast', ['admin_zones']),
+    ('admin_reviews', 'Avis clients', 'fa-star', ['admin_reviews']),
     ('admin_banners', 'Bannières', 'fa-images', ['admin_banners', 'admin_add_banner', 'admin_edit_banner']),
     ('admin_reset_requests', 'Codes mot de passe', 'fa-key', ['admin_reset_requests']),
     ('admin_settings', 'Paramètres', 'fa-gear', ['admin_settings']),
     ('admin_logs', 'Journal', 'fa-clipboard-list', ['admin_logs']),
     ('admin_profile', 'Mon profil', 'fa-user-shield', ['admin_profile']),
 ] %}
-{% set more_active = ep in ['admin_categories', 'admin_banners', 'admin_add_banner', 'admin_edit_banner', 'admin_reset_requests', 'admin_settings', 'admin_logs', 'admin_profile'] %}
+{% set more_active = ep in ['admin_categories', 'admin_zones', 'admin_reviews', 'admin_banners', 'admin_add_banner', 'admin_edit_banner', 'admin_reset_requests', 'admin_settings', 'admin_logs', 'admin_profile'] %}
 
 <body class="admin-body ax">
     <!-- ===== Barre du haut (mobile) ===== -->
@@ -52,6 +54,7 @@
                     <i class="fas {{ icon }}"></i> <span>{{ label }}</span>
                     {% if endpoint == 'admin_orders' and pending_orders_count %}<em class="ax-count">{{ pending_orders_count }}</em>{% endif %}
                     {% if endpoint == 'admin_reset_requests' and pending_reset_count %}<em class="ax-count">{{ pending_reset_count }}</em>{% endif %}
+                    {% if endpoint == 'admin_reviews' and pending_reviews_count %}<em class="ax-count">{{ pending_reviews_count }}</em>{% endif %}
                 </a>
                 {% endfor %}
             </nav>
@@ -91,7 +94,7 @@
         <a href="{{ url_for('admin_customers') }}" class="{{ 'on' if ep == 'admin_customers' }}">
             <i class="fas fa-users"></i><span>Clients</span></a>
         <button type="button" class="{{ 'on' if more_active }}" onclick="axSheet(true)">
-            <span class="ax-tab-ic"><i class="fas fa-grip"></i>{% if pending_reset_count %}<em>{{ pending_reset_count }}</em>{% endif %}</span><span>Plus</span></button>
+            <span class="ax-tab-ic"><i class="fas fa-grip"></i>{% if pending_reset_count or pending_reviews_count %}<em>{{ (pending_reset_count or 0) + (pending_reviews_count or 0) }}</em>{% endif %}</span><span>Plus</span></button>
     </nav>
 
     <!-- ===== Menu « Plus » ===== -->
@@ -103,7 +106,8 @@
             {% for endpoint, label, icon, eps in nav[4:] %}
             <a href="{{ url_for(endpoint) }}" class="{{ 'on' if ep in eps }}">
                 <span class="ax-sheet-ic"><i class="fas {{ icon }}"></i>
-                    {% if endpoint == 'admin_reset_requests' and pending_reset_count %}<em>{{ pending_reset_count }}</em>{% endif %}</span>
+                    {% if endpoint == 'admin_reset_requests' and pending_reset_count %}<em>{{ pending_reset_count }}</em>{% endif %}
+                    {% if endpoint == 'admin_reviews' and pending_reviews_count %}<em>{{ pending_reviews_count }}</em>{% endif %}</span>
                 <span>{{ label }}</span>
             </a>
             {% endfor %}

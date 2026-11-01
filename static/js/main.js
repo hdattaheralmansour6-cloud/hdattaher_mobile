@@ -582,6 +582,35 @@ const translations = {
   }
 };
 
+// Versions, zones de livraison, avis clients
+Object.assign(translations.fr, {
+  opt_storage: 'Stockage', opt_color: 'Couleur', choose_version: 'Choisir', variant_out: 'Indisponible dans cette version',
+  delivery_fee: 'Livraison', delivery_next: "Choisie à l'étape suivante", delivery_zone_title: 'Zone de livraison',
+  delivery_zone_help: "Choisissez où vous livrer : le prix de la livraison s'ajoute au total.", choose_zone_short: 'À choisir', free: 'Gratuit',
+  reviews_title: 'Avis clients', reviews_word: 'avis', reviews_none: 'Aucun avis pour le moment. Soyez le premier !',
+  review_write: 'Donner mon avis', review_send: 'Envoyer mon avis', review_placeholder: "Qu'avez-vous pensé du produit ? (facultatif)",
+  review_pending_note: 'Votre avis sera publié après vérification.', review_login: 'Connectez-vous pour donner votre avis',
+  review_thanks: 'Merci, votre avis sur ce produit a bien été reçu.'
+});
+Object.assign(translations.en, {
+  opt_storage: 'Storage', opt_color: 'Color', choose_version: 'Choose', variant_out: 'Unavailable in this version',
+  delivery_fee: 'Delivery', delivery_next: 'Chosen at the next step', delivery_zone_title: 'Delivery area',
+  delivery_zone_help: 'Choose where to deliver: the delivery price is added to the total.', choose_zone_short: 'To choose', free: 'Free',
+  reviews_title: 'Customer reviews', reviews_word: 'reviews', reviews_none: 'No reviews yet. Be the first!',
+  review_write: 'Write a review', review_send: 'Send my review', review_placeholder: 'What did you think of the product? (optional)',
+  review_pending_note: 'Your review will be published after verification.', review_login: 'Log in to write a review',
+  review_thanks: 'Thank you, your review of this product has been received.'
+});
+Object.assign(translations.ar, {
+  opt_storage: 'السعة', opt_color: 'اللون', choose_version: 'اختر', variant_out: 'غير متوفر في هذا الخيار',
+  delivery_fee: 'التوصيل', delivery_next: 'يُحدد في الخطوة التالية', delivery_zone_title: 'منطقة التوصيل',
+  delivery_zone_help: 'اختر مكان التوصيل: يُضاف سعر التوصيل إلى المجموع.', choose_zone_short: 'للاختيار', free: 'مجاني',
+  reviews_title: 'آراء العملاء', reviews_word: 'تقييم', reviews_none: 'لا توجد تقييمات بعد. كن أول من يقيّم!',
+  review_write: 'أضف تقييمك', review_send: 'إرسال التقييم', review_placeholder: 'ما رأيك في المنتج؟ (اختياري)',
+  review_pending_note: 'سيُنشر تقييمك بعد المراجعة.', review_login: 'سجّل الدخول لإضافة تقييم',
+  review_thanks: 'شكرًا، تم استلام تقييمك لهذا المنتج.'
+});
+
 // Traduit tout élément portant data-name-fr / data-name-en / data-name-ar
 // (catégories et produits venant de la base de données) selon la langue active.
 function applyDataNameTranslations() {
@@ -958,15 +987,16 @@ function initQty() {
   document.querySelectorAll('.qty').forEach(box => {
     const input = box.querySelector('input[type=number]');
     if (!input) return;
-    const max = parseInt(box.dataset.max || input.max || '99', 10) || 99;
+    const curMax = () => parseInt(box.dataset.max || input.max || '99', 10) || 99;
     const sync = () => {
-      const v = parseInt(input.value, 10) || 1;
+      const v = parseInt(input.value, 10) || 1, max = curMax();
       box.querySelectorAll('.qty-btn').forEach(b => {
         const step = parseInt(b.dataset.step, 10);
         b.disabled = (step < 0 && v <= 1) || (step > 0 && v >= max);
       });
     };
     box.querySelectorAll('.qty-btn').forEach(b => b.addEventListener('click', () => {
+      const max = curMax();
       const v = Math.min(max, Math.max(1, (parseInt(input.value, 10) || 1) + parseInt(b.dataset.step, 10)));
       if (String(v) === input.value) return;
       input.value = v;
@@ -974,7 +1004,7 @@ function initQty() {
       if (box.classList.contains('qty-auto')) { box.classList.add('is-busy'); box.submit(); }
     }));
     input.addEventListener('change', () => {
-      input.value = Math.min(max, Math.max(1, parseInt(input.value, 10) || 1));
+      input.value = Math.min(curMax(), Math.max(1, parseInt(input.value, 10) || 1));
       sync();
       if (box.classList.contains('qty-auto')) box.submit();
     });

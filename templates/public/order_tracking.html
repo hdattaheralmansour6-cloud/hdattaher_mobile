@@ -69,6 +69,7 @@
             {% for it in items %}
             <li><span>{{ it.product_name }} <small>× {{ it.quantity }}</small></span><b>{{ it.subtotal|fcfa }}</b></li>
             {% endfor %}
+            {% if order.delivery_zone %}<li><span><span data-i18n="delivery_fee">Livraison</span> <small>{{ order.delivery_zone }}</small></span><b>{{ (order.delivery_fee or 0)|fcfa }}</b></li>{% endif %}
         </ul>
         {% endif %}
 
