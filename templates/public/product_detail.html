@@ -258,7 +258,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var hasS = !!document.querySelector('.pd-chip[data-g=s]'), hasC = !!document.querySelector('.pd-chip[data-g=c]');
     var sel = { s: null, c: null };
     var find = function (s, c) { return V.find(function (v) { return (!hasS || v.storage === s) && (!hasC || v.color === c); }); };
-    var first = V.find(function (v) { return v.stock > 0; }) || V[0];
+    // Au départ : la version disponible la moins chère (même prix que sur la carte du produit)
+    var first = V.filter(function (v) { return v.stock > 0; }).sort(function (a, b2) { return a.final_price - b2.final_price; })[0] || V[0];
     sel.s = first.storage; sel.c = first.color;
     var input = document.getElementById('pdVariant'), add = document.querySelector('#pdBuy .pd-add'),
         qtyBox = document.querySelector('#pdBuy .qty'), qty = qtyBox && qtyBox.querySelector('input'),

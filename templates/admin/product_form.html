@@ -84,6 +84,7 @@
                     <label for="fPrice">Prix de vente (FCFA) *</label>
                     <input type="number" name="price" id="fPrice" class="form-control" inputmode="numeric"
                            value="{{ (product.price|int) if product else '' }}" required min="0" step="1">
+                    <small class="ax-muted" id="priceAuto" hidden><i class="fas fa-layer-group"></i> Calculé tout seul : prix de la version la moins chère en stock</small>
                 </div>
                 <div class="form-group">
                     <label for="fOld">Ancien prix (FCFA) <small class="ax-muted">— pour une promo</small></label>
@@ -243,13 +244,31 @@
         d.innerHTML = '<b>' + esc(label) + '</b><button type="button" class="vt-del" aria-label="Retirer"><i class="fas fa-xmark"></i></button>' +
             '<input type="hidden" name="v_storage" value="' + esc(sto) + '"><input type="hidden" name="v_color" value="' + esc(col) + '">' +
             '<div class="vt-fields"><label>Stock<input type="number" name="v_stock" class="form-control" min="0" inputmode="numeric" value="' + esc(stock == null ? 1 : stock) + '"></label>' +
-            '<label>Prix (vide = prix normal)<input type="number" name="v_price" class="form-control" min="0" inputmode="numeric" value="' + esc(price || '') + '" placeholder="' + esc(price_.value || '') + '"></label></div>';
+            '<label>Prix (si différent)<input type="number" name="v_price" class="form-control" min="0" inputmode="numeric" value="' + esc(price || '') + '" placeholder="' + esc(price_.value || '') + '"></label></div>';
         d.querySelector('.vt-del').addEventListener('click', function () { d.remove(); total(); });
         d.querySelector('[name=v_stock]').addEventListener('input', total);
+        d.querySelector('[name=v_price]').addEventListener('input', syncMain);
         vTable.appendChild(d);
     }
     var price_ = document.getElementById('fPrice');
+    // Si chaque version a son prix, le prix de vente = la version la moins chère (rempli tout seul)
+    var priceAuto = document.getElementById('priceAuto');
+    function syncMain() {
+        var rows = hasV.checked ? vTable.querySelectorAll('.vt-row') : [], prices = [];
+        var inStock = [];
+        rows.forEach(function (r) {
+            var v = parseFloat(r.querySelector('[name=v_price]').value);
+            if (v > 0) { prices.push(v); if ((parseInt(r.querySelector('[name=v_stock]').value, 10) || 0) > 0) inStock.push(v); }
+        });
+        var auto = rows.length > 0 && prices.length === rows.length;
+        if (auto) price_.value = Math.min.apply(null, inStock.length ? inStock : prices);
+        price_.readOnly = auto; priceAuto.hidden = !auto;
+        price_.required = !(hasV.checked && prices.length);
+        vTable.querySelectorAll('[name=v_price]').forEach(function (i) { i.placeholder = auto ? '' : (price_.value || ''); });
+        if (typeof promo === 'function') promo();
+    }
     function total() {
+        syncMain();
         var t = 0, n = 0;
         vTable.querySelectorAll('.vt-row').forEach(function (r) {
             var s = parseInt(r.querySelector('[name=v_stock]').value, 10) || 0; t += s; n++;
@@ -271,7 +290,7 @@
     }
     document.getElementById('vGen').addEventListener('click', generate);
     hasV.addEventListener('change', function () {
-        vBox.hidden = !hasV.checked; stockGroup.hidden = hasV.checked;
+        vBox.hidden = !hasV.checked; stockGroup.hidden = hasV.checked; syncMain();
         if (hasV.checked && !vTable.children.length) vS.focus();
     });
     if (VARIANTS.length) {

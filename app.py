@@ -1237,6 +1237,14 @@ def _upload_product_image(file):
 def _prices_from_form():
     """Prix, ancien prix et réduction cohérents (réduction calculée depuis l'ancien prix)."""
     price = max(0, safe_float(request.form.get('price'), 0))
+    # Produit à plusieurs versions avec chacune son prix : le prix affiché = le moins cher
+    variant_rows = _variants_from_form()
+    if variant_rows:
+        own = [r['price'] for r in variant_rows if r['price'] > 0]
+        if own and (len(own) == len(variant_rows) or price <= 0):
+            # de préférence parmi les versions en stock (le prix de la carte = un prix que l'on peut acheter)
+            in_stock = [r['price'] for r in variant_rows if r['price'] > 0 and r['stock'] > 0]
+            price = min(in_stock or own)
     old_price = max(0, safe_float(request.form.get('old_price'), 0))
     discount = max(0, min(99, safe_int(request.form.get('discount'), 0)))
     if old_price > price > 0:
