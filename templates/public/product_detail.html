@@ -26,6 +26,7 @@
         "url": "{{ config.SITE_URL }}/product/{{ product.id }}",
         "priceCurrency": "XOF",
         "price": {{ product.price|tojson }},
+        "itemCondition": "https://schema.org/{{ 'UsedCondition' if product.etat and product.etat != 'neuf' else 'NewCondition' }}",
         "availability": "{% if product.stock and product.stock > 0 %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}"
     }
 }
@@ -91,6 +92,29 @@
                 {% if saving %}<s>{{ product.old_price|fcfa }}</s>{% endif %}
             </div>
             {% if saving %}<div class="pd-save"><i class="fas fa-tag"></i> <span data-i18n="you_save">Vous économisez</span> {{ saving|fcfa }}</div>{% endif %}
+
+            {% if product.etat and product.etat != 'neuf' %}
+            <!-- Téléphone d'occasion -->
+            <div class="pd-used">
+                <div class="pd-used-head">
+                    <span class="pd-used-ic"><i class="fas fa-rotate"></i></span>
+                    <div><b data-i18n="used_title">Téléphone d'occasion</b><small data-i18n="used_checked">Vérifié et testé avant la vente</small></div>
+                </div>
+                <dl class="pd-used-grid">
+                    <div><dt data-i18n="condition">État</dt><dd data-i18n="cond_{{ product.etat }}">{{ ETATS.get(product.etat, '') }}</dd></div>
+                    {% if product.battery_health %}
+                    <div><dt data-i18n="battery_health">Batterie</dt>
+                        <dd><span class="pd-bat"><span style="width:{{ product.battery_health }}%" class="{{ 'ok' if product.battery_health >= 85 else ('mid' if product.battery_health >= 75 else 'low') }}"></span></span> {{ product.battery_health }} %</dd></div>
+                    {% endif %}
+                    <div><dt data-i18n="warranty">Garantie</dt>
+                        <dd>{% if product.warranty_months %}{{ product.warranty_months }} <span data-i18n="months">mois</span>{% else %}<span data-i18n="no_warranty">Sans garantie</span>{% endif %}</dd></div>
+                </dl>
+                {% if product.etat_note %}
+                <p class="pd-used-note"><i class="fas fa-circle-info"></i>
+                    <span data-name-fr="{{ product.etat_note }}" data-name-en="{{ product.etat_note_en or product.etat_note }}" data-name-ar="{{ product.etat_note_ar or product.etat_note }}">{{ product.etat_note }}</span></p>
+                {% endif %}
+            </div>
+            {% endif %}
 
             {% if variants %}
             <!-- Versions (stockage / couleur) -->

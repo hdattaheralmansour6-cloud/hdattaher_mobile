@@ -6,7 +6,8 @@
 {% set cur_brand = current_brand|default('') %}
 {% set is_promo = promo_only|default(false) %}
 {% set cats = all_categories|default([]) %}
-{% set nb_filters = (1 if current_category else 0) + (1 if cur_brand else 0) + (1 if min_price is not none else 0) + (1 if max_price is not none else 0) + (1 if is_promo else 0) %}
+{% set cur_etat = etat|default('') %}
+{% set nb_filters = (1 if current_category else 0) + (1 if cur_brand else 0) + (1 if min_price is not none else 0) + (1 if max_price is not none else 0) + (1 if is_promo else 0) + (1 if cur_etat else 0) %}
 
 <div class="shop">
     <div class="shop-head">
@@ -28,17 +29,22 @@
         {% if current_category %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
         {% if cur_brand %}<input type="hidden" name="brand" value="{{ cur_brand }}">{% endif %}
         {% if is_promo %}<input type="hidden" name="promo" value="1">{% endif %}
+        {% if cur_etat %}<input type="hidden" name="etat" value="{{ cur_etat }}">{% endif %}
         <input type="hidden" name="sort" value="{{ sort }}">
     </form>
 
     <!-- Tri rapide -->
-    {% set base_args = {'search': search or None, 'category': current_category or None, 'brand': cur_brand or None, 'promo': '1' if is_promo else None, 'min_price': min_price, 'max_price': max_price} %}
+    {% set base_args = {'search': search or None, 'category': current_category or None, 'brand': cur_brand or None, 'promo': '1' if is_promo else None, 'min_price': min_price, 'max_price': max_price, 'etat': cur_etat or None} %}
     <div class="chips">
         {% for key, label, i18n in [('newest', 'Nouveautés', 'newest'), ('popular', 'Populaires', 'popular'), ('price_asc', 'Prix ↑', 'price_up'), ('price_desc', 'Prix ↓', 'price_down')] %}
         <a href="{{ url_for('products', sort=key, **base_args) }}" class="chip {{ 'on' if sort == key }}" data-i18n="{{ i18n }}">{{ label }}</a>
         {% endfor %}
         <a href="{{ url_for('products', sort=sort, **dict(base_args, promo=None if is_promo else '1')) }}" class="chip chip-promo {{ 'on' if is_promo }}">
             <i class="fas fa-fire-flame-curved"></i> <span data-i18n="promos">Promos</span></a>
+        <a href="{{ url_for('products', sort=sort, **dict(base_args, etat=None if cur_etat == 'neuf' else 'neuf')) }}" class="chip {{ 'on' if cur_etat == 'neuf' }}">
+            <i class="fas fa-box"></i> <span data-i18n="new_label">Neuf</span></a>
+        <a href="{{ url_for('products', sort=sort, **dict(base_args, etat=None if cur_etat == 'occasion' else 'occasion')) }}" class="chip {{ 'on' if cur_etat == 'occasion' }}">
+            <i class="fas fa-rotate"></i> <span data-i18n="used">Occasion</span></a>
     </div>
 
     <!-- Marques -->
@@ -124,6 +130,15 @@
                 {% for key, label, i18n in [('newest', 'Nouveautés', 'newest'), ('popular', 'Populaires', 'popular'), ('price_asc', 'Prix croissant', 'price_asc'), ('price_desc', 'Prix décroissant', 'price_desc')] %}
                 <label><input type="radio" name="sort" value="{{ key }}" {{ 'checked' if sort == key }}><span data-i18n="{{ i18n }}">{{ label }}</span></label>
                 {% endfor %}
+            </div>
+        </div>
+
+        <div class="sheet-group">
+            <label data-i18n="condition">État</label>
+            <div class="radio-chips">
+                <label><input type="radio" name="etat" value="" {{ 'checked' if not cur_etat }}><span data-i18n="all">Tout</span></label>
+                <label><input type="radio" name="etat" value="neuf" {{ 'checked' if cur_etat == 'neuf' }}><span data-i18n="new_label">Neuf</span></label>
+                <label><input type="radio" name="etat" value="occasion" {{ 'checked' if cur_etat == 'occasion' }}><span data-i18n="used">Occasion</span></label>
             </div>
         </div>
 

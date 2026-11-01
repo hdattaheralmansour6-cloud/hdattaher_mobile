@@ -66,7 +66,8 @@ def create_order_from_cart(customer_id, cart_items, shipping_name, shipping_phon
         line = {
             'order_id': order['id'],
             'product_id': product['id'],
-            'product_name': product['name'] + (f" — {item['label']}" if item.get('label') else ''),
+            'product_name': product['name'] + (f" — {item['label']}" if item.get('label') else '')
+                            + (' (occasion)' if (product.get('etat') or 'neuf') != 'neuf' else ''),
             'quantity': item['quantity'],
             'unit_price': item.get('unit_price', product['price']),
             'subtotal': item['subtotal'],

@@ -810,3 +810,33 @@ a.pc-btn-cart { text-decoration: none; }
 .rv-login, .rv-note { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 16px; border-radius: 14px;
     border: 1.5px dashed var(--border); color: var(--text); font-weight: 600; font-size: .88rem; text-decoration: none; margin: 0; text-align: center; }
 .rv-note i { color: #22C55E; }
+
+/* ============================================================
+   TÉLÉPHONES D'OCCASION
+   ============================================================ */
+.pc-badges { flex-wrap: wrap; }
+.pc-badge-used { background: #0B0B0D; color: #7DD3FC; border: 1px solid rgba(125, 211, 252, .55); gap: 4px; }
+.pc-badge-used i { font-size: .6rem; }
+.pc-used { font-size: .74rem; font-weight: 600; color: #0284C7; margin: 1px 0 2px; }
+[data-theme="dark"] .pc-used { color: #7DD3FC; }
+.pc-used i { font-size: .7rem; }
+
+.pd-used { margin: 18px 0 4px; padding: 14px 16px; border-radius: 18px; border: 1px solid rgba(56, 189, 248, .35);
+    background: linear-gradient(180deg, rgba(56, 189, 248, .08), transparent); }
+.pd-used-head { display: flex; align-items: center; gap: 12px; }
+.pd-used-ic { width: 38px; height: 38px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+    background: rgba(56, 189, 248, .15); color: #0284C7; }
+[data-theme="dark"] .pd-used-ic { color: #7DD3FC; }
+.pd-used-head b { display: block; color: var(--text); font-size: .95rem; }
+.pd-used-head small { color: var(--text-secondary); font-size: .8rem; }
+.pd-used-grid { margin: 12px 0 0; display: flex; flex-direction: column; border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+.pd-used-grid div { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; font-size: .88rem; }
+.pd-used-grid div + div { border-top: 1px solid var(--border); }
+.pd-used-grid dt { color: var(--text-secondary); }
+.pd-used-grid dd { margin: 0; font-weight: 700; color: var(--text); display: inline-flex; align-items: center; gap: 8px; }
+.pd-bat { width: 70px; height: 8px; border-radius: 99px; background: var(--border); overflow: hidden; display: inline-block; }
+.pd-bat span { display: block; height: 100%; border-radius: 99px; }
+.pd-bat .ok { background: #22C55E; } .pd-bat .mid { background: #F59E0B; } .pd-bat .low { background: #EF4444; }
+.pd-used-note { display: flex; gap: 8px; margin: 12px 0 0; font-size: .86rem; line-height: 1.5; color: var(--text); }
+.pd-used-note i { color: #0284C7; margin-top: 3px; }
+[data-theme="dark"] .pd-used-note i { color: #7DD3FC; }

@@ -75,6 +75,52 @@
         </div>
     </section>
 
+    <!-- État : neuf ou occasion -->
+    {% set cur_etat = (product.get('etat') if product else 'neuf') or 'neuf' %}
+    {% set is_used = cur_etat != 'neuf' %}
+    <section class="admin-card">
+        <div class="admin-card-header"><h3><i class="fas fa-certificate"></i> État</h3></div>
+        <div class="admin-card-body">
+            <div class="et-switch" id="etSwitch">
+                <label><input type="radio" name="et_kind" value="neuf" {{ 'checked' if not is_used }}><span><i class="fas fa-box"></i> Neuf</span></label>
+                <label><input type="radio" name="et_kind" value="occasion" {{ 'checked' if is_used }}><span><i class="fas fa-rotate"></i> Occasion</span></label>
+            </div>
+            <input type="hidden" name="etat" id="etatInput" value="{{ cur_etat }}">
+
+            <div id="usedBox" {{ '' if is_used else 'hidden' }}>
+                <div class="form-group">
+                    <label>État du téléphone</label>
+                    <div class="brand-picker" id="etatPicker">
+                        {% for key, label in ETATS.items() %}
+                        <label class="brand-opt"><input type="radio" name="etat_pick" value="{{ key }}" {{ 'checked' if cur_etat == key or (not is_used and loop.index == 2) }}><span>{{ label }}</span></label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="ax-form-2">
+                    <div class="form-group">
+                        <label for="fBat">Batterie (%) <small class="ax-muted">— facultatif</small></label>
+                        <input type="number" name="battery_health" id="fBat" class="form-control" min="1" max="100" inputmode="numeric"
+                               value="{{ (product.get('battery_health') if product else '') or '' }}" placeholder="Ex : 92">
+                    </div>
+                    <div class="form-group">
+                        <label for="fWar">Garantie</label>
+                        <select name="warranty_months" id="fWar" class="form-control">
+                            {% set cur_w = ((product.get('warranty_months') if product else 0) or 0)|int %}
+                            {% for m, t in [(0, 'Sans garantie'), (1, '1 mois'), (3, '3 mois'), (6, '6 mois'), (12, '12 mois')] %}
+                            <option value="{{ m }}" {{ 'selected' if cur_w == m }}>{{ t }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="fNote">À savoir <small class="ax-muted">— petite rayure, accessoires fournis… (traduit automatiquement)</small></label>
+                    <textarea name="etat_note" id="fNote" class="form-control" rows="2" maxlength="300"
+                              placeholder="Ex : Petite rayure au dos, livré avec chargeur.">{{ (product.get('etat_note') if product else '') or '' }}</textarea>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Prix & stock -->
     <section class="admin-card">
         <div class="admin-card-header"><h3><i class="fas fa-tag"></i> Prix & stock</h3></div>
@@ -169,6 +215,13 @@
 .brand-opt input:checked + span { background: var(--admin-gradient); border-color: transparent; color: var(--on-gold); box-shadow: 0 6px 16px rgba(212, 175, 55, .3); }
 .brand-opt-other span { border-style: dashed; }
 .vt-help { display: block; margin-top: 8px; }
+.et-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.et-switch label { margin: 0; cursor: pointer; position: relative; }
+.et-switch input { position: absolute; opacity: 0; pointer-events: none; }
+.et-switch span { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 50px; border-radius: 14px;
+    border: 1.5px solid var(--admin-border); background: var(--admin-bg); font-weight: 700; color: var(--admin-text); }
+.et-switch input:checked + span { background: var(--admin-gradient); color: var(--on-gold); border-color: transparent; }
+#usedBox { margin-top: 16px; }
 .vt { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
 .vt-row { display: grid; grid-template-columns: 1fr auto; gap: 8px 10px; align-items: center; padding: 12px; border-radius: 14px;
     border: 1px solid var(--admin-border); background: var(--admin-bg); }
@@ -222,6 +275,17 @@
     document.querySelectorAll('#stockStepper button').forEach(function (b) {
         b.addEventListener('click', function () { st.value = Math.max(0, (parseInt(st.value, 10) || 0) + parseInt(b.dataset.d, 10)); });
     });
+
+    // ===== Neuf / occasion =====
+    var etatInput = document.getElementById('etatInput'), usedBox = document.getElementById('usedBox');
+    function etatSync() {
+        var used = document.querySelector('input[name=et_kind]:checked').value === 'occasion';
+        usedBox.hidden = !used;
+        var pick = document.querySelector('input[name=etat_pick]:checked');
+        etatInput.value = used ? (pick ? pick.value : 'tres_bon') : 'neuf';
+    }
+    document.querySelectorAll('input[name=et_kind], input[name=etat_pick]').forEach(function (r) { r.addEventListener('change', etatSync); });
+    etatSync();
 
     // ===== Versions (stockage / couleur) =====
     var VARIANTS = {{ (variants or [])|tojson }};

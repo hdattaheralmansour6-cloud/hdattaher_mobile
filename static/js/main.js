@@ -590,7 +590,11 @@ Object.assign(translations.fr, {
   reviews_title: 'Avis clients', reviews_word: 'avis', reviews_none: 'Aucun avis pour le moment. Soyez le premier !',
   review_write: 'Donner mon avis', review_send: 'Envoyer mon avis', review_placeholder: "Qu'avez-vous pensé du produit ? (facultatif)",
   review_pending_note: 'Votre avis sera publié après vérification.', review_login: 'Connectez-vous pour donner votre avis',
-  review_thanks: 'Merci, votre avis sur ce produit a bien été reçu.'
+  review_thanks: 'Merci, votre avis sur ce produit a bien été reçu.',
+  used: 'Occasion', new_label: 'Neuf', used_phones: 'Occasions vérifiées', used_title: "Téléphone d'occasion",
+  used_checked: 'Vérifié et testé avant la vente', condition: 'État', battery_health: 'Batterie', warranty: 'Garantie',
+  months: 'mois', no_warranty: 'Sans garantie', cond_comme_neuf: 'Comme neuf', cond_tres_bon: 'Très bon état',
+  cond_bon: 'Bon état', cond_correct: 'État correct'
 });
 Object.assign(translations.en, {
   opt_storage: 'Storage', opt_color: 'Color', choose_version: 'Choose', variant_out: 'Unavailable in this version',
@@ -599,7 +603,11 @@ Object.assign(translations.en, {
   reviews_title: 'Customer reviews', reviews_word: 'reviews', reviews_none: 'No reviews yet. Be the first!',
   review_write: 'Write a review', review_send: 'Send my review', review_placeholder: 'What did you think of the product? (optional)',
   review_pending_note: 'Your review will be published after verification.', review_login: 'Log in to write a review',
-  review_thanks: 'Thank you, your review of this product has been received.'
+  review_thanks: 'Thank you, your review of this product has been received.',
+  used: 'Used', new_label: 'New', used_phones: 'Checked used phones', used_title: 'Used phone',
+  used_checked: 'Checked and tested before sale', condition: 'Condition', battery_health: 'Battery', warranty: 'Warranty',
+  months: 'months', no_warranty: 'No warranty', cond_comme_neuf: 'Like new', cond_tres_bon: 'Very good',
+  cond_bon: 'Good', cond_correct: 'Fair'
 });
 Object.assign(translations.ar, {
   opt_storage: 'السعة', opt_color: 'اللون', choose_version: 'اختر', variant_out: 'غير متوفر في هذا الخيار',
@@ -608,7 +616,11 @@ Object.assign(translations.ar, {
   reviews_title: 'آراء العملاء', reviews_word: 'تقييم', reviews_none: 'لا توجد تقييمات بعد. كن أول من يقيّم!',
   review_write: 'أضف تقييمك', review_send: 'إرسال التقييم', review_placeholder: 'ما رأيك في المنتج؟ (اختياري)',
   review_pending_note: 'سيُنشر تقييمك بعد المراجعة.', review_login: 'سجّل الدخول لإضافة تقييم',
-  review_thanks: 'شكرًا، تم استلام تقييمك لهذا المنتج.'
+  review_thanks: 'شكرًا، تم استلام تقييمك لهذا المنتج.',
+  used: 'مستعمل', new_label: 'جديد', used_phones: 'هواتف مستعملة مفحوصة', used_title: 'هاتف مستعمل',
+  used_checked: 'تم فحصه واختباره قبل البيع', condition: 'الحالة', battery_health: 'البطارية', warranty: 'الضمان',
+  months: 'أشهر', no_warranty: 'بدون ضمان', cond_comme_neuf: 'كالجديد', cond_tres_bon: 'حالة جيدة جدًا',
+  cond_bon: 'حالة جيدة', cond_correct: 'حالة مقبولة'
 });
 
 // Traduit tout élément portant data-name-fr / data-name-en / data-name-ar

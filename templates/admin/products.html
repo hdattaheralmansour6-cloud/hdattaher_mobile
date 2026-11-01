@@ -38,7 +38,7 @@
         <div class="ax-pbody">
             <div class="ax-ptop">
                 <div class="ax-pname">
-                    {% if p.brand %}<small>{{ p.brand }}</small>{% endif %}
+                    {% if p.brand or (p.etat and p.etat != 'neuf') %}<small>{{ p.brand or '' }}{% if p.etat and p.etat != 'neuf' %} <em class="ax-used">Occasion</em>{% endif %}</small>{% endif %}
                     <a href="{{ url_for('admin_edit_product', product_id=p.id) }}">{{ p.name }}</a>
                 </div>
                 <button type="button" class="ax-more" aria-label="Plus d'actions" data-menu="{{ p.id }}"><i class="fas fa-ellipsis-vertical"></i></button>
@@ -112,6 +112,8 @@
     border: 1px dashed var(--admin-border); color: var(--admin-text); text-decoration: none; }
 .ax-vlink i { color: #E8C86E; }
 .ax-vlink output { font-weight: 800; }
+.ax-used { font-style: normal; font-size: .68rem; font-weight: 800; letter-spacing: 0; text-transform: none; padding: 1px 7px; border-radius: 999px;
+    background: rgba(56, 189, 248, .15); color: #7DD3FC; }
 </style>
 <script>
 (function () {

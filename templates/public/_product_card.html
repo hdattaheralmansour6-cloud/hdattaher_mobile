@@ -11,6 +11,7 @@
 
         <span class="pc-badges">
             {% if p.discount and p.discount > 0 %}<span class="pc-badge pc-badge-promo">-{{ p.discount }}%</span>{% endif %}
+            {% if p.etat and p.etat != 'neuf' %}<span class="pc-badge pc-badge-used"><i class="fas fa-rotate"></i> <span data-i18n="used">Occasion</span></span>{% endif %}
         </span>
 
         {% if p.stock == 0 %}
@@ -31,6 +32,9 @@
         <a href="{{ url_for('product_detail', product_id=p.id) }}" class="pc-name"
            data-name-fr="{{ p.name }}" data-name-en="{{ p.name_en or p.name }}" data-name-ar="{{ p.name_ar or p.name }}">{{ p.name }}</a>
 
+        {% if p.etat and p.etat != 'neuf' %}
+        <div class="pc-used"><span data-i18n="cond_{{ p.etat }}">{{ ETATS.get(p.etat, '') }}</span>{% if p.battery_health %} · <i class="fas fa-battery-three-quarters"></i> {{ p.battery_health }} %{% endif %}</div>
+        {% endif %}
         {% if p.rating_count %}
         <div class="pc-rating"><i class="fas fa-star"></i> {{ '%.1f'|format(p.rating_avg|float) }} <small>({{ p.rating_count }})</small></div>
         {% endif %}

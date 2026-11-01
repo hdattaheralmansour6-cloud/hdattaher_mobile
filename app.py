@@ -468,6 +468,63 @@ def _brand_names():
     return sorted(seen.values(), key=str.lower)
 
 
+# ============================================================
+#  TÉLÉPHONES D'OCCASION
+# ============================================================
+ETATS = {
+    'comme_neuf': 'Comme neuf',
+    'tres_bon': 'Très bon état',
+    'bon': 'Bon état',
+    'correct': 'État correct',
+}
+
+
+@app.context_processor
+def _inject_etats():
+    return {'ETATS': ETATS}
+
+
+def _etat_from_form():
+    """Champs « état » de la fiche produit (neuf ou occasion)."""
+    etat = request.form.get('etat', 'neuf')
+    if etat not in ETATS:
+        return {'etat': 'neuf', 'battery_health': None, 'warranty_months': None,
+                'etat_note': None, 'etat_note_en': None, 'etat_note_ar': None}
+    battery = safe_int(request.form.get('battery_health'), 0)
+    note = ' '.join((request.form.get('etat_note') or '').split())[:300]
+    return {
+        'etat': etat,
+        'battery_health': battery if 1 <= battery <= 100 else None,
+        'warranty_months': max(0, min(36, safe_int(request.form.get('warranty_months'), 0))),
+        'etat_note': note or None,
+        'etat_note_en': auto_translate(note, 'en') if note else None,
+        'etat_note_ar': auto_translate(note, 'ar') if note else None,
+    }
+
+
+def _save_etat(product_id, fields):
+    """Enregistre l'état à part : sans la mise à jour SQL, le produit est quand même enregistré."""
+    try:
+        db.update('products', fields, {'id': product_id})
+        return None
+    except Exception as e:
+        app.logger.warning('Etat %s : %s', product_id, e)
+        if fields.get('etat') != 'neuf':
+            return "L'état « occasion » n'a pas pu être enregistré : lancez d'abord la mise à jour SQL dans Supabase."
+        return None
+
+
+@shop_cached(60)
+def _used_list(limit=8):
+    try:
+        r = get_supabase().table('products').select('*, categories(name)') \
+            .eq('is_active', True).neq('etat', 'neuf') \
+            .order('created_at', desc=True).limit(limit).execute()
+        return _fix_cat_and_image(r.data or [])
+    except Exception:
+        return []
+
+
 @shop_cached(60)
 def _home_data():
     sb = get_supabase()
@@ -498,7 +555,7 @@ def index():
         'total_brands': len(brand_names),
         'happy_clients': 1000,
     }
-    return render_template('public/index.html', latest=data['latest'],
+    return render_template('public/index.html', latest=data['latest'], used=_used_list(),
                            promos=data['promos'], stats=stats, banners=data['banners'],
                            brands=brand_names)
 
@@ -510,31 +567,37 @@ def _clean_search(text, limit=60):
 
 
 @shop_cached(60)
-def _product_list(category_id, search, promo_only, min_price, max_price, brand, sort):
+def _product_list(category_id, search, promo_only, min_price, max_price, brand, sort, etat=''):
     """Produits filtrés et triés (gardés 60 s par combinaison de filtres)."""
     sb = get_supabase()
     # Catégorie « Promotions » = produits en réduction
     promo_cat = next((c for c in get_categories_list() if c.get('name') == 'Promotions'), None)
     promo_category_id = promo_cat['id'] if promo_cat else None
 
-    query = sb.table('products').select('*, categories(name)').eq('is_active', True)
-    if category_id:
-        if category_id == promo_category_id:
+    def build(with_etat):
+        query = sb.table('products').select('*, categories(name)').eq('is_active', True)
+        if category_id:
+            if category_id == promo_category_id:
+                query = query.gt('discount', 0)
+            else:
+                query = query.eq('category_id', category_id)
+        if search:
+            query = query.or_(
+                f'name.ilike.%{search}%,brand.ilike.%{search}%,description.ilike.%{search}%'
+            )
+        if promo_only:
             query = query.gt('discount', 0)
-        else:
-            query = query.eq('category_id', category_id)
-    if search:
-        query = query.or_(
-            f'name.ilike.%{search}%,brand.ilike.%{search}%,description.ilike.%{search}%'
-        )
-    if promo_only:
-        query = query.gt('discount', 0)
-    if min_price is not None:
-        query = query.gte('price', min_price)
-    if max_price is not None:
-        query = query.lte('price', max_price)
-    if brand:
-        query = query.ilike('brand', re.sub(r'[%_\\]', '', brand))
+        if min_price is not None:
+            query = query.gte('price', min_price)
+        if max_price is not None:
+            query = query.lte('price', max_price)
+        if brand:
+            query = query.ilike('brand', re.sub(r'[%_\\]', '', brand))
+        if with_etat == 'neuf':
+            query = query.eq('etat', 'neuf')
+        elif with_etat == 'occasion':
+            query = query.neq('etat', 'neuf')
+        return query
 
     sort_map = {
         'price_asc': ('price', False),
@@ -543,7 +606,12 @@ def _product_list(category_id, search, promo_only, min_price, max_price, brand, 
         'newest': ('created_at', True),
     }
     col, desc = sort_map[sort]
-    return _fix_cat_and_image(query.order(col, desc=desc).execute().data or [])
+    if etat in ('neuf', 'occasion'):
+        try:
+            return _fix_cat_and_image(build(etat).order(col, desc=desc).execute().data or [])
+        except Exception:
+            pass  # colonne « etat » pas encore créée : on ignore ce filtre
+    return _fix_cat_and_image(build('').order(col, desc=desc).execute().data or [])
 
 
 @app.route('/products')
@@ -563,7 +631,10 @@ def products():
         sort = 'newest'
 
     promo_only = request.args.get('promo') == '1'
-    products_list = _product_list(category_id or '', search, promo_only, min_price, max_price, brand, sort)
+    etat = request.args.get('etat', '')
+    if etat not in ('neuf', 'occasion'):
+        etat = ''
+    products_list = _product_list(category_id or '', search, promo_only, min_price, max_price, brand, sort, etat)
     all_categories = get_categories_list()
     all_brands = _brand_names()
 
@@ -573,7 +644,7 @@ def products():
                            all_brands=all_brands,
                            current_category=category_id,
                            current_brand=brand,
-                           search=search, sort=sort, promo_only=promo_only,
+                           search=search, sort=sort, promo_only=promo_only, etat=etat,
                            min_price=min_price, max_price=max_price)
 
 
@@ -1324,6 +1395,9 @@ def admin_add_product():
             'is_new': bool(request.form.get('is_new')),
         })
         problem = _apply_variants(new_product['id'], variant_rows, False) if (new_product and variant_rows) else None
+        etat_fields = _etat_from_form()
+        if new_product and etat_fields['etat'] != 'neuf':
+            problem = _save_etat(new_product['id'], etat_fields) or problem
         log_action('Ajout produit', f'Produit: {name}')
         flash(problem or 'Produit ajouté avec succès!', 'warning' if problem else 'success')
         return redirect(url_for('admin_products'))
@@ -1378,6 +1452,9 @@ def admin_edit_product(product_id):
             'is_active': bool(request.form.get('is_active')),
         }, {'id': product_id})
         problem = _apply_variants(product_id, variant_rows, bool(product.get('has_variants')))
+        etat_fields = _etat_from_form()
+        if etat_fields['etat'] != 'neuf' or (product.get('etat') or 'neuf') != 'neuf':
+            problem = _save_etat(product_id, etat_fields) or problem
         log_action('Modification produit', f'Produit: {name}')
         flash(problem or 'Produit modifié avec succès!', 'warning' if problem else 'success')
         return redirect(url_for('admin_products'))
