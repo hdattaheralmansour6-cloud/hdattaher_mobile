@@ -622,3 +622,8 @@ h1, h2,
 [data-theme="dark"] .fx-chips a { color: #EDE6D3; }
 .fx-tiles a:hover, .fx-chips a:hover { border-color: #D4AF37; background: rgba(212, 175, 55, .12); transform: translateY(-2px); }
 @media (min-width: 901px) { .fx-tiles { grid-template-columns: 1fr; } }
+
+/* Arabe : les prix restent lisibles de gauche à droite (« 305 000 FCFA ») */
+[dir="rtl"] :is(.account-order-row strong, .co-total, .pay-amount strong, .sum-row span:last-child, .sum-total strong, .cart-sub, .cart-unit,
+  .pd-price strong, .pd-price s, .pd-sticky-price strong, .pc-price strong, .pc-price s, .acc-item-price, .acc-total strong, .acc-order-side strong,
+  .track-res-head strong, .track-items b, #coFee) { direction: ltr; unicode-bidi: isolate; }

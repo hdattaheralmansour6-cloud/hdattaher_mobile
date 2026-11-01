@@ -1011,3 +1011,20 @@
 
 [dir="rtl"] .auth-steps li + li::before { right: auto; left: 50%; }
 [dir="rtl"] .acc-btn i.fa-arrow-right { transform: scaleX(-1); }
+
+/* ---------- Revue design : mobile ---------- */
+@media (max-width: 600px) {
+    /* Liste des commandes : numéro sur une ligne entière, montant + statut dessous */
+    .acc-order { display: grid; grid-template-columns: 38px 1fr; column-gap: 12px; row-gap: 4px; align-items: center; }
+    .acc-order-icon { grid-row: 1 / 4; align-self: start; }
+    .acc-order-main { display: contents; }
+    .acc-order-main strong { grid-column: 2; white-space: nowrap; font-size: .92rem; letter-spacing: .01em; }
+    .acc-order-main small { grid-column: 2; white-space: nowrap; }
+    .acc-order-side { grid-column: 2; flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; }
+    .acc-order-arrow { display: none; }
+
+    /* Paiement : moins de marges pour laisser la place au contenu */
+    .account-wrapper.account-wide { padding: 0; margin-top: 24px; }
+    .account-wide .account-card { padding: 22px 16px; }
+}
+.pay-amount strong { white-space: nowrap; }

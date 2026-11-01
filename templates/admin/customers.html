@@ -4,18 +4,15 @@
 {% block admin_content %}
 <div class="admin-header">
     <div>
-        <h1>Comptes Clients</h1>
+        <h1>Clients</h1>
         <span class="breadcrumb">{{ customers|length }} client(s) inscrit(s)</span>
     </div>
 </div>
 
-<div class="admin-card" style="margin-bottom:1.5rem;">
-    <div class="admin-card-body" style="padding:0.8rem 1rem;">
-        <input type="text" id="customerSearch" class="form-control"
-            placeholder="🔍 Rechercher un client (nom, email, téléphone)..."
-            oninput="filterCustomers(this.value)">
-    </div>
-</div>
+<label class="ax-search" style="margin-bottom:14px;">
+    <i class="fas fa-magnifying-glass"></i>
+    <input type="search" id="customerSearch" placeholder="Nom, email ou téléphone…" oninput="filterCustomers(this.value)" autocomplete="off">
+</label>
 
 <div id="customersList">
     {% for c in customers %}

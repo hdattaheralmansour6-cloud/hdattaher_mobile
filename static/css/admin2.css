@@ -335,7 +335,8 @@ a.ax-row:active, a.ax-row:hover { background: rgba(212, 175, 55, .04); }
 .ax-ohero { padding: 18px; box-shadow: inset 0 4px 0 var(--c), 0 8px 24px rgba(0, 0, 0, .35); }
 .ax-ohero-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 18px; }
 .ax-ohero-top small { color: var(--admin-text-sec); font-size: .78rem; }
-.ax-ohero-top h1 { margin: 2px 0; font-size: 1.25rem; overflow-wrap: anywhere; }
+.ax-ohero-top h1 { margin: 2px 0; font-size: 1.05rem; letter-spacing: .01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ax-ohero-top > div:first-child { min-width: 0; }
 .ax-ohero-total { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
 .ax-ohero-total b { font-family: Georgia, serif; font-size: 1.35rem; color: #E8C86E; white-space: nowrap; }
 .ax-steps { list-style: none; margin: 0 0 18px; padding: 0; display: grid; grid-template-columns: repeat(5, 1fr); }

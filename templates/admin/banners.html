@@ -4,68 +4,58 @@
 {% block admin_content %}
 <div class="admin-header">
     <div>
-        <h1>Bannières du carrousel</h1>
+        <h1>Bannières de l'accueil</h1>
         <span class="breadcrumb">{{ banners|length }} bannière(s)</span>
     </div>
     <a href="{{ url_for('admin_add_banner') }}" class="btn-admin primary">
-        <i class="fas fa-plus"></i> Nouvelle bannière
+        <i class="fas fa-plus"></i> Nouvelle
     </a>
 </div>
 
-<div class="admin-card" style="margin-bottom:1.5rem;">
-    <div class="admin-card-body" style="padding:1rem; color:var(--admin-text-sec); font-size:0.9rem;">
-        <i class="fas fa-circle-info"></i>
-        Les bannières actives défilent automatiquement sur la page d'accueil. Utilise "Ordre" pour choisir
-        dans quel sens elles s'enchaînent (le plus petit nombre passe en premier).
-    </div>
-</div>
+<p class="ax-hint"><i class="fas fa-circle-info"></i> Les bannières actives défilent toutes seules sur l'accueil, dans l'ordre (le plus petit chiffre passe en premier).</p>
 
-<div class="admin-card">
-    <div class="admin-card-body" style="padding:0; overflow-x:auto;">
-        <table class="admin-table">
-            <thead>
-                <tr>
-                    <th>Image</th>
-                    <th>Titre</th>
-                    <th>Ordre</th>
-                    <th>Statut</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for b in banners %}
-                <tr>
-                    <td><img src="{{ b.image }}" alt="" style="width:90px; height:50px; object-fit:cover; border-radius:8px;"></td>
-                    <td style="font-weight:600;">{{ b.title or '—' }}</td>
-                    <td>{{ b.sort_order }}</td>
-                    <td>
-                        {% if b.is_active %}
-                        <span style="color:var(--admin-success);"><i class="fas fa-circle-check"></i> Active</span>
-                        {% else %}
-                        <span style="color:var(--admin-text-sec);"><i class="fas fa-circle-pause"></i> Masquée</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        <a href="{{ url_for('admin_edit_banner', banner_id=b.id) }}" class="btn-admin"
-                           style="padding:6px 12px; font-size:0.8rem;"><i class="fas fa-pen"></i></a>
-                        <form method="POST" action="{{ url_for('admin_delete_banner', banner_id=b.id) }}"
-                              onsubmit="return confirm('Supprimer cette bannière ?');" style="display:inline;">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <button type="submit" class="btn-admin danger" style="padding:6px 12px; font-size:0.8rem;">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="5" style="text-align:center; padding:30px; color:var(--admin-text-sec);">
-                        Aucune bannière pour le moment. Ajoutes-en une pour activer le carrousel sur l'accueil.
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+{% if banners %}
+<div class="bn-list">
+    {% for b in banners %}
+    <article class="bn-card {{ '' if b.is_active else 'is-off' }}">
+        <a href="{{ url_for('admin_edit_banner', banner_id=b.id) }}" class="bn-img"><img src="{{ b.image }}" alt="" loading="lazy">
+            <em class="bn-order">{{ b.sort_order or loop.index }}</em></a>
+        <div class="bn-body">
+            <div class="bn-title"><b>{{ b.title or 'Sans titre' }}</b>{% if b.subtitle %}<small>{{ b.subtitle }}</small>{% endif %}</div>
+            <div class="bn-actions">
+                <span class="bn-state">{% if b.is_active %}<i class="fas fa-circle-check"></i> Active{% else %}<i class="fas fa-circle-pause"></i> Masquée{% endif %}</span>
+                <a href="{{ url_for('admin_edit_banner', banner_id=b.id) }}" class="btn-admin"><i class="fas fa-pen"></i> Modifier</a>
+                <form method="POST" action="{{ url_for('admin_delete_banner', banner_id=b.id) }}" onsubmit="return confirm('Supprimer cette bannière ?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn-admin danger" aria-label="Supprimer"><i class="fas fa-trash"></i></button>
+                </form>
+            </div>
+        </div>
+    </article>
+    {% endfor %}
 </div>
+{% else %}
+<div class="ax-empty"><i class="fas fa-images"></i>Aucune bannière pour le moment. Ajoutez-en une pour activer le carrousel de l'accueil.
+    <br><a href="{{ url_for('admin_add_banner') }}" class="btn-admin primary"><i class="fas fa-plus"></i> Nouvelle bannière</a></div>
+{% endif %}
+
+<style>
+.ax-hint { display: flex; gap: 8px; margin: 0 0 14px; color: var(--admin-text-sec); font-size: .86rem; line-height: 1.5; }
+.ax-hint i { color: #D4AF37; margin-top: 3px; }
+.bn-list { display: grid; gap: 12px; }
+@media (min-width: 900px) { .bn-list { grid-template-columns: 1fr 1fr; } }
+.bn-card { background: var(--admin-card); border: 1px solid var(--admin-border); border-radius: var(--admin-radius); overflow: hidden; }
+.bn-card.is-off { opacity: .6; }
+.bn-img { position: relative; display: block; aspect-ratio: 16 / 7; background: #000; }
+.bn-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.bn-order { position: absolute; top: 10px; left: 10px; min-width: 28px; height: 28px; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center;
+    background: rgba(0, 0, 0, .7); border: 1px solid #D4AF37; color: #F1D88A; font-style: normal; font-weight: 800; font-size: .85rem; }
+.bn-body { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 10px; }
+.bn-title b { display: block; font-size: .98rem; }
+.bn-title small { display: block; color: var(--admin-text-sec); font-size: .8rem; margin-top: 2px; }
+.bn-actions { display: flex; align-items: center; gap: 8px; }
+.bn-actions form { margin: 0; }
+.bn-state { margin-right: auto; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-size: .8rem; font-weight: 700; color: #4ADE80; }
+.bn-card.is-off .bn-state { color: var(--admin-text-sec); }
+</style>
 {% endblock %}

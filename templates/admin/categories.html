@@ -4,15 +4,15 @@
 {% block admin_content %}
 <div class="admin-header">
     <div>
-        <h1>Gestion des Catégories</h1><span class="breadcrumb">{{ cats|length }} catégorie(s)</span>
+        <h1>Catégories</h1><span class="breadcrumb">{{ cats|length }} catégorie(s)</span>
     </div>
 </div>
 
-<div class="dashboard-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+<div class="dashboard-grid ct-grid">
     <!-- Ajouter -->
     <div class="admin-card">
         <div class="admin-card-header">
-            <h3><i class="fas fa-plus"></i> Nouvelle Catégorie</h3>
+            <h3><i class="fas fa-plus"></i> Nouvelle catégorie</h3>
         </div>
         <div class="admin-card-body">
             <form method="POST" action="{{ url_for('admin_add_category') }}">
@@ -72,34 +72,21 @@
     <!-- Liste -->
     <div class="admin-card">
         <div class="admin-card-header">
-            <h3><i class="fas fa-layer-group"></i> Catégories</h3>
+            <h3><i class="fas fa-layer-group"></i> Vos catégories</h3><small class="ax-muted">{{ cats|length }}</small>
         </div>
-        <div class="admin-card-body" style="padding:0;">
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>Icône</th>
-                        <th>Nom</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for cat in cats %}
-                    <tr>
-                        <td><i class="{{ cat.icon }}" style="font-size:1.3rem; color:var(--admin-primary);"></i></td>
-                        <td style="font-weight:600;">{{ cat.name }}</td>
-                        <td>
-                            <form method="POST" action="{{ url_for('admin_delete_category', cat_id=cat.id) }}"
-                                onsubmit="return confirm('Supprimer cette catégorie?');">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="btn-admin danger"
-                                    style="padding:6px 12px; font-size:0.8rem;"><i class="fas fa-trash"></i></button>
-                            </form>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="ax-list">
+            {% for cat in cats %}
+            <div class="ax-row ct-row">
+                <span class="ct-ic"><i class="{{ cat.icon or 'fas fa-box' }}"></i></span>
+                <span class="ax-row-main"><b>{{ cat.name }}</b>{% if cat.name_en or cat.name_ar %}<small>{{ cat.name_en or '' }}{% if cat.name_en and cat.name_ar %} · {% endif %}{{ cat.name_ar or '' }}</small>{% endif %}</span>
+                <form method="POST" action="{{ url_for('admin_delete_category', cat_id=cat.id) }}" onsubmit="return confirm('Supprimer la catégorie « {{ cat.name|e }} » ?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="ct-del" aria-label="Supprimer"><i class="fas fa-trash"></i></button>
+                </form>
+            </div>
+            {% else %}
+            <p class="ax-empty-line">Aucune catégorie pour l'instant.</p>
+            {% endfor %}
         </div>
     </div>
 </div>
@@ -135,9 +122,15 @@
     }
 
     /* Icône sélectionnée */
+    .ct-grid { display: grid; gap: 1.2rem; }
+    @media (min-width: 960px) { .ct-grid { grid-template-columns: 1fr 1fr; align-items: start; } }
+    .ct-ic { width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+        background: rgba(212, 175, 55, .1); border: 1px solid rgba(212, 175, 55, .3); color: #E8C86E; font-size: 1.05rem; }
+    .ct-row form { margin: 0; }
+    .ct-del { width: 38px; height: 38px; border-radius: 11px; border: 1px solid rgba(248, 113, 113, .3); background: rgba(248, 113, 113, .08); color: #F87171; cursor: pointer; }
     .icon-picker label:has(input:checked) {
         border-color: var(--admin-primary);
-        background: rgba(108, 99, 255, 0.15);
+        background: rgba(212, 175, 55, 0.15);
         color: var(--admin-primary);
         box-shadow: 0 0 0 1px var(--admin-primary);
     }
