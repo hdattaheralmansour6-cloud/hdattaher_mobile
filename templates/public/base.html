@@ -60,7 +60,7 @@
         }, true);
     </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=27">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}?v=6">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}?v=7">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/shop.css') }}?v=6">
     <!-- CSS dynamique depuis les paramètres admin -->
     <style>
@@ -376,41 +376,30 @@
         <!-- Colonnes -->
         <div class="footer-columns">
             <div class="footer-col">
-                <button type="button" class="footer-col-toggle" onclick="toggleFooterAccordion(this)">
-                    <h4 data-i18n="quick_links">Liens Rapides</h4>
-                    <i class="fas fa-chevron-down footer-col-arrow"></i>
-                </button>
-                <ul class="footer-links footer-accordion-content">
-                    <li><a href="{{ url_for('index') }}" data-i18n="home">Accueil</a></li>
-                    <li><a href="{{ url_for('products') }}" data-i18n="products">Produits</a></li>
-                    <li><a href="{{ url_for('new_arrivals') }}" data-i18n="new_arrivals">Nouveautés</a></li>
-                    <li><a href="{{ url_for('order_tracking') }}" data-i18n="track_order">Suivre ma commande</a></li>
-                    <li><a href="{{ url_for('about') }}" data-i18n="about">À propos</a></li>
-                    <li><a href="{{ url_for('contact') }}" data-i18n="contact">Contact</a></li>
-                </ul>
-            </div>
-            <div class="footer-col">
-                <button type="button" class="footer-col-toggle" onclick="toggleFooterAccordion(this)">
-                    <h4 data-i18n="our_categories">Nos Catégories</h4>
-                    <i class="fas fa-chevron-down footer-col-arrow"></i>
-                </button>
-                <ul class="footer-links footer-accordion-content">
-                    {% for cat in categories %}
-                    <li>
-                        <a href="{{ url_for('products', category=cat.id) }}">
-                            <span data-name-fr="{{ cat.name }}" data-name-en="{{ cat.name_en or cat.name }}" data-name-ar="{{ cat.name_ar or cat.name }}">{{ cat.name }}</span>
-                        </a>
-                    </li>
+                <div class="fx-head"><span class="fx-ic"><i class="fas fa-compass"></i></span><h4 data-i18n="quick_links">Liens Rapides</h4></div>
+                <ul class="fx-tiles">
+                    {% for ep, ic, key, label in [('index', 'fa-house', 'home', 'Accueil'), ('products', 'fa-store', 'products', 'Produits'),
+                                                  ('new_arrivals', 'fa-bolt', 'new_arrivals', 'Nouveautés'), ('order_tracking', 'fa-truck-fast', 'track_order', 'Suivre ma commande'),
+                                                  ('about', 'fa-circle-info', 'about', 'À propos'), ('contact', 'fa-envelope', 'contact', 'Contact')] %}
+                    <li><a href="{{ url_for(ep) }}"><i class="fas {{ ic }}"></i><span data-i18n="{{ key }}">{{ label }}</span></a></li>
                     {% endfor %}
                 </ul>
             </div>
+            {% if categories %}
             <div class="footer-col">
-                <button type="button" class="footer-col-toggle" onclick="toggleFooterAccordion(this)">
-                    <h4 data-i18n="contact_us">Contactez-nous</h4>
-                    <i class="fas fa-chevron-down footer-col-arrow"></i>
-                </button>
+                <div class="fx-head"><span class="fx-ic"><i class="fas fa-layer-group"></i></span><h4 data-i18n="our_categories">Nos Catégories</h4></div>
+                <ul class="fx-chips">
+                    {% for cat in categories %}
+                    <li><a href="{{ url_for('products', category=cat.id) }}"><i class="{{ cat.icon or 'fas fa-box' }}"></i>
+                        <span data-name-fr="{{ cat.name }}" data-name-en="{{ cat.name_en or cat.name }}" data-name-ar="{{ cat.name_ar or cat.name }}">{{ cat.name }}</span></a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            <div class="footer-col">
+                <div class="fx-head"><span class="fx-ic"><i class="fas fa-headset"></i></span><h4 data-i18n="contact_us">Contactez-nous</h4></div>
                 {% set wa_num = (settings.get('whatsapp') or '22791720755')|replace('+', '')|replace(' ', '') %}
-                <ul class="footer-links footer-contact footer-accordion-content">
+                <ul class="footer-links footer-contact">
                     <li><a href="https://wa.me/{{ wa_num }}" target="_blank" rel="noopener">
                         <span class="fc-ic fc-wa"><i class="fab fa-whatsapp"></i></span>
                         <span><small>WhatsApp</small><b dir="ltr">+{{ wa_num }}</b></span></a></li>
