@@ -565,3 +565,39 @@ h1, h2,
   .logo-word small { font-size: .5rem; letter-spacing: .42em; }
 }
 @media (max-width: 400px) { .logo-mark { width: 36px; height: 36px; border-radius: 9.5px; } }
+
+/* ============================================================
+   PIED DE PAGE : contact + barre finale
+   ============================================================ */
+.footer-contact a::before { display: none !important; }
+.footer-contact li { margin-bottom: 10px; }
+.footer-contact a, .footer-contact .fc-row { display: flex !important; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px;
+  border: 1px solid var(--border); background: var(--bg-card); text-decoration: none; transform: none !important; }
+[data-theme="dark"] .footer-contact a, [data-theme="dark"] .footer-contact .fc-row { background: rgba(255, 255, 255, .03); border-color: rgba(212, 175, 55, .18); }
+.footer-contact a:hover { border-color: rgba(212, 175, 55, .55); }
+.fc-ic { width: 38px; height: 38px; border-radius: 11px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(212, 175, 55, .12); color: var(--gold, #D4AF37); font-size: 1rem; }
+.fc-ic.fc-wa { background: rgba(37, 211, 102, .14); color: #25D366; }
+.footer-contact small { display: block; font-size: .7rem; letter-spacing: .08em; text-transform: uppercase; color: var(--text-secondary); }
+.footer-contact b { display: block; font-weight: 600; font-size: .95rem; color: var(--text); }
+[data-theme="dark"] .footer-contact b { color: #F1E7CC; }
+
+.footer-columns .footer-col:last-child { border-bottom: none; }
+.footer-bottom { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 22px 0 26px !important;
+  border-top: 1px solid rgba(212, 175, 55, .22) !important; position: relative; }
+.footer-bottom::before { content: ''; position: absolute; top: -1px; left: 50%; width: 90px; height: 2px; transform: translateX(-50%);
+  background: linear-gradient(90deg, transparent, #D4AF37, transparent); }
+.fb-pay { display: flex; align-items: center; gap: 8px; font-size: .78rem; color: var(--text-secondary); }
+.fb-pay img { height: 26px; border-radius: 6px; background: #fff; padding: 2px 4px; }
+.fb-copy { margin: 0; font-size: .82rem; color: var(--text-secondary); text-align: center; line-height: 1.6; }
+.fb-copy b { font-family: var(--serif); font-weight: 700; letter-spacing: .04em; color: #B8892E; }
+[data-theme="dark"] .fb-copy b { color: #E9CF7E; }
+.fb-dot { margin: 0 6px; color: #D4AF37; }
+.fb-made { margin: 0; font-size: .74rem; color: var(--text-secondary); opacity: .85; }
+.fb-made i { color: #D4AF37; margin-right: 4px; }
+@media (max-width: 768px) {
+  /* laisse la place au bouton WhatsApp flottant et à la barre d'onglets */
+  .footer { padding-bottom: 76px !important; }
+  .fb-copy .fb-dot { display: none; }
+  .fb-copy span[data-i18n] { display: block; }
+}

@@ -263,7 +263,8 @@ def inject_globals():
             pending_orders_count = 0
     return dict(settings=settings, categories=categories, dynamic_css=dynamic_css,
                 cart_count=cart_count, pending_reset_count=pending_reset_count,
-                pending_orders_count=pending_orders_count, pending_reviews_count=pending_reviews_count)
+                pending_orders_count=pending_orders_count, pending_reviews_count=pending_reviews_count,
+                now_year=datetime.now().year)
 
 
 # ============================================================

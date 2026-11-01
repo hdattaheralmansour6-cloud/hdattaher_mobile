@@ -584,6 +584,7 @@ const translations = {
 
 // Versions, zones de livraison, avis clients
 Object.assign(translations.fr, {
+  our_address: 'Adresse', made_in_niger: 'Fièrement basé au Niger',
   opt_storage: 'Stockage', opt_color: 'Couleur', choose_version: 'Choisir', variant_out: 'Indisponible dans cette version',
   delivery_fee: 'Livraison', delivery_next: "Choisie à l'étape suivante", delivery_zone_title: 'Zone de livraison',
   delivery_zone_help: "Choisissez où vous livrer : le prix de la livraison s'ajoute au total.", choose_zone_short: 'À choisir', free: 'Gratuit',
@@ -597,6 +598,7 @@ Object.assign(translations.fr, {
   cond_bon: 'Bon état', cond_correct: 'État correct'
 });
 Object.assign(translations.en, {
+  our_address: 'Address', made_in_niger: 'Proudly based in Niger',
   opt_storage: 'Storage', opt_color: 'Color', choose_version: 'Choose', variant_out: 'Unavailable in this version',
   delivery_fee: 'Delivery', delivery_next: 'Chosen at the next step', delivery_zone_title: 'Delivery area',
   delivery_zone_help: 'Choose where to deliver: the delivery price is added to the total.', choose_zone_short: 'To choose', free: 'Free',
@@ -610,6 +612,7 @@ Object.assign(translations.en, {
   cond_bon: 'Good', cond_correct: 'Fair'
 });
 Object.assign(translations.ar, {
+  our_address: 'العنوان', made_in_niger: 'بكل فخر من النيجر',
   opt_storage: 'السعة', opt_color: 'اللون', choose_version: 'اختر', variant_out: 'غير متوفر في هذا الخيار',
   delivery_fee: 'التوصيل', delivery_next: 'يُحدد في الخطوة التالية', delivery_zone_title: 'منطقة التوصيل',
   delivery_zone_help: 'اختر مكان التوصيل: يُضاف سعر التوصيل إلى المجموع.', choose_zone_short: 'للاختيار', free: 'مجاني',

@@ -60,7 +60,7 @@
         }, true);
     </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=27">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}?v=5">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}?v=6">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/shop.css') }}?v=6">
     <!-- CSS dynamique depuis les paramètres admin -->
     <style>
@@ -409,18 +409,27 @@
                     <h4 data-i18n="contact_us">Contactez-nous</h4>
                     <i class="fas fa-chevron-down footer-col-arrow"></i>
                 </button>
-                <ul class="footer-links footer-accordion-content">
-                    <li><a href="https://wa.me/{{ settings.get('whatsapp','22791720755') }}" target="_blank"><i
-                                class="fab fa-whatsapp" style="color:#25D366;"></i>
-                            {{ settings.get('whatsapp', '+22791720755') }}</a></li>
-                    <li><i class="fas fa-map-marker-alt"></i> {{ settings.get('location', 'Abalak, Niger') }}</li>
+                {% set wa_num = (settings.get('whatsapp') or '22791720755')|replace('+', '')|replace(' ', '') %}
+                <ul class="footer-links footer-contact footer-accordion-content">
+                    <li><a href="https://wa.me/{{ wa_num }}" target="_blank" rel="noopener">
+                        <span class="fc-ic fc-wa"><i class="fab fa-whatsapp"></i></span>
+                        <span><small>WhatsApp</small><b dir="ltr">+{{ wa_num }}</b></span></a></li>
+                    <li><span class="fc-row">
+                        <span class="fc-ic"><i class="fas fa-location-dot"></i></span>
+                        <span><small data-i18n="our_address">Adresse</small><b>{{ settings.get('location') or 'Abalak, Niger' }}</b></span></span></li>
                 </ul>
             </div>
         </div>
 
         <!-- Barre finale -->
         <div class="footer-bottom">
-            &copy; 2026 HDATTAHER MOBILE. <span data-i18n="all_rights">Tous droits réservés</span>.
+            <div class="fb-pay">
+                <span data-i18n="pay_with">Paiement par</span>
+                <img src="{{ url_for('static', filename='img/amana.png') }}" alt="Amana" loading="lazy">
+                <img src="{{ url_for('static', filename='img/nita.png') }}" alt="Nita" loading="lazy">
+            </div>
+            <p class="fb-copy">&copy; {{ now_year|default(2026) }} <b>HDATTAHER MOBILE</b><span class="fb-dot">·</span><span data-i18n="all_rights">Tous droits réservés</span></p>
+            <p class="fb-made"><i class="fas fa-location-dot"></i> <span data-i18n="made_in_niger">Fièrement basé au Niger</span></p>
         </div>
     </footer>
 
@@ -504,7 +513,7 @@
         <i class="fab fa-whatsapp"></i>
     </a>
 
-    <script src="{{ url_for('static', filename='js/main.js') }}?v=36"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}?v=37"></script>
     <script>
         // ============ Mobile Menu ============
         function toggleMobileMenu() {
