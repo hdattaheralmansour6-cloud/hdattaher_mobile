@@ -1675,7 +1675,7 @@ def checkout():
             return _render(selected_method=payment_method, notes=notes)
 
         if payment_method not in Config.PAYMENT_METHODS:
-            flash('Veuillez choisir un moyen de paiement (Amanata ou Nita).', 'error')
+            flash('Veuillez choisir un moyen de paiement (Amana ou Nita).', 'error')
             return _render(notes=notes)
 
         proof_url, proof_error = _save_payment_proof(request.files.get('payment_proof'), current_user.id)

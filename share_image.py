@@ -138,14 +138,14 @@ def _photo_panel(img, box, photo_bytes, radius=34):
 
 
 def _pay_logos(img, x, y, h=52, label=True):
-    """Logos Amanata et Nita sur des petites cartes blanches. Retourne la largeur utilisée."""
+    """Logos Amana et Nita sur des petites cartes blanches. Retourne la largeur utilisée."""
     d = ImageDraw.Draw(img)
     cx = x
     if label:
         lf = _font(24, italic=True)
         d.text((cx, y + h / 2), 'Paiement', font=lf, fill=GREY, anchor='lm')
         cx += int(d.textlength('Paiement', font=lf)) + 14
-    for name in ('amanata', 'nita'):
+    for name in ('amana', 'nita'):
         try:
             logo = Image.open(os.path.join(_IMG_DIR, name + '.png')).convert('RGB')
         except Exception:

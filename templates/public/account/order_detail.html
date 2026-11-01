@@ -94,7 +94,7 @@
             <div class="acc-pay">
                 <img src="{{ url_for('static', filename='img/' ~ order.payment_method|lower ~ '.png') }}" alt="">
                 <div>
-                    <strong>{{ order.payment_method }}</strong>
+                    <strong>{{ order.payment_method|replace('Amanata','Amana') }}</strong>
                     <small data-i18n="receipt_sent">Reçu de transfert envoyé</small>
                 </div>
             </div>

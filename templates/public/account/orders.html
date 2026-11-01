@@ -26,7 +26,7 @@
                 <div class="acc-order-main">
                     <strong>#{{ order.order_number }}</strong>
                     <small>{{ order.created_at[:10] if order.created_at else '' }}
-                        {% if order.payment_method %}· {{ order.payment_method }}{% endif %}</small>
+                        {% if order.payment_method %}· {{ order.payment_method|replace('Amanata','Amana') }}{% endif %}</small>
                 </div>
                 <div class="acc-order-side">
                     <strong>{{ order.total|fcfa }}</strong>

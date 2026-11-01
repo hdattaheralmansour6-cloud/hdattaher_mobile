@@ -90,7 +90,7 @@ def generate_invoice_pdf(order, items, settings=None):
     status_key = str(order.get('status') or '').lower()
     st_label, st_fg, st_bg = STATUS_LABELS.get(
         status_key, (order.get('status') or '—', '#374151', '#E5E7EB'))
-    method = order.get('payment_method') or ''
+    method = (order.get('payment_method') or '').replace('Amanata', 'Amana')
 
     def style(name, **kw):
         base = dict(fontName='Helvetica', fontSize=9.5, leading=13, textColor=TEXT)

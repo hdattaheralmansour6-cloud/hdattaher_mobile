@@ -66,7 +66,7 @@ class Config:
 
     # Paiement par transfert d'argent mobile (le client envoie le reçu en capture d'écran)
     PAYMENT_NUMBER = '91720755'
-    PAYMENT_METHODS = ('Amanata', 'Nita')
+    PAYMENT_METHODS = ('Amana', 'Nita')
 
     # --- Sessions sécurisées ---
     SESSION_COOKIE_HTTPONLY = True

@@ -46,7 +46,7 @@
         </a>
         <div class="ax-oinfo">
             {% if order.payment_method %}
-            <span class="ax-tag"><img src="{{ url_for('static', filename='img/' ~ order.payment_method|lower ~ '.png') }}" alt="">{{ order.payment_method }}</span>
+            <span class="ax-tag"><img src="{{ url_for('static', filename='img/' ~ order.payment_method|lower ~ '.png') }}" alt="">{{ order.payment_method|replace('Amanata','Amana') }}</span>
             {% endif %}
             {% if order.payment_proof %}<span class="ax-tag ax-tag-ok"><i class="fas fa-receipt"></i> Reçu joint</span>
             {% else %}<span class="ax-tag ax-tag-warn"><i class="fas fa-circle-exclamation"></i> Pas de reçu</span>{% endif %}

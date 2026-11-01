@@ -110,7 +110,7 @@
         <div class="admin-card-body">
             <div class="ax-pay">
                 {% if order.payment_method %}<img src="{{ url_for('static', filename='img/' ~ order.payment_method|lower ~ '.png') }}" alt="">{% endif %}
-                <div><b>{{ order.payment_method or 'Non renseigné' }}</b><small>Montant attendu : {{ order.total|fcfa }}</small></div>
+                <div><b>{{ (order.payment_method or 'Non renseigné')|replace('Amanata','Amana') }}</b><small>Montant attendu : {{ order.total|fcfa }}</small></div>
             </div>
             {% if order.payment_proof %}
             <a href="{{ order.payment_proof }}" target="_blank" rel="noopener" class="ax-receipt">
