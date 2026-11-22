@@ -34,6 +34,28 @@
                 <input type="file" name="image" id="imageInput" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
             </label>
             <small class="ax-muted">La photo est automatiquement redressée, réduite et allégée pour un site plus rapide.</small>
+
+            {% set extras = (product.get('extra_images') if product else None) or [] %}
+            <div class="xp-head">
+                <b>Autres photos</b><small class="ax-muted"><span id="xpCount">{{ extras|length }}</span> / 7 · dos, côtés, écran allumé, boîte…</small>
+            </div>
+            <div class="xp-grid" id="xpGrid">
+                {% for u in extras %}
+                <div class="xp-item">
+                    <img src="{{ u|thumb }}" data-full="{{ u }}" alt="" onerror="if(this.dataset.full&&this.src!==this.dataset.full)this.src=this.dataset.full">
+                    <input type="hidden" name="keep_photo" value="{{ u }}">
+                    <span class="xp-tools">
+                        <button type="button" class="xp-left" aria-label="Avancer"><i class="fas fa-chevron-left"></i></button>
+                        <button type="button" class="xp-del" aria-label="Retirer"><i class="fas fa-trash"></i></button>
+                    </span>
+                </div>
+                {% endfor %}
+                <label class="xp-add" id="xpAdd">
+                    <i class="fas fa-plus"></i><span>Ajouter</span>
+                    <input type="file" name="extra_photos" id="xpInput" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden>
+                </label>
+            </div>
+            <small class="ax-muted xp-help">Vous pouvez en choisir plusieurs d'un coup. La flèche avance une photo, la poubelle la retire.</small>
         </div>
     </section>
 
@@ -215,6 +237,19 @@
 .brand-opt input:checked + span { background: var(--admin-gradient); border-color: transparent; color: var(--on-gold); box-shadow: 0 6px 16px rgba(212, 175, 55, .3); }
 .brand-opt-other span { border-style: dashed; }
 .vt-help { display: block; margin-top: 8px; }
+.xp-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 18px 0 10px; flex-wrap: wrap; }
+.xp-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.xp-item, .xp-add { position: relative; aspect-ratio: 1; border-radius: 14px; overflow: hidden; border: 1px solid var(--admin-border); background: #fff; }
+.xp-item img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.xp-item.is-new::after { content: 'Nouvelle'; position: absolute; left: 4px; top: 4px; font-size: .6rem; font-weight: 800; padding: 2px 6px; border-radius: 6px; background: #D4AF37; color: #111; }
+.xp-tools { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; padding: 4px; background: linear-gradient(transparent, rgba(0,0,0,.6)); }
+.xp-tools button { width: 30px; height: 30px; border-radius: 9px; border: none; background: rgba(11,11,13,.75); color: #fff; font-size: .75rem; cursor: pointer; }
+.xp-tools .xp-del { color: #F87171; }
+.xp-item:first-child .xp-left { visibility: hidden; }
+.xp-add { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; background: var(--admin-bg); border-style: dashed; color: var(--admin-text-sec); font-size: .8rem; font-weight: 600; }
+.xp-add i { font-size: 1.2rem; color: #E8C86E; }
+.xp-add.is-full { display: none; }
+.xp-help { display: block; margin-top: 8px; }
 .et-switch { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .et-switch label { margin: 0; cursor: pointer; position: relative; }
 .et-switch input { position: absolute; opacity: 0; pointer-events: none; }
@@ -251,6 +286,41 @@
         r.onload = function (e) { prev.src = e.target.result; prev.hidden = false; box.classList.add('has-img'); };
         r.readAsDataURL(input.files[0]);
     });
+
+    // Autres photos : aperçu, ordre, suppression
+    var xpGrid = document.getElementById('xpGrid'), xpAdd = document.getElementById('xpAdd'), xpInput = document.getElementById('xpInput'), xpCount = document.getElementById('xpCount');
+    function xpSync() {
+        var n = xpGrid.querySelectorAll('.xp-item').length, picked = xpInput.files ? xpInput.files.length : 0;
+        var kept = xpGrid.querySelectorAll('.xp-item:not(.is-new)').length;
+        xpCount.textContent = n; xpAdd.classList.toggle('is-full', kept + picked >= 7 || n >= 7);
+    }
+    xpGrid.addEventListener('click', function (e) {
+        var b = e.target.closest('button'); if (!b) return;
+        var item = b.closest('.xp-item');
+        if (b.classList.contains('xp-del')) {
+            if (item.classList.contains('is-new')) { xpInput.value = ''; xpGrid.querySelectorAll('.xp-item.is-new').forEach(function (x) { x.remove(); }); }
+            else item.remove();
+        } else if (b.classList.contains('xp-left') && item.previousElementSibling) {
+            xpGrid.insertBefore(item, item.previousElementSibling);
+        }
+        xpSync();
+    });
+    xpInput.addEventListener('change', function () {
+        xpGrid.querySelectorAll('.xp-item.is-new').forEach(function (x) { x.remove(); });
+        var kept = xpGrid.querySelectorAll('.xp-item').length, room = 7 - kept;
+        if (xpInput.files.length > room) {
+            alert('Vous pouvez ajouter encore ' + room + ' photo(s). Choisissez-en moins.');
+            xpInput.value = ''; xpSync(); return;
+        }
+        Array.prototype.forEach.call(xpInput.files, function (f) {
+            var d = document.createElement('div'); d.className = 'xp-item is-new';
+            d.innerHTML = '<img alt=""><span class="xp-tools"><span></span><button type="button" class="xp-del" aria-label="Retirer"><i class="fas fa-trash"></i></button></span>';
+            var r = new FileReader(); r.onload = function (ev) { d.querySelector('img').src = ev.target.result; }; r.readAsDataURL(f);
+            xpGrid.insertBefore(d, xpAdd);
+        });
+        xpSync();
+    });
+    xpSync();
 
     // Réduction calculée automatiquement
     var price = document.getElementById('fPrice'), old = document.getElementById('fOld'), disc = document.getElementById('fDisc'), hint = document.getElementById('promoHint');

@@ -1306,6 +1306,39 @@ def _upload_product_image(file):
     return _upload_image_field(file, 1400, '', True)
 
 
+MAX_EXTRA_PHOTOS = 7   # + la photo principale = 8 photos
+
+
+def _extra_photos_from_form(current):
+    """Autres photos : celles gardées (dans l'ordre affiché) + les nouvelles envoyées."""
+    current = [u for u in (current or []) if isinstance(u, str)]
+    keep = [u for u in request.form.getlist('keep_photo') if u in current]
+    for f in request.files.getlist('extra_photos'):
+        if len(keep) >= MAX_EXTRA_PHOTOS:
+            break
+        url = _upload_product_image(f)
+        if url and not url.startswith('http'):
+            try:
+                url = get_supabase().storage.from_('product-images').get_public_url(url)
+            except Exception:
+                url = None
+        if url:
+            keep.append(url)
+    return keep[:MAX_EXTRA_PHOTOS]
+
+
+def _save_extra_photos(product_id, photos, before):
+    """Enregistre à part : sans la mise à jour SQL, le produit est quand même enregistré."""
+    if list(photos) == list(before or []):
+        return None
+    try:
+        db.update('products', {'extra_images': photos}, {'id': product_id})
+        return None
+    except Exception as e:
+        app.logger.warning('Photos %s : %s', product_id, e)
+        return "Les autres photos n'ont pas pu être enregistrées : lancez d'abord la mise à jour SQL dans Supabase."
+
+
 def _prices_from_form():
     """Prix, ancien prix et réduction cohérents (réduction calculée depuis l'ancien prix)."""
     price = max(0, safe_float(request.form.get('price'), 0))
@@ -1396,6 +1429,8 @@ def admin_add_product():
             'is_new': bool(request.form.get('is_new')),
         })
         problem = _apply_variants(new_product['id'], variant_rows, False) if (new_product and variant_rows) else None
+        if new_product:
+            problem = _save_extra_photos(new_product['id'], _extra_photos_from_form([]), []) or problem
         etat_fields = _etat_from_form()
         if new_product and etat_fields['etat'] != 'neuf':
             problem = _save_etat(new_product['id'], etat_fields) or problem
@@ -1453,6 +1488,8 @@ def admin_edit_product(product_id):
             'is_active': bool(request.form.get('is_active')),
         }, {'id': product_id})
         problem = _apply_variants(product_id, variant_rows, bool(product.get('has_variants')))
+        problem = _save_extra_photos(product_id, _extra_photos_from_form(product.get('extra_images')),
+                                     product.get('extra_images')) or problem
         etat_fields = _etat_from_form()
         if etat_fields['etat'] != 'neuf' or (product.get('etat') or 'neuf') != 'neuf':
             problem = _save_etat(product_id, etat_fields) or problem

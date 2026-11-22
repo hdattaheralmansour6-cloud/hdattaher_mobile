@@ -36,6 +36,7 @@
 {% block content %}
 {% set wa = settings.get('whatsapp', '22791720755')|replace('+', '')|replace(' ', '') %}
 {% set has_img = product.image and product.image != 'default.png' %}
+{% set photos = ([product.image] if has_img else []) + ((product.extra_images or []) if product.extra_images is iterable and product.extra_images is not string else []) %}
 {% set in_stock = product.stock and product.stock > 0 %}
 {% set saving = (product.old_price - product.price) if (product.old_price and product.old_price > product.price) else 0 %}
 {% set storages = [] %}{% set colors = [] %}
@@ -58,8 +59,19 @@
 
     <div class="pd-grid">
         <!-- Photo -->
+        <div class="pd-gallery">
         <div class="pd-media">
-            {% if has_img %}
+            {% if photos|length > 1 %}
+            <div class="pd-track" id="pdTrack">
+                {% for u in photos %}
+                <button type="button" class="pd-slide" onclick="openZoom(this.querySelector('img').src)" aria-label="Agrandir la photo {{ loop.index }}">
+                    <img src="{{ u }}" alt="{{ product.name }} — photo {{ loop.index }}" {{ 'loading=lazy' if not loop.first }}>
+                </button>
+                {% endfor %}
+            </div>
+            <span class="pd-zoom-hint"><i class="fas fa-expand"></i></span>
+            <span class="pd-count" id="pdCount">1 / {{ photos|length }}</span>
+            {% elif has_img %}
             <button type="button" class="pd-img-btn" onclick="openZoom(this.querySelector('img').src)" aria-label="Agrandir">
                 <img src="{{ product.image }}" alt="{{ product.name }}">
                 <span class="pd-zoom-hint"><i class="fas fa-expand"></i></span>
@@ -76,6 +88,15 @@
                     <i class="fas fa-share-nodes"></i></button>
             </div>
             {% if product.discount and product.discount > 0 %}<span class="pd-discount">-{{ product.discount }}%</span>{% endif %}
+        </div>
+        {% if photos|length > 1 %}
+        <div class="pd-thumbs" id="pdThumbs">
+            {% for u in photos %}
+            <button type="button" class="pd-thumb {{ 'on' if loop.first }}" data-i="{{ loop.index0 }}" aria-label="Photo {{ loop.index }}">
+                <img src="{{ u|thumb }}" data-full="{{ u }}" alt="" loading="lazy" onerror="if(this.dataset.full&&this.src!==this.dataset.full)this.src=this.dataset.full"></button>
+            {% endfor %}
+        </div>
+        {% endif %}
         </div>
 
         <!-- Infos -->
@@ -336,6 +357,27 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     render();
 });
+</script>
+{% endif %}
+
+{% if photos|length > 1 %}
+<script>
+(function () {
+    var track = document.getElementById('pdTrack'), thumbs = document.querySelectorAll('.pd-thumb'), count = document.getElementById('pdCount'), n = thumbs.length;
+    if (!track) return;
+    var cur = 0;
+    function idx() { return Math.round(Math.abs(track.scrollLeft) / track.clientWidth); }
+    function mark(i) {
+        cur = i; count.textContent = (i + 1) + ' / ' + n;
+        thumbs.forEach(function (t, k) { t.classList.toggle('on', k === i); });
+        var t = thumbs[i]; if (t && t.scrollIntoView) t.parentNode.scrollTo({ left: t.offsetLeft - 8, behavior: 'smooth' });
+    }
+    var raf; track.addEventListener('scroll', function () { cancelAnimationFrame(raf); raf = requestAnimationFrame(function () { var i = idx(); if (i !== cur) mark(i); }); }, { passive: true });
+    thumbs.forEach(function (t) { t.addEventListener('click', function () {
+        var i = +t.dataset.i, rtl = getComputedStyle(track).direction === 'rtl';
+        track.scrollTo({ left: (rtl ? -1 : 1) * i * track.clientWidth, behavior: 'smooth' }); mark(i);
+    }); });
+})();
 </script>
 {% endif %}
 

@@ -552,5 +552,10 @@ CREATE INDEX IF NOT EXISTS idx_products_etat ON products(etat);
 
 
 -- ============================================================
+-- PLUSIEURS PHOTOS PAR PRODUIT
+-- ============================================================
+ALTER TABLE products ADD COLUMN IF NOT EXISTS extra_images JSONB NOT NULL DEFAULT '[]'::jsonb;
+
+-- ============================================================
 -- ✅ TERMINÉ ! Votre base de données est prête.
 -- ============================================================

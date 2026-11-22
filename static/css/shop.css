@@ -840,3 +840,21 @@ a.pc-btn-cart { text-decoration: none; }
 .pd-used-note { display: flex; gap: 8px; margin: 12px 0 0; font-size: .86rem; line-height: 1.5; color: var(--text); }
 .pd-used-note i { color: #0284C7; margin-top: 3px; }
 [data-theme="dark"] .pd-used-note i { color: #7DD3FC; }
+
+/* ============================================================
+   GALERIE DE PHOTOS (fiche produit)
+   ============================================================ */
+.pd-track { position: absolute; inset: 0; display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; direction: ltr; }
+.pd-track::-webkit-scrollbar { display: none; }
+.pd-slide { position: relative; flex: 0 0 100%; height: 100%; scroll-snap-align: center; border: none; background: none; padding: 0; cursor: zoom-in; }
+.pd-slide img { position: absolute; top: 11%; left: 11%; width: 78%; height: 78%; max-width: none; object-fit: contain; filter: drop-shadow(0 18px 24px rgba(0, 0, 0, .3)); }
+.pd-count { position: absolute; right: 14px; bottom: 14px; padding: 4px 10px; border-radius: 999px; background: rgba(11, 11, 13, .6); color: #F1D88A; font-size: .75rem; font-weight: 700; font-variant-numeric: tabular-nums; pointer-events: none; }
+.pd-media > .pd-zoom-hint { pointer-events: none; }
+.pd-thumbs { display: flex; gap: 8px; overflow-x: auto; padding: 10px 2px 2px; scrollbar-width: none; }
+.pd-thumbs::-webkit-scrollbar { display: none; }
+.pd-thumb { flex: 0 0 62px; height: 62px; border-radius: 14px; padding: 4px; border: 1.5px solid var(--border); background: #fff; cursor: pointer; opacity: .7; transition: opacity .15s, border-color .15s; }
+.pd-thumb img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.pd-thumb.on { opacity: 1; border-color: var(--gold, #D4AF37); box-shadow: 0 0 0 1px var(--gold, #D4AF37); }
+[dir="rtl"] .pd-count { right: auto; left: 14px; }
+.pd-gallery { min-width: 0; }
+@media (min-width: 900px) { .pd-gallery { position: sticky; top: 96px; } .pd-gallery .pd-media { position: relative; top: auto; } }
