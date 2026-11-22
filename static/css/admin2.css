@@ -523,3 +523,12 @@ a.ax-row:active, a.ax-row:hover { background: rgba(212, 175, 55, .04); }
 .ax-install-go.ready { animation: axReady 1s ease-in-out 3; }
 @keyframes axPulse { 50% { opacity: .55; } }
 @keyframes axReady { 50% { transform: scale(1.08); box-shadow: 0 0 0 6px rgba(212, 175, 55, .25); } }
+
+.ax-top-install { width: auto; padding: 0 12px; gap: 6px; margin-right: 8px; font: inherit; font-weight: 800; font-size: .8rem; cursor: pointer;
+  color: #E8C86E; border-color: rgba(212, 175, 55, .5); background: rgba(212, 175, 55, .1); }
+.ax-top-install[hidden] { display: none; }
+@media (min-width: 900px) { .ax-top-install { display: none; } }
+.ax-app-card { display: flex; align-items: center; gap: 14px; }
+.ax-app-card img { width: 56px; height: 56px; border-radius: 14px; flex: none; }
+.ax-app-card div { flex: 1; min-width: 0; }
+.ax-app-card .btn-admin { width: auto; flex: none; margin: 0; }

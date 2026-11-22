@@ -17,7 +17,7 @@
     <title>{% block title %}Admin{% endblock %} - HDATTAHER MOBILE</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v=3">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin2.css') }}?v=8">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin2.css') }}?v=9">
 </head>
 
 {% set ep = request.endpoint or '' %}
@@ -56,6 +56,8 @@
             <b>{% block top_title %}{{ self.title() }}{% endblock %}</b>
             <small>Espace admin</small>
         </div>
+        <button type="button" class="ax-top-btn ax-top-install" data-ax-install hidden aria-label="Installer l'application">
+            <i class="fas fa-download"></i><span>App</span></button>
         <a href="{{ url_for('admin_add_product') }}" class="ax-top-btn ax-top-add" aria-label="Nouveau produit">
             <i class="fas fa-plus"></i></a>
     </header>
@@ -226,16 +228,27 @@
         var box = document.getElementById('axInstall'), help = document.getElementById('axInstallHelp');
         if (standalone || !box) return;
         var closed = 0; try { closed = +localStorage.getItem('ax_install_closed') || 0; } catch (e) {}
-        if (Date.now() - closed < 7 * 864e5) return;
+        var recentlyClosed = Date.now() - closed < 864e5;   // la barre revient seule après 1 jour
+        // Boutons « Installer » toujours disponibles (en haut + page Profil)
+        document.querySelectorAll('[data-ax-install]').forEach(function (b) {
+            b.hidden = false;
+            b.addEventListener('click', function () {
+                box.hidden = false;
+                document.getElementById('axInstallGo').click();
+            });
+        });
         var ua = navigator.userAgent, mobile = /android|iphone|ipad|ipod/i.test(ua) || (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
         var isIOS = /iphone|ipad|ipod/i.test(ua) || (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
         var isChrome = /Chrome\/\d+/.test(ua) && !/SamsungBrowser|OPR|Opera|EdgA|PHX|Phoenix|UCBrowser|MiuiBrowser|HeyTap|VivoBrowser|Firefox|YaBrowser|wv\)/.test(ua);
         help.querySelector('[data-os="ios"]').hidden = !isIOS;
         help.querySelector('[data-os="android"]').hidden = isIOS;
         help.querySelector('[data-notchrome]').hidden = isIOS || isChrome;
-        function show() { box.hidden = false; }
+        function show() { if (!recentlyClosed) box.hidden = false; }
         document.addEventListener('hm-bip', show);
-        window.addEventListener('appinstalled', function () { box.hidden = true; help.hidden = true; });
+        window.addEventListener('appinstalled', function () {
+            box.hidden = true; help.hidden = true;
+            document.querySelectorAll('[data-ax-install]').forEach(function (b) { b.hidden = true; });
+        });
         if (mobile || window.__hmBip) setTimeout(show, 800);
         var go = document.getElementById('axInstallGo'), sub = document.getElementById('axInstallSub');
         var waiting = false, waitTimer = null;
