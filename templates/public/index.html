@@ -6,6 +6,36 @@
 {% set wa = settings.get('whatsapp', '22791720755')|replace('+', '')|replace(' ', '') %}
 <div class="home">
 
+    {% if stories %}
+    <!-- ===== Stories (comme les statuts WhatsApp) ===== -->
+    <div class="sto-row" id="stoRow" aria-label="Stories">
+        {% for st in stories %}
+        <button type="button" class="sto-item" data-i="{{ loop.index0 }}" data-id="{{ st.id }}">
+            <span class="sto-ring"><span class="sto-in"><span class="sto-img">
+                {% if st.type == 'video' %}{% if st.product and st.product.image %}<img src="{{ st.product.image|thumb }}" alt="" loading="lazy">{% else %}<i class="fas fa-play"></i>{% endif %}
+                {% else %}<img src="{{ st.media }}" alt="" loading="lazy">{% endif %}
+            </span></span></span>
+            <span class="sto-lab">{{ st.label }}</span>
+        </button>
+        {% endfor %}
+    </div>
+    <script type="application/json" id="stoData">{{ stories|tojson }}</script>
+    <div class="sto-view" id="stoView" hidden role="dialog" aria-modal="true" aria-label="Story"
+         data-view-url="{{ url_for('story_view', story_id='__ID__') }}" data-csrf="{{ csrf_token() }}" data-product-url="{{ url_for('product_detail', product_id='__ID__') }}">
+        <div class="sto-stage" id="stoStage"></div>
+        <div class="sto-bars" id="stoBars"></div>
+        <div class="sto-head">
+            <img src="{{ url_for('static', filename='pwa/icon-192.png') }}" alt="" width="34" height="34">
+            <div><b>HDATTAHER MOBILE</b><span class="sto-ago" id="stoAgo"></span></div>
+            <button type="button" class="sto-x" id="stoClose" aria-label="Fermer"><i class="fas fa-xmark"></i></button>
+        </div>
+        <button type="button" class="sto-nav sto-prev" id="stoPrev" aria-label="Précédente"></button>
+        <button type="button" class="sto-nav sto-next" id="stoNext" aria-label="Suivante"></button>
+        <div class="sto-txt" id="stoTxt"></div>
+        <a class="sto-cta" id="stoCta" hidden><span></span><i class="fas fa-arrow-right"></i></a>
+    </div>
+    {% endif %}
+
     <!-- ===== Accueil : salutation + recherche ===== -->
     <section class="h-top">
         <p class="h-hello">
@@ -171,4 +201,5 @@
         </a>
     </section>
 </div>
+{% if stories %}<script src="{{ url_for('static', filename='js/stories.js') }}?v=3" defer></script>{% endif %}
 {% endblock %}

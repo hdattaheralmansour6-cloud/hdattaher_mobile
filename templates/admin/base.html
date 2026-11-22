@@ -31,6 +31,7 @@
     ('admin_coupons', 'Codes promo', 'fa-ticket', ['admin_coupons']),
     ('admin_reviews', 'Avis clients', 'fa-star', ['admin_reviews']),
     ('admin_stock_alerts', 'Alertes stock', 'fa-bell', ['admin_stock_alerts']),
+    ('admin_stories', 'Stories', 'fa-circle-play', ['admin_stories']),
     ('admin_banners', 'Bannières', 'fa-images', ['admin_banners', 'admin_add_banner', 'admin_edit_banner']),
     ('admin_reset_requests', 'Codes mot de passe', 'fa-key', ['admin_reset_requests']),
     ('admin_settings', 'Paramètres', 'fa-gear', ['admin_settings']),
@@ -46,7 +47,7 @@
     ('admin_profile', 'Mon profil', 'fa-user-shield', ['admin_profile']),
 ] %}
 {% endif %}
-{% set more_active = ep in ['admin_categories', 'admin_zones', 'admin_coupons', 'admin_reviews', 'admin_stock_alerts', 'admin_banners', 'admin_add_banner', 'admin_edit_banner', 'admin_reset_requests', 'admin_settings', 'admin_team', 'admin_logs', 'admin_profile'] %}
+{% set more_active = ep in ['admin_categories', 'admin_zones', 'admin_coupons', 'admin_reviews', 'admin_stock_alerts', 'admin_stories', 'admin_banners', 'admin_add_banner', 'admin_edit_banner', 'admin_reset_requests', 'admin_settings', 'admin_team', 'admin_logs', 'admin_profile'] %}
 
 <body class="admin-body ax">
     <!-- ===== Barre du haut (mobile) ===== -->

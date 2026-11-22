@@ -761,6 +761,80 @@ def _home_data():
     return {'latest': latest, 'promos': promos, 'total_products': total_products, 'banners': banners}
 
 
+# ============================================================
+#  STORIES (comme les statuts WhatsApp, en haut de l'accueil)
+# ============================================================
+STORY_TAGS = ['NOUVEL ARRIVAGE', 'PROMO', 'OCCASION', 'BIENTÔT', 'INFO']
+STORY_DURATIONS = {'24h': 24, '3j': 72, '7j': 168, '0': 0}
+STORY_VIDEO_EXT = {'mp4': 'video/mp4', 'webm': 'video/webm', 'mov': 'video/quicktime', 'm4v': 'video/mp4'}
+STORY_VIDEO_MAX = 15 * 1024 * 1024
+
+
+def _parse_ts(v):
+    try:
+        return datetime.fromisoformat(str(v).replace('Z', '+00:00').split('.')[0].replace(' ', 'T')[:19])
+    except Exception:
+        return None
+
+
+def _story_live(st, now=None):
+    now = now or datetime.utcnow()
+    if st.get('is_active') is False:
+        return False
+    exp = _parse_ts(st.get('expires_at')) if st.get('expires_at') else None
+    return exp is None or exp > now
+
+
+def _story_products(ids):
+    ids = [i for i in set(ids) if i]
+    if not ids:
+        return {}
+    try:
+        rows = get_supabase().table('products').select('id, name, price, old_price, discount, stock, image, is_active') \
+            .in_('id', ids).execute().data or []
+    except Exception:
+        return {}
+    return {r['id']: r for r in _fix_cat_and_image(rows)}
+
+
+@shop_cached(60)
+def _stories_active():
+    """Stories en ligne (les plus récentes d'abord). [] si la table n'existe pas encore."""
+    try:
+        rows = db.fetch_all('stories', '*', {'is_active': True}, order=('created_at', False), limit=30)
+    except Exception:
+        return []
+    now = datetime.utcnow()
+    rows = [r for r in rows if _story_live(r, now)]
+    prods = _story_products([r.get('product_id') for r in rows])
+    out = []
+    for r in rows:
+        p = prods.get(r.get('product_id'))
+        if p and p.get('is_active') is False:
+            p = None
+        out.append({
+            'id': r['id'], 'label': r.get('label') or (r.get('tag') or '').title() or (p or {}).get('name') or 'Nouveau',
+            'tag': r.get('tag') or '', 'title': r.get('title') or (p or {}).get('name') or '',
+            'media': r.get('media_url'), 'type': r.get('media_type') or 'image',
+            'created': str(r.get('created_at') or ''),
+            'product': {'id': p['id'], 'name': p.get('name'), 'price': p.get('price'), 'old_price': p.get('old_price'),
+                        'stock': p.get('stock'), 'image': p.get('image')} if p else None,
+        })
+    return out
+
+
+@app.route('/stories/<story_id>/vue', methods=['POST'])
+def story_view(story_id):
+    """+1 vue (le navigateur ne l'envoie qu'une fois par story)."""
+    if not re.fullmatch(r'[0-9a-fA-F-]{32,36}', story_id or ''):
+        return ('', 204)
+    try:
+        get_supabase().rpc('story_add_view', {'p_id': story_id}).execute()
+    except Exception:
+        pass
+    return ('', 204)
+
+
 @app.route('/')
 def index():
     """Page d'accueil"""
@@ -771,9 +845,13 @@ def index():
         'total_brands': len(brand_names),
         'happy_clients': 1000,
     }
+    try:
+        stories = _stories_active()
+    except Exception:
+        stories = []
     return render_template('public/index.html', latest=data['latest'], used=_used_list(),
                            promos=data['promos'], stats=stats, banners=data['banners'],
-                           brands=brand_names)
+                           brands=brand_names, stories=stories)
 
 
 def _clean_search(text, limit=60):
@@ -2320,6 +2398,124 @@ def admin_settings():
         return redirect(url_for('admin_settings'))
 
     return render_template('admin/settings.html')
+
+
+@app.route('/azawad/stories')
+@login_required
+def admin_stories():
+    try:
+        rows = db.fetch_all('stories', '*', order=('created_at', False), limit=60)
+        missing = False
+    except Exception:
+        rows, missing = [], True
+    now = datetime.utcnow()
+    prods = _story_products([r.get('product_id') for r in rows])
+    for r in rows:
+        r['live'] = _story_live(r, now)
+        exp = _parse_ts(r.get('expires_at')) if r.get('expires_at') else None
+        if exp and r['live']:
+            h = max(1, int((exp - now).total_seconds() // 3600))
+            r['left'] = f'Expire dans {h} h' if h < 48 else f'Expire dans {h // 24} jours'
+        elif r['live']:
+            r['left'] = 'Sans limite'
+        else:
+            r['left'] = 'Terminée'
+        r['product_name'] = (prods.get(r.get('product_id')) or {}).get('name')
+    try:
+        products = db.fetch_all('products', 'id, name', {'is_active': True}, order=('name', True))
+    except Exception:
+        products = []
+    live = [r for r in rows if r['live']]
+    ended = [r for r in rows if not r['live']]
+    return render_template('admin/stories.html', live=live, ended=ended, products=products,
+                           missing=missing, tags=STORY_TAGS)
+
+
+@app.route('/azawad/stories/ajouter', methods=['POST'])
+@login_required
+def admin_add_story():
+    f = request.files.get('media')
+    tag = request.form.get('tag', '')
+    tag = tag if tag in STORY_TAGS else ''
+    title = ' '.join((request.form.get('title') or '').split())[:90]
+    label = ' '.join((request.form.get('label') or '').split())[:14]
+    product_id = (request.form.get('product_id') or '').strip() or None
+    product = None
+    if product_id:
+        try:
+            product = db.fetch_one('products', 'id, name, image', {'id': product_id})
+        except Exception:
+            product = None
+        if not product:
+            product_id = None
+    hours = STORY_DURATIONS.get(request.form.get('duree', '24h'), 24)
+    media_url, media_type = None, 'image'
+    if f and f.filename:
+        ext = f.filename.rsplit('.', 1)[-1].lower() if '.' in f.filename else ''
+        if ext in STORY_VIDEO_EXT:
+            data = f.read(STORY_VIDEO_MAX + 1)
+            if len(data) > STORY_VIDEO_MAX:
+                flash('Vidéo trop lourde : 15 Mo maximum (environ 15 secondes).', 'error')
+                return redirect(url_for('admin_stories'))
+            try:
+                bucket = get_supabase().storage.from_('product-images')
+                name = f"story_{int(time.time())}_{secrets.token_hex(5)}.{ext}"
+                bucket.upload(name, data, {'content-type': STORY_VIDEO_EXT[ext], 'upsert': 'true'})
+                media_url, media_type = bucket.get_public_url(name), 'video'
+            except Exception:
+                app.logger.exception('Vidéo story')
+                flash("La vidéo n'a pas pu être envoyée. Réessayez.", 'error')
+                return redirect(url_for('admin_stories'))
+        elif allowed_file(f.filename):
+            media_url = _store_image(f.read(), 1400, 'story_', False, f.filename)
+        else:
+            flash('Format non accepté : photo (JPG, PNG, WEBP) ou vidéo (MP4, MOV).', 'error')
+            return redirect(url_for('admin_stories'))
+    if not media_url and product and product.get('image') and product['image'] != 'default.png':
+        img = product['image']
+        media_url = img if img.startswith('http') else get_supabase().storage.from_('product-images').get_public_url(img)
+    if not media_url:
+        flash('Ajoutez une photo ou une vidéo (ou choisissez un produit qui a une photo).', 'error')
+        return redirect(url_for('admin_stories'))
+    if not (title or tag or product):
+        flash('Écrivez un petit texte pour la story.', 'error')
+        return redirect(url_for('admin_stories'))
+    row = {'label': label or None, 'tag': tag or None, 'title': title or None, 'media_url': media_url,
+           'media_type': media_type, 'product_id': product_id, 'is_active': True}
+    if hours:
+        row['expires_at'] = (datetime.utcnow() + timedelta(hours=hours)).isoformat()
+    try:
+        db.insert('stories', row)
+    except Exception:
+        flash("Impossible de publier : lancez d'abord la mise à jour SQL « stories » dans Supabase.", 'error')
+        return redirect(url_for('admin_stories'))
+    log_action('Story publiée', title or tag or (product or {}).get('name') or '')
+    flash('Story publiée ! Elle est en haut de l\'accueil du site.', 'success')
+    return redirect(url_for('admin_stories'))
+
+
+@app.route('/azawad/stories/<story_id>', methods=['POST'])
+@login_required
+def admin_story_action(story_id):
+    action = request.form.get('action')
+    try:
+        st = db.fetch_one('stories', 'id, title, tag', {'id': story_id})
+    except Exception:
+        st = None
+    if not st:
+        flash('Story introuvable.', 'error')
+        return redirect(url_for('admin_stories'))
+    try:
+        if action == 'stop':
+            db.update('stories', {'is_active': False}, {'id': story_id})
+            flash('Story retirée de l\'accueil.', 'success')
+        elif action == 'delete':
+            db.delete('stories', {'id': story_id})
+            flash('Story supprimée.', 'success')
+        log_action('Story ' + ('retirée' if action == 'stop' else 'supprimée'), st.get('title') or st.get('tag') or '')
+    except Exception:
+        flash('Action impossible pour le moment.', 'error')
+    return redirect(url_for('admin_stories'))
 
 
 @app.route('/azawad/equipe')

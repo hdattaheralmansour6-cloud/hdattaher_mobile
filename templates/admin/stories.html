@@ -1,0 +1,145 @@
+{% extends "admin/base.html" %}
+{% block title %}Stories{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <div>
+        <h1>Stories</h1>
+        <span class="breadcrumb">Comme les statuts WhatsApp, en haut de l'accueil du site</span>
+    </div>
+</div>
+
+{% if missing %}
+<div class="ax-empty"><i class="fas fa-database"></i>Lancez d'abord la mise à jour SQL « stories » dans Supabase (fichier mise_a_jour_stories.sql).</div>
+{% else %}
+<div class="sy-grid">
+    <section class="admin-card">
+        <div class="admin-card-header"><h3><i class="fas fa-circle-plus"></i> Nouvelle story</h3></div>
+        <div class="admin-card-body">
+            <form method="POST" action="{{ url_for('admin_add_story') }}" enctype="multipart/form-data" id="syForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="sy-pick">
+                    <label class="sy-ph" for="syMedia">
+                        <span class="sy-ph-empty" id="syEmpty"><i class="fas fa-camera"></i><span>Photo ou vidéo</span></span>
+                        <img id="syPrevImg" alt="" hidden>
+                        <video id="syPrevVid" muted playsinline loop hidden></video>
+                    </label>
+                    <input type="file" name="media" id="syMedia" accept="image/*,video/mp4,video/quicktime,video/webm" hidden>
+                    <small class="ax-muted sy-hint">Photo, ou vidéo de 15 secondes maximum.<br>Sans photo : celle du produit choisi est utilisée.</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Étiquette</label>
+                    <div class="sy-chips" id="syTags">
+                        <label><input type="radio" name="tag" value="" checked><span>Aucune</span></label>
+                        {% for t in tags %}<label><input type="radio" name="tag" value="{{ t }}"><span>{{ t|capitalize }}</span></label>{% endfor %}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="syTitle">Texte</label>
+                    <input type="text" name="title" id="syTitle" class="form-control" maxlength="90" placeholder="Ex : iPhone 17 Pro Max disponible !">
+                </div>
+                <div class="form-group">
+                    <label for="syProd">Produit lié <small class="ax-muted">(bouton « Voir le produit » + prix)</small></label>
+                    <select name="product_id" id="syProd" class="form-control">
+                        <option value="">Aucun produit</option>
+                        {% for p in products %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="ax-form-2">
+                    <div class="form-group">
+                        <label for="syLabel">Nom sous le rond</label>
+                        <input type="text" name="label" id="syLabel" class="form-control" maxlength="14" placeholder="Ex : Arrivage">
+                    </div>
+                    <div class="form-group">
+                        <label>Durée</label>
+                        <div class="sy-chips">
+                            <label><input type="radio" name="duree" value="24h" checked><span>24 h</span></label>
+                            <label><input type="radio" name="duree" value="3j"><span>3 jours</span></label>
+                            <label><input type="radio" name="duree" value="7j"><span>7 jours</span></label>
+                            <label><input type="radio" name="duree" value="0"><span>Sans limite</span></label>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn-admin primary sy-pub" id="syPub"><i class="fas fa-paper-plane"></i> Publier la story</button>
+            </form>
+        </div>
+    </section>
+
+    <section>
+        <h3 class="sy-h">En ligne maintenant <em>{{ live|length }}</em></h3>
+        {% if not live %}
+        <div class="ax-empty sy-empty"><i class="fas fa-circle-play"></i>Aucune story en ligne. Publiez-en une : elle apparaît en haut de l'accueil.</div>
+        {% endif %}
+        <div class="sy-list">
+            {% for st in live %}{% include 'admin/_story_row.html' %}{% endfor %}
+        </div>
+        {% if ended %}
+        <h3 class="sy-h sy-h2">Terminées</h3>
+        <div class="sy-list sy-ended">
+            {% for st in ended %}{% include 'admin/_story_row.html' %}{% endfor %}
+        </div>
+        {% endif %}
+    </section>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<style>
+.sy-grid { display: grid; gap: 1rem; }
+@media (min-width: 960px) { .sy-grid { grid-template-columns: 1fr 1fr; align-items: start; } }
+.sy-pick { display: flex; gap: 14px; align-items: center; margin-bottom: 14px; }
+.sy-ph { flex: none; width: 96px; height: 150px; border-radius: 16px; border: 1.5px dashed rgba(212, 175, 55, .55); display: grid; place-items: center;
+    overflow: hidden; cursor: pointer; background: rgba(212, 175, 55, .05); position: relative; }
+.sy-ph-empty { display: grid; justify-items: center; gap: 6px; color: #E8C86E; font-size: .75rem; font-weight: 700; text-align: center; }
+.sy-ph-empty i { font-size: 1.4rem; }
+.sy-ph img, .sy-ph video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.sy-hint { line-height: 1.5; }
+.sy-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.sy-chips label { margin: 0; cursor: pointer; }
+.sy-chips input { position: absolute; opacity: 0; pointer-events: none; }
+.sy-chips span { display: inline-block; padding: 8px 12px; border-radius: 999px; font-size: .8rem; font-weight: 600; border: 1px solid var(--admin-border); color: var(--admin-text-sec); }
+.sy-chips input:checked + span { background: rgba(212, 175, 55, .15); border-color: #D4AF37; color: #F1D88A; }
+.sy-pub { width: 100%; justify-content: center; margin-top: 6px; }
+.sy-pub.busy { opacity: .6; pointer-events: none; }
+.sy-h { margin: 4px 2px 10px; font-size: 1rem; display: flex; align-items: center; gap: 8px; }
+.sy-h em { font-style: normal; font-size: .75rem; padding: 2px 9px; border-radius: 999px; background: rgba(212, 175, 55, .15); color: #E8C86E; }
+.sy-h2 { margin-top: 1.4rem; color: var(--admin-text-sec); }
+.sy-empty { padding: 1.4rem; }
+.sy-list { display: grid; gap: 10px; }
+.sy-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; margin: 0; }
+.sy-th { flex: none; width: 54px; height: 54px; border-radius: 50%; overflow: hidden; background: #F3EFE6; box-shadow: 0 0 0 2.5px #D4AF37; display: grid; place-items: center; }
+.sy-ended .sy-th { box-shadow: 0 0 0 2.5px #4A4740; }
+.sy-th img, .sy-th video { width: 100%; height: 100%; object-fit: cover; }
+.sy-i { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.sy-i b { font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sy-i small { font-size: .76rem; color: var(--admin-text-sec); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sy-v { flex: none; font-weight: 800; font-size: .85rem; color: #E8C86E; padding: 6px 10px; border-radius: 999px; background: rgba(212, 175, 55, .12); }
+.sy-acts { display: flex; gap: 6px; flex: none; }
+.sy-acts form { margin: 0; }
+.sy-acts .btn-admin { width: 40px; height: 40px; padding: 0; margin: 0; justify-content: center; }
+</style>
+<script>
+(function () {
+    var inp = document.getElementById('syMedia');
+    if (!inp) return;
+    var img = document.getElementById('syPrevImg'), vid = document.getElementById('syPrevVid'), empty = document.getElementById('syEmpty');
+    inp.addEventListener('change', function () {
+        var f = inp.files && inp.files[0];
+        img.hidden = vid.hidden = true; empty.hidden = !!f;
+        if (!f) return;
+        if (f.size > 15 * 1024 * 1024 && /^video/.test(f.type)) {
+            alert('Vidéo trop lourde : 15 Mo maximum (environ 15 secondes).');
+            inp.value = ''; empty.hidden = false; return;
+        }
+        var url = URL.createObjectURL(f);
+        if (/^video/.test(f.type)) { vid.src = url; vid.hidden = false; vid.play().catch(function () {}); }
+        else { img.src = url; img.hidden = false; }
+    });
+    document.getElementById('syForm').addEventListener('submit', function () {
+        var b = document.getElementById('syPub'); b.classList.add('busy'); b.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Envoi…';
+    });
+})();
+</script>
+{% endblock %}

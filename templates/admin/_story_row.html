@@ -1,0 +1,20 @@
+<article class="admin-card sy-row">
+    <span class="sy-th">{% if st.media_type == 'video' %}<video src="{{ st.media_url }}#t=0.5" muted playsinline preload="metadata"></video>{% else %}<img src="{{ st.media_url }}" alt="" loading="lazy">{% endif %}</span>
+    <div class="sy-i">
+        <b>{{ st.title or st.tag or st.product_name or 'Story' }}</b>
+        <small><i class="far fa-clock"></i> {{ st.left }}{% if st.product_name %} · {{ st.product_name }}{% endif %}{% if st.media_type == 'video' %} · vidéo{% endif %}</small>
+    </div>
+    <span class="sy-v" title="Vues"><i class="fas fa-eye"></i> {{ st.views or 0 }}</span>
+    <div class="sy-acts">
+        {% if st.live %}
+        <form method="POST" action="{{ url_for('admin_story_action', story_id=st.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" name="action" value="stop" class="btn-admin" title="Retirer de l'accueil" aria-label="Retirer de l'accueil"><i class="fas fa-eye-slash"></i></button>
+        </form>
+        {% endif %}
+        <form method="POST" action="{{ url_for('admin_story_action', story_id=st.id) }}" onsubmit="return confirm('Supprimer cette story ?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" name="action" value="delete" class="btn-admin danger" aria-label="Supprimer"><i class="fas fa-trash"></i></button>
+        </form>
+    </div>
+</article>
