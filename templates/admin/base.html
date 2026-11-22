@@ -16,7 +16,7 @@
     <title>{% block title %}Admin{% endblock %} - HDATTAHER MOBILE</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v=3">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin2.css') }}?v=5">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin2.css') }}?v=6">
 </head>
 
 {% set ep = request.endpoint or '' %}
@@ -193,7 +193,46 @@
         }
     </script>
     {% block scripts %}{% endblock %}
-    <script>if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function () {}); });</script>
+    <!-- ===== Installer l'app HM Admin ===== -->
+    <div class="ax-install" id="axInstall" hidden>
+        <img src="{{ url_for('static', filename='pwa/icon-192.png') }}" alt="" width="42" height="42">
+        <div class="ax-install-txt"><b>Installer l'app HM Admin</b>
+            <small id="axInstallSub">Ouvrez votre espace admin en un geste</small></div>
+        <button type="button" class="ax-install-go" id="axInstallGo">Installer</button>
+        <button type="button" class="ax-install-x" id="axInstallX" aria-label="Fermer"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="ax-install-help" id="axInstallHelp" hidden>
+        <b>Sur iPhone :</b> touchez <i class="fas fa-arrow-up-from-bracket"></i> Partager (ou ⋯ puis Partager), puis « Sur l'écran d'accueil », puis « Ajouter ».<br>
+        <b>Sur Android :</b> touchez le menu <i class="fas fa-ellipsis-vertical"></i> de Chrome, puis « Installer l'application » ou « Ajouter à l'écran d'accueil ».
+    </div>
+    <script>
+    (function () {
+        if ('serviceWorker' in navigator) window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(function () {}); });
+        var standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+        var box = document.getElementById('axInstall'), help = document.getElementById('axInstallHelp');
+        if (standalone || !box) return;
+        var closed = 0; try { closed = +localStorage.getItem('ax_install_closed') || 0; } catch (e) {}
+        if (Date.now() - closed < 7 * 864e5) return;
+        var ua = navigator.userAgent, mobile = /android|iphone|ipad|ipod/i.test(ua) || (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+        var deferred = null;
+        function show() { box.hidden = false; }
+        window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; show(); });
+        window.addEventListener('appinstalled', function () { box.hidden = true; help.hidden = true; });
+        if (mobile) setTimeout(show, 800);
+        document.getElementById('axInstallGo').addEventListener('click', function () {
+            if (deferred) {
+                deferred.prompt();
+                deferred.userChoice.then(function (c) { deferred = null; if (c && c.outcome === 'accepted') box.hidden = true; }).catch(function () {});
+            } else {
+                help.hidden = !help.hidden;
+            }
+        });
+        document.getElementById('axInstallX').addEventListener('click', function () {
+            box.hidden = true; help.hidden = true;
+            try { localStorage.setItem('ax_install_closed', String(Date.now())); } catch (e) {}
+        });
+    })();
+    </script>
 </body>
 
 </html>

@@ -498,3 +498,19 @@ a.ax-row:active, a.ax-row:hover { background: rgba(212, 175, 55, .04); }
 .ax-oactions > * { min-width: 0; }
 .ax-oactions .ax-grow .btn-admin, .ax-oactions .btn-admin.ax-grow { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ax-ohead .ax-row-main small { white-space: normal; overflow: visible; }
+
+/* ===== Installer l'app HM Admin ===== */
+.ax-install { position: fixed; left: 12px; right: 12px; bottom: calc(var(--ax-tab-h) + var(--ax-safe-b, 0px) + 12px); z-index: 1100;
+  display: flex; align-items: center; gap: 10px; padding: 10px 10px 10px 12px; border-radius: 18px;
+  background: rgba(20, 20, 22, .97); border: 1px solid rgba(212, 175, 55, .45); box-shadow: 0 14px 40px rgba(0, 0, 0, .5); }
+.ax-install img { width: 42px; height: 42px; border-radius: 11px; flex: none; }
+.ax-install-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.ax-install-txt b { font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ax-install-txt small { font-size: .74rem; color: var(--admin-text-sec); }
+.ax-install-go { flex: none; min-height: 40px; padding: 0 14px; border: none; border-radius: 12px; font: inherit; font-weight: 800; font-size: .85rem;
+  color: #17120a; background: linear-gradient(135deg, #F1D88A, #C9A23F 55%, #A87C22); cursor: pointer; }
+.ax-install-x { flex: none; width: 34px; height: 34px; border: none; border-radius: 50%; background: rgba(255, 255, 255, .06); color: var(--admin-text-sec); cursor: pointer; }
+.ax-install-help { position: fixed; left: 12px; right: 12px; bottom: calc(var(--ax-tab-h) + var(--ax-safe-b, 0px) + 84px); z-index: 1100;
+  padding: 12px 14px; border-radius: 14px; font-size: .85rem; line-height: 1.55; background: #1b1b1f; border: 1px solid rgba(212, 175, 55, .3); }
+.ax-install-help i { color: #4DA3FF; }
+@media (min-width: 900px) { .ax-install, .ax-install-help { left: auto; right: 24px; width: 380px; } .ax-install { bottom: 24px; } .ax-install-help { bottom: 96px; } }
