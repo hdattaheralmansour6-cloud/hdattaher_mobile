@@ -1,4 +1,7 @@
-/* HDATTAHER MOBILE — installer l'application sur l'écran d'accueil */
+/* HDATTAHER MOBILE — installer l'application sur l'écran d'accueil
+   - Android / ordinateur : le bouton n'apparaît QUE quand Chrome autorise l'installation directe ;
+     un toucher ouvre la vraie fenêtre d'installation (aucune explication affichée).
+   - iPhone : petit guide (Apple n'a pas de fenêtre d'installation). */
 (function () {
     // 1. Service worker (ouverture plus rapide + page « Pas de connexion »)
     if ('serviceWorker' in navigator) {
@@ -9,15 +12,14 @@
 
     var ua = navigator.userAgent || '';
     var isIOS = /iphone|ipad|ipod/i.test(ua) || (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
-    var isAndroid = /android/i.test(ua);
     var inApp = /FBAN|FBAV|FB_IAB|Instagram|Line\/|Snapchat|TikTok|musical_ly|BytedanceWebview/i.test(ua);
     var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
-    var mobile = isIOS || isAndroid;
 
     var bar = document.getElementById('pwaBar');
     var sheet = document.getElementById('pwaSheet');
     var nativeBtn = document.getElementById('pwaNative');
     if (!sheet) return;
+    if (nativeBtn) nativeBtn.hidden = true;
 
     function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } }
 
@@ -26,54 +28,19 @@
         return; // déjà ouverte comme application : rien à proposer
     }
 
-    var deferred = window.__hmBip || null; // invite d'installation Android / Chrome (captée dès le début de la page)
-    var isChrome = /Chrome\/\d+/.test(ua) && !/SamsungBrowser|OPR|Opera|EdgA|PHX|Phoenix|UCBrowser|MiuiBrowser|HeyTap|VivoBrowser|Firefox|YaBrowser|wv\)/.test(ua);
-    function setNative(state) { // 'wait' (Chrome se prépare) ou 'ready'
-        if (!nativeBtn) return;
-        var lab = nativeBtn.querySelector('span');
-        nativeBtn.classList.toggle('wait', state === 'wait');
-        nativeBtn.disabled = state === 'wait';
-        if (lab) lab.textContent = state === 'wait' ? (document.documentElement.lang === 'ar' ? 'جارٍ التحضير…' : document.documentElement.lang === 'en' ? 'Getting ready…' : 'Préparation…')
-                                                    : (document.documentElement.lang === 'ar' ? 'ثبّت الآن' : document.documentElement.lang === 'en' ? 'Install now' : 'Installer maintenant');
-    }
-    function gotPrompt() {
-        deferred = window.__hmBip || deferred;
-        if (nativeBtn) { nativeBtn.hidden = !deferred; if (deferred) setNative('ready'); }
-        showEntry();
-    }
-    document.addEventListener('hm-bip', gotPrompt);
-    window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); window.__hmBip = e; gotPrompt(); });
-    window.addEventListener('appinstalled', function () {
-        store('pwa_installed', '1'); deferred = null;
-        hideBar(); close();
-        document.querySelectorAll('.pwa-menu-link').forEach(function (a) { a.hidden = true; });
-    });
+    function prompt() { return window.__hmBip || null; }
+    function available() { return isIOS || !!prompt(); }
 
-    function showEntry() {
-        document.querySelectorAll('.pwa-menu-link').forEach(function (a) { a.hidden = false; });
+    function refresh() {
+        var ok = available();
+        document.querySelectorAll('.pwa-menu-link').forEach(function (a) { a.hidden = !ok; });
+        if (!ok) hideBar();
     }
-    if (mobile || deferred) showEntry();
 
-    function open(ev) {
-        if (ev) ev.preventDefault();
+    function openSheet() { // iPhone seulement
         if (typeof window.closeMobileMenu === 'function') { try { window.closeMobileMenu(); } catch (e) {} }
-        var os = isIOS ? 'ios' : 'android';
-        sheet.querySelectorAll('[data-pwa-os]').forEach(function (b) { b.hidden = b.getAttribute('data-pwa-os') !== os; });
-        var ia = sheet.querySelector('[data-pwa-inapp]'); if (ia) ia.hidden = !(isIOS && inApp);
-        if (nativeBtn) {
-            if (deferred) { nativeBtn.hidden = false; setNative('ready'); }
-            else if (isAndroid && isChrome) { // Chrome demande ~30 s sur la page (et attend plus longtemps après un « Annuler »)
-                nativeBtn.hidden = false; setNative('wait');
-                clearTimeout(window.__hmWaitT);
-                window.__hmWaitT = setTimeout(function () {
-                    if (deferred) return;
-                    nativeBtn.hidden = true;
-                    var st = sheet.querySelector('[data-pwa-os="android"]');
-                    if (st) { st.classList.add('pwa-steps-hl'); }
-                }, 20000);
-            }
-            else nativeBtn.hidden = true;
-        }
+        sheet.querySelectorAll('[data-pwa-os]').forEach(function (b) { b.hidden = b.getAttribute('data-pwa-os') !== 'ios'; });
+        var ia = sheet.querySelector('[data-pwa-inapp]'); if (ia) ia.hidden = !inApp;
         sheet.hidden = false;
         requestAnimationFrame(function () { sheet.classList.add('open'); });
         document.body.style.overflow = 'hidden';
@@ -83,26 +50,27 @@
         document.body.style.overflow = '';
         setTimeout(function () { sheet.hidden = true; }, 250);
     }
-    function hideBar() { if (bar) { bar.classList.remove('show'); setTimeout(function () { bar.hidden = true; }, 300); } }
+    function hideBar() { if (bar && !bar.hidden) { bar.classList.remove('show'); setTimeout(function () { bar.hidden = true; }, 300); } }
 
-    document.querySelectorAll('[data-pwa-open]').forEach(function (b) {
-        b.addEventListener('click', function (ev) {
-            if (deferred && !isIOS) { // Android : la vraie fenêtre d'installation directement
-                ev.preventDefault();
-                deferred.prompt();
-                deferred.userChoice.then(function () { deferred = null; hideBar(); }).catch(function () {});
-                return;
-            }
-            open(ev);
-        });
-    });
+    function install(ev) {
+        if (ev) ev.preventDefault();
+        var d = prompt();
+        if (d) { // Android / ordinateur : la vraie fenêtre d'installation, directement
+            if (typeof window.closeMobileMenu === 'function') { try { window.closeMobileMenu(); } catch (e) {} }
+            d.prompt();
+            d.userChoice.then(function () { window.__hmBip = null; hideBar(); refresh(); }).catch(function () {});
+        } else if (isIOS) {
+            openSheet();
+        }
+    }
+
+    document.querySelectorAll('[data-pwa-open]').forEach(function (b) { b.addEventListener('click', install); });
     sheet.querySelectorAll('[data-pwa-close]').forEach(function (b) { b.addEventListener('click', close); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !sheet.hidden) close(); });
-    if (nativeBtn) nativeBtn.addEventListener('click', function () {
-        if (!deferred) return;
-        deferred.prompt();
-        deferred.userChoice.then(function () { deferred = null; close(); hideBar(); }).catch(function () {});
+    window.addEventListener('appinstalled', function () {
+        store('pwa_installed', '1'); window.__hmBip = null; hideBar(); close(); refresh();
     });
+    window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); window.__hmBip = e; document.dispatchEvent(new Event('hm-bip')); });
 
     // 2. Petite barre « Installer » : sur téléphone, à partir de la 2e visite, pas pendant un achat,
     //    et pas plus d'une fois tous les 14 jours si le client l'a fermée.
@@ -112,12 +80,20 @@
     store('pwa_visits', String(visits));
     var closedAt = parseInt(store('pwa_bar_closed') || '0', 10);
     var recentlyClosed = closedAt && (Date.now() - closedAt) < 14 * 864e5;
-    if (bar && mobile && visits >= 2 && quiet !== '1' && !recentlyClosed && store('pwa_installed') !== '1') {
+    var barAllowed = bar && visits >= 2 && quiet !== '1' && !recentlyClosed && store('pwa_installed') !== '1';
+    function showBar() {
+        if (!barAllowed || !available() || !bar.hidden) return;
         setTimeout(function () {
+            if (!available()) return;
             bar.hidden = false;
             requestAnimationFrame(function () { bar.classList.add('show'); });
-        }, 2500);
+        }, isIOS ? 2500 : 600);
     }
+
+    refresh();
+    if (isIOS) showBar();
+    document.addEventListener('hm-bip', function () { refresh(); showBar(); });
+
     var x = document.getElementById('pwaBarX');
     if (x) x.addEventListener('click', function () { store('pwa_bar_closed', String(Date.now())); hideBar(); });
 })();

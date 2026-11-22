@@ -205,29 +205,11 @@
         <button type="button" class="ax-install-x" id="axInstallX" aria-label="Fermer"><i class="fas fa-xmark"></i></button>
     </div>
     <div class="ax-install-help" id="axInstallHelp" hidden>
-        <div data-shopapp hidden>
-            <p class="ax-ih-warn"><i class="fas fa-circle-info"></i> L'app de la <b>boutique HDATTAHER</b> est déjà installée sur ce téléphone : Chrome bloque l'installation de HM Admin.</p>
-            <ol>
-                <li>Sur l'écran d'accueil, <b>appui long</b> sur l'icône <b>HDATTAHER</b>, puis <b>« Désinstaller »</b> (vos données ne sont pas perdues).</li>
-                <li>Revenez ici dans Chrome et touchez <b>« App »</b> en haut : installez <b>HM Admin</b>.</li>
-                <li>Ensuite, vous pouvez réinstaller l'app de la boutique depuis la page d'accueil du site.</li>
-            </ol>
-        </div>
-        <div data-os="android">
-            <p class="ax-ih-warn" data-notchrome hidden><i class="fas fa-circle-info"></i> Ouvrez d'abord cette page dans <b>Google Chrome</b>.</p>
-            <ol>
-                <li>Touchez les <b>3 points</b> <i class="fas fa-ellipsis-vertical"></i> en haut à droite de Chrome.</li>
-                <li>Touchez <b>« Installer l'application »</b> <small>(ou « Ajouter à l'écran d'accueil »)</small>.</li>
-                <li>Touchez <b>« Installer »</b> : l'icône HM Admin arrive sur l'écran.</li>
-            </ol>
-        </div>
-        <div data-os="ios" hidden>
-            <ol>
-                <li>Touchez <i class="fas fa-arrow-up-from-bracket"></i> <b>Partager</b> (ou ⋯ puis Partager).</li>
-                <li>Touchez <b>« Sur l'écran d'accueil »</b>.</li>
-                <li>Touchez <b>« Ajouter »</b>.</li>
-            </ol>
-        </div>
+        <ol>
+            <li>Touchez <i class="fas fa-arrow-up-from-bracket"></i> <b>Partager</b> (ou ⋯ puis Partager).</li>
+            <li>Touchez <b>« Sur l'écran d'accueil »</b>.</li>
+            <li>Touchez <b>« Ajouter »</b>.</li>
+        </ol>
     </div>
     <script>
     (function () {
@@ -235,79 +217,38 @@
         var standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
         var box = document.getElementById('axInstall'), help = document.getElementById('axInstallHelp');
         if (standalone || !box) return;
+        var ua = navigator.userAgent;
+        var isIOS = /iphone|ipad|ipod/i.test(ua) || (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+        var btns = document.querySelectorAll('[data-ax-install]');
         var closed = 0; try { closed = +localStorage.getItem('ax_install_closed') || 0; } catch (e) {}
         var recentlyClosed = Date.now() - closed < 864e5;   // la barre revient seule après 1 jour
-        // Boutons « Installer » toujours disponibles (en haut + page Profil)
-        document.querySelectorAll('[data-ax-install]').forEach(function (b) {
-            b.hidden = false;
-            b.addEventListener('click', function () {
-                box.hidden = false;
-                document.getElementById('axInstallGo').click();
-            });
-        });
-        var ua = navigator.userAgent, mobile = /android|iphone|ipad|ipod/i.test(ua) || (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
-        var isIOS = /iphone|ipad|ipod/i.test(ua) || (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
-        var isChrome = /Chrome\/\d+/.test(ua) && !/SamsungBrowser|OPR|Opera|EdgA|PHX|Phoenix|UCBrowser|MiuiBrowser|HeyTap|VivoBrowser|Firefox|YaBrowser|wv\)/.test(ua);
-        help.querySelector('[data-os="ios"]').hidden = !isIOS;
-        help.querySelector('[data-os="android"]').hidden = isIOS;
-        help.querySelector('[data-notchrome]').hidden = isIOS || isChrome;
-        function show() { if (!recentlyClosed) box.hidden = false; }
-        document.addEventListener('hm-bip', show);
-        window.addEventListener('appinstalled', function () {
-            box.hidden = true; help.hidden = true;
-            document.querySelectorAll('[data-ax-install]').forEach(function (b) { b.hidden = true; });
-        });
-        if (mobile || window.__hmBip) setTimeout(show, 800);
-        var go = document.getElementById('axInstallGo'), sub = document.getElementById('axInstallSub');
-        var waiting = false, waitTimer = null;
-        function ready() {
-            if (!waiting) return;
-            waiting = false; clearTimeout(waitTimer);
-            go.textContent = 'Installer maintenant'; go.classList.remove('wait'); go.classList.add('ready');
-            sub.textContent = 'Prêt ! Touchez « Installer maintenant »';
-            help.hidden = true;
+
+        // iPhone : guide (Apple n'a pas de fenêtre d'installation).
+        // Android / ordinateur : boutons visibles SEULEMENT quand Chrome autorise l'installation directe.
+        function available() { return isIOS || !!window.__hmBip; }
+        function refresh() {
+            var ok = available();
+            btns.forEach(function (b) { b.hidden = !ok; });
+            var card = document.querySelector('[data-ax-install-card]'); if (card) card.hidden = !ok;
+            if (!ok) { box.hidden = true; help.hidden = true; }
         }
-        document.addEventListener('hm-bip', ready);
-        // L'app de la boutique est-elle déjà installée ? (Chrome Android) — elle bloque l'installation de HM Admin
-        var shopInstalled = false;
-        if (navigator.getInstalledRelatedApps) {
-            navigator.getInstalledRelatedApps().then(function (apps) { shopInstalled = !!(apps && apps.length); }).catch(function () {});
-        }
-        function showShopHelp() {
-            help.querySelector('[data-shopapp]').hidden = false;
-            help.querySelector('[data-os="android"]').hidden = true;
-            help.querySelector('[data-os="ios"]').hidden = true;
-            sub.textContent = 'Une étape avant d\'installer :';
-            go.textContent = 'Installer'; go.classList.remove('wait');
-            help.hidden = false;
-        }
-        go.addEventListener('click', function () {
+        function showBar() { if (available() && !recentlyClosed) box.hidden = false; }
+        refresh();
+        if (isIOS) setTimeout(showBar, 800);
+        document.addEventListener('hm-bip', function () { refresh(); showBar(); });
+        window.addEventListener('appinstalled', function () { window.__hmBip = null; refresh(); });
+
+        function install() {
             var d = window.__hmBip;
-            if (!d && shopInstalled && !isIOS) { waiting = false; clearTimeout(waitTimer); showShopHelp(); return; }
             if (d) {
                 d.prompt();
-                d.userChoice.then(function (c) { window.__hmBip = null; if (c && c.outcome === 'accepted') { box.hidden = true; help.hidden = true; } }).catch(function () {});
-                return;
+                d.userChoice.then(function (c) { window.__hmBip = null; refresh(); }).catch(function () {});
+            } else if (isIOS) {
+                box.hidden = false; help.hidden = !help.hidden;
             }
-            if (!isIOS && isChrome) {
-                // Chrome attend que la personne ait touché la page et soit restée environ 30 secondes
-                if (waiting) return;
-                waiting = true;
-                go.textContent = 'Préparation…'; go.classList.add('wait');
-                sub.textContent = 'Chrome prépare l\'installation (30 s environ). Restez sur la page.';
-                waitTimer = setTimeout(function () {
-                    if (!waiting) return;
-                    waiting = false; go.textContent = 'Installer'; go.classList.remove('wait');
-                    if (shopInstalled) { showShopHelp(); return; }
-                    // Chrome ne propose toujours rien : le plus souvent l'app de la boutique est déjà installée
-                    help.querySelector('[data-shopapp]').hidden = false;
-                    sub.textContent = 'Chrome ne propose pas l\'installation :';
-                    help.hidden = false;
-                }, 40000);
-                return;
-            }
-            help.hidden = !help.hidden;
-        });
+        }
+        document.getElementById('axInstallGo').addEventListener('click', install);
+        btns.forEach(function (b) { b.addEventListener('click', install); });
         document.getElementById('axInstallX').addEventListener('click', function () {
             box.hidden = true; help.hidden = true;
             try { localStorage.setItem('ax_install_closed', String(Date.now())); } catch (e) {}

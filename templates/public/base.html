@@ -524,12 +524,6 @@
                 <div class="pwa-step"><span>2</span><p><span data-i18n="pwa_ios2">Choisissez « Sur l'écran d'accueil »</span> <i class="far fa-square-plus pwa-key"></i></p></div>
                 <div class="pwa-step"><span>3</span><p data-i18n="pwa_ios3">Touchez « Ajouter » : l'icône HM apparaît sur votre écran.</p></div>
             </div>
-            <div class="pwa-steps" data-pwa-os="android" hidden>
-                <div class="pwa-step"><span>1</span><p><span data-i18n="pwa_and1">Touchez le menu du navigateur</span> <i class="fas fa-ellipsis-vertical pwa-key"></i></p></div>
-                <div class="pwa-step"><span>2</span><p data-i18n="pwa_and2">Choisissez « Installer l'application » ou « Ajouter à l'écran d'accueil ».</p></div>
-                <div class="pwa-step"><span>3</span><p data-i18n="pwa_and3">Confirmez : l'icône HM apparaît sur votre écran.</p></div>
-            </div>
-            <button type="button" class="btn btn-primary pwa-native" id="pwaNative" hidden><i class="fas fa-download"></i> <span data-i18n="pwa_install_now">Installer maintenant</span></button>
             <button type="button" class="pwa-later" data-pwa-close data-i18n="pwa_later">Plus tard</button>
         </div>
     </div>
@@ -548,7 +542,7 @@
     </a>
 
     <script src="{{ url_for('static', filename='js/main.js') }}?v=41"></script>
-    <script src="{{ url_for('static', filename='js/pwa.js') }}?v=4" defer data-quiet="{{ 1 if request.endpoint in ('checkout', 'cart_view', 'order_confirmation', 'customer_login', 'customer_register') else 0 }}"></script>
+    <script src="{{ url_for('static', filename='js/pwa.js') }}?v=5" defer data-quiet="{{ 1 if request.endpoint in ('checkout', 'cart_view', 'order_confirmation', 'customer_login', 'customer_register') else 0 }}"></script>
     <script>
         // ============ Mobile Menu ============
         function toggleMobileMenu() {
