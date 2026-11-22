@@ -245,8 +245,16 @@ def get_categories_list():
 
 @app.context_processor
 def inject_globals():
-    settings = get_settings()
-    categories = get_categories_list()
+    # Si Supabase ne répond pas, on garde des valeurs par défaut au lieu de faire planter la page.
+    try:
+        settings = get_settings()
+    except Exception:
+        app.logger.warning('Paramètres indisponibles (Supabase injoignable ?)')
+        settings = {}
+    try:
+        categories = get_categories_list()
+    except Exception:
+        categories = []
     dynamic_css = ':root {\n'
     dynamic_css += f'  --primary: {settings.get("primary_color", "#6C63FF")};\n'
     dynamic_css += f'  --secondary: {settings.get("secondary_color", "#FF6584")};\n'
@@ -2667,9 +2675,27 @@ def customer_reset_password():
 #  GESTION DES ERREURS
 # ============================================================
 
+def _error_page(code):
+    """Page d'erreur autonome : elle ne lit rien dans Supabase, donc elle s'affiche même en cas de panne."""
+    wa = '22791720755'
+    try:
+        wa = (get_settings_dict().get('whatsapp') or wa).replace('+', '').replace(' ', '')
+    except Exception:
+        pass
+    html = app.jinja_env.get_template('public/error.html').render(
+        code=code, wa=wa, home=url_for('index'), shop=url_for('products'),
+        logo=url_for('static', filename='img/logo-hm.png'))
+    return Response(html, status=code, mimetype='text/html')
+
+
 @app.errorhandler(404)
 def page_not_found(e):
-    return render_template('public/about.html'), 404
+    return _error_page(404)
+
+
+@app.errorhandler(500)
+def server_error(e):
+    return _error_page(500)
 
 
 @app.errorhandler(403)
