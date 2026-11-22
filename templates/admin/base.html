@@ -17,7 +17,7 @@
     <title>{% block title %}Admin{% endblock %} - HDATTAHER MOBILE</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v=3">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin2.css') }}?v=7">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin2.css') }}?v=8">
 </head>
 
 {% set ep = request.endpoint or '' %}
@@ -237,14 +237,38 @@
         document.addEventListener('hm-bip', show);
         window.addEventListener('appinstalled', function () { box.hidden = true; help.hidden = true; });
         if (mobile || window.__hmBip) setTimeout(show, 800);
-        document.getElementById('axInstallGo').addEventListener('click', function () {
+        var go = document.getElementById('axInstallGo'), sub = document.getElementById('axInstallSub');
+        var waiting = false, waitTimer = null;
+        function ready() {
+            if (!waiting) return;
+            waiting = false; clearTimeout(waitTimer);
+            go.textContent = 'Installer maintenant'; go.classList.remove('wait'); go.classList.add('ready');
+            sub.textContent = 'Prêt ! Touchez « Installer maintenant »';
+            help.hidden = true;
+        }
+        document.addEventListener('hm-bip', ready);
+        go.addEventListener('click', function () {
             var d = window.__hmBip;
             if (d) {
                 d.prompt();
                 d.userChoice.then(function (c) { window.__hmBip = null; if (c && c.outcome === 'accepted') { box.hidden = true; help.hidden = true; } }).catch(function () {});
-            } else {
-                help.hidden = !help.hidden;
+                return;
             }
+            if (!isIOS && isChrome) {
+                // Chrome attend que la personne ait touché la page et soit restée environ 30 secondes
+                if (waiting) return;
+                waiting = true;
+                go.textContent = 'Préparation…'; go.classList.add('wait');
+                sub.textContent = 'Chrome prépare l\'installation (30 s environ). Restez sur la page.';
+                waitTimer = setTimeout(function () {
+                    if (!waiting) return;
+                    waiting = false; go.textContent = 'Installer'; go.classList.remove('wait');
+                    sub.textContent = 'Utilisez le menu ⋮ de Chrome :';
+                    help.hidden = false;
+                }, 45000);
+                return;
+            }
+            help.hidden = !help.hidden;
         });
         document.getElementById('axInstallX').addEventListener('click', function () {
             box.hidden = true; help.hidden = true;

@@ -913,3 +913,6 @@ body.light-mode .pwa-bar-txt b, [data-theme="light"] .pwa-bar-txt b { color: #17
 .pwa-inapp { padding: 10px 12px; border-radius: 12px; font-size: .85rem; line-height: 1.45; color: #FBD38D; background: rgba(251, 191, 36, .1); border: 1px solid rgba(251, 191, 36, .3); }
 .pwa-native { width: 100%; min-height: 50px; margin-top: 16px; border-radius: 14px; }
 .pwa-later { display: block; width: 100%; margin-top: 10px; min-height: 44px; border: none; background: none; color: #A9A396; font: inherit; font-weight: 600; cursor: pointer; }
+
+.pwa-native.wait { opacity: .6; animation: pwaPulse 1.2s ease-in-out infinite; }
+@keyframes pwaPulse { 50% { opacity: .35; } }

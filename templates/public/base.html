@@ -70,7 +70,7 @@
     </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=27">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}?v=8">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/shop.css') }}?v=9">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/shop.css') }}?v=10">
     <!-- CSS dynamique depuis les paramètres admin -->
     <style>
         {
@@ -548,7 +548,7 @@
     </a>
 
     <script src="{{ url_for('static', filename='js/main.js') }}?v=41"></script>
-    <script src="{{ url_for('static', filename='js/pwa.js') }}?v=2" defer data-quiet="{{ 1 if request.endpoint in ('checkout', 'cart_view', 'order_confirmation', 'customer_login', 'customer_register') else 0 }}"></script>
+    <script src="{{ url_for('static', filename='js/pwa.js') }}?v=3" defer data-quiet="{{ 1 if request.endpoint in ('checkout', 'cart_view', 'order_confirmation', 'customer_login', 'customer_register') else 0 }}"></script>
     <script>
         // ============ Mobile Menu ============
         function toggleMobileMenu() {

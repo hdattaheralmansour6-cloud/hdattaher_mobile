@@ -518,3 +518,8 @@ a.ax-row:active, a.ax-row:hover { background: rgba(212, 175, 55, .04); }
 .ax-install-help li { padding-left: 2px; }
 .ax-install-help small { color: var(--admin-text-sec); }
 .ax-ih-warn { margin: 0 0 8px; padding: 8px 10px; border-radius: 10px; background: rgba(251, 191, 36, .1); color: #FBD38D; }
+
+.ax-install-go.wait { background: rgba(212, 175, 55, .18); color: #E8C86E; animation: axPulse 1.2s ease-in-out infinite; }
+.ax-install-go.ready { animation: axReady 1s ease-in-out 3; }
+@keyframes axPulse { 50% { opacity: .55; } }
+@keyframes axReady { 50% { transform: scale(1.08); box-shadow: 0 0 0 6px rgba(212, 175, 55, .25); } }

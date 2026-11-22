@@ -27,9 +27,18 @@
     }
 
     var deferred = window.__hmBip || null; // invite d'installation Android / Chrome (captée dès le début de la page)
+    var isChrome = /Chrome\/\d+/.test(ua) && !/SamsungBrowser|OPR|Opera|EdgA|PHX|Phoenix|UCBrowser|MiuiBrowser|HeyTap|VivoBrowser|Firefox|YaBrowser|wv\)/.test(ua);
+    function setNative(state) { // 'wait' (Chrome se prépare) ou 'ready'
+        if (!nativeBtn) return;
+        var lab = nativeBtn.querySelector('span');
+        nativeBtn.classList.toggle('wait', state === 'wait');
+        nativeBtn.disabled = state === 'wait';
+        if (lab) lab.textContent = state === 'wait' ? (document.documentElement.lang === 'ar' ? 'جارٍ التحضير…' : document.documentElement.lang === 'en' ? 'Getting ready…' : 'Préparation…')
+                                                    : (document.documentElement.lang === 'ar' ? 'ثبّت الآن' : document.documentElement.lang === 'en' ? 'Install now' : 'Installer maintenant');
+    }
     function gotPrompt() {
         deferred = window.__hmBip || deferred;
-        if (nativeBtn) nativeBtn.hidden = !deferred;
+        if (nativeBtn) { nativeBtn.hidden = !deferred; if (deferred) setNative('ready'); }
         showEntry();
     }
     document.addEventListener('hm-bip', gotPrompt);
@@ -51,7 +60,11 @@
         var os = isIOS ? 'ios' : 'android';
         sheet.querySelectorAll('[data-pwa-os]').forEach(function (b) { b.hidden = b.getAttribute('data-pwa-os') !== os; });
         var ia = sheet.querySelector('[data-pwa-inapp]'); if (ia) ia.hidden = !(isIOS && inApp);
-        if (nativeBtn) nativeBtn.hidden = !deferred;
+        if (nativeBtn) {
+            if (deferred) { nativeBtn.hidden = false; setNative('ready'); }
+            else if (isAndroid && isChrome) { nativeBtn.hidden = false; setNative('wait'); } // Chrome demande ~30 s sur la page
+            else nativeBtn.hidden = true;
+        }
         sheet.hidden = false;
         requestAnimationFrame(function () { sheet.classList.add('open'); });
         document.body.style.overflow = 'hidden';
