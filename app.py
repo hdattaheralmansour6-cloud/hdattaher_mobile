@@ -432,7 +432,12 @@ def _manifest(admin=False):
     if admin:
         data = {'id': '/azawad-app', 'name': 'HM Admin · HDATTAHER MOBILE', 'short_name': 'HM Admin',
                 'description': 'Espace admin de la boutique HDATTAHER MOBILE',
-                'start_url': url_for('admin_dashboard') + '?source=app'}
+                'start_url': url_for('admin_app_start') + '?source=app',
+                # L'admin a son propre espace (/azawad) : il ne se mélange pas avec l'app de la boutique
+                'scope': '/azawad',
+                # Permet de savoir si l'app de la boutique est déjà installée sur ce téléphone (Android)
+                'related_applications': [{'platform': 'webapp', 'url': request.url_root.rstrip('/') + url_for('pwa_manifest')}],
+                'prefer_related_applications': False}
     else:
         data = {'id': '/', 'name': 'HDATTAHER MOBILE', 'short_name': 'HDATTAHER',
                 'description': 'Smartphones et accessoires au Niger, livrés chez vous.',
@@ -442,7 +447,8 @@ def _manifest(admin=False):
                     {'name': 'Panier', 'url': url_for('cart_view'), 'icons': [{'src': url_for('static', filename='pwa/icon-192.png'), 'sizes': '192x192'}]},
                     {'name': 'Suivre ma commande', 'url': url_for('order_tracking'), 'icons': [{'src': url_for('static', filename='pwa/icon-192.png'), 'sizes': '192x192'}]},
                 ]}
-    data.update({'scope': '/', 'display': 'standalone', 'orientation': 'portrait',
+    data.setdefault('scope', '/')
+    data.update({'display': 'standalone', 'orientation': 'portrait',
                  'background_color': '#0B0B0D', 'theme_color': '#0B0B0D', 'lang': 'fr', 'dir': 'auto',
                  'categories': ['shopping'], 'icons': icons})
     resp = Response(json.dumps(data, ensure_ascii=False), mimetype='application/manifest+json')
@@ -968,7 +974,7 @@ def api_products():
 # ============================================================
 ADMIN_ROLES = {'owner': 'Propriétaire', 'products': 'Produits seulement'}
 PRODUCTS_ROLE_ENDPOINTS = {
-    'admin_login', 'admin_logout', 'admin_profile',
+    'admin_login', 'admin_logout', 'admin_profile', 'admin_app_start',
     'admin_products', 'admin_add_product', 'admin_edit_product', 'admin_delete_product',
     'admin_product_stock', 'admin_product_toggle', 'admin_product_duplicate', 'admin_optimize_photos',
 }
@@ -1023,7 +1029,7 @@ def _admin_role_guard():
     if session.get('role') == 'products' and ep not in PRODUCTS_ROLE_ENDPOINTS:
         if request.headers.get('X-Requested-With') == 'fetch':
             return jsonify(ok=False, error='Accès réservé au propriétaire.'), 403
-        if ep != 'admin_dashboard':
+        if ep not in ('admin_dashboard', 'admin_dashboard_old_url'):
             flash('Votre compte peut seulement gérer les produits.', 'warning')
         return redirect(url_for('admin_products'))
 
@@ -1099,6 +1105,20 @@ def admin_logout():
 
 
 @app.route('/admin')
+def admin_dashboard_old_url():
+    """Ancienne adresse du tableau de bord (favoris) : on redirige."""
+    return redirect(url_for('admin_dashboard'))
+
+
+@app.route('/azawad/app')
+def admin_app_start():
+    """Point d'entrée de l'application « HM Admin » : chacun arrive sur sa bonne page."""
+    if 'logged_in' not in session:
+        return redirect(url_for('admin_login'))
+    return redirect(url_for('admin_products' if session.get('role') == 'products' else 'admin_dashboard'))
+
+
+@app.route('/azawad/tableau-de-bord')
 @login_required
 def admin_dashboard():
     sb = get_supabase()

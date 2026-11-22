@@ -205,6 +205,14 @@
         <button type="button" class="ax-install-x" id="axInstallX" aria-label="Fermer"><i class="fas fa-xmark"></i></button>
     </div>
     <div class="ax-install-help" id="axInstallHelp" hidden>
+        <div data-shopapp hidden>
+            <p class="ax-ih-warn"><i class="fas fa-circle-info"></i> L'app de la <b>boutique HDATTAHER</b> est déjà installée sur ce téléphone : Chrome bloque l'installation de HM Admin.</p>
+            <ol>
+                <li>Sur l'écran d'accueil, <b>appui long</b> sur l'icône <b>HDATTAHER</b>, puis <b>« Désinstaller »</b> (vos données ne sont pas perdues).</li>
+                <li>Revenez ici dans Chrome et touchez <b>« App »</b> en haut : installez <b>HM Admin</b>.</li>
+                <li>Ensuite, vous pouvez réinstaller l'app de la boutique depuis la page d'accueil du site.</li>
+            </ol>
+        </div>
         <div data-os="android">
             <p class="ax-ih-warn" data-notchrome hidden><i class="fas fa-circle-info"></i> Ouvrez d'abord cette page dans <b>Google Chrome</b>.</p>
             <ol>
@@ -260,8 +268,22 @@
             help.hidden = true;
         }
         document.addEventListener('hm-bip', ready);
+        // L'app de la boutique est-elle déjà installée ? (Chrome Android) — elle bloque l'installation de HM Admin
+        var shopInstalled = false;
+        if (navigator.getInstalledRelatedApps) {
+            navigator.getInstalledRelatedApps().then(function (apps) { shopInstalled = !!(apps && apps.length); }).catch(function () {});
+        }
+        function showShopHelp() {
+            help.querySelector('[data-shopapp]').hidden = false;
+            help.querySelector('[data-os="android"]').hidden = true;
+            help.querySelector('[data-os="ios"]').hidden = true;
+            sub.textContent = 'Une étape avant d\'installer :';
+            go.textContent = 'Installer'; go.classList.remove('wait');
+            help.hidden = false;
+        }
         go.addEventListener('click', function () {
             var d = window.__hmBip;
+            if (!d && shopInstalled && !isIOS) { waiting = false; clearTimeout(waitTimer); showShopHelp(); return; }
             if (d) {
                 d.prompt();
                 d.userChoice.then(function (c) { window.__hmBip = null; if (c && c.outcome === 'accepted') { box.hidden = true; help.hidden = true; } }).catch(function () {});
@@ -276,9 +298,12 @@
                 waitTimer = setTimeout(function () {
                     if (!waiting) return;
                     waiting = false; go.textContent = 'Installer'; go.classList.remove('wait');
-                    sub.textContent = 'Utilisez le menu ⋮ de Chrome :';
+                    if (shopInstalled) { showShopHelp(); return; }
+                    // Chrome ne propose toujours rien : le plus souvent l'app de la boutique est déjà installée
+                    help.querySelector('[data-shopapp]').hidden = false;
+                    sub.textContent = 'Chrome ne propose pas l\'installation :';
                     help.hidden = false;
-                }, 45000);
+                }, 40000);
                 return;
             }
             help.hidden = !help.hidden;
