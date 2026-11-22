@@ -916,3 +916,5 @@ body.light-mode .pwa-bar-txt b, [data-theme="light"] .pwa-bar-txt b { color: #17
 
 .pwa-native.wait { opacity: .6; animation: pwaPulse 1.2s ease-in-out infinite; }
 @keyframes pwaPulse { 50% { opacity: .35; } }
+
+.pwa-steps-hl .pwa-step { border-color: rgba(212, 175, 55, .55); background: rgba(212, 175, 55, .08); }

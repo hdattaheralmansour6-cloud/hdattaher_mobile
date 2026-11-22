@@ -62,7 +62,16 @@
         var ia = sheet.querySelector('[data-pwa-inapp]'); if (ia) ia.hidden = !(isIOS && inApp);
         if (nativeBtn) {
             if (deferred) { nativeBtn.hidden = false; setNative('ready'); }
-            else if (isAndroid && isChrome) { nativeBtn.hidden = false; setNative('wait'); } // Chrome demande ~30 s sur la page
+            else if (isAndroid && isChrome) { // Chrome demande ~30 s sur la page (et attend plus longtemps après un « Annuler »)
+                nativeBtn.hidden = false; setNative('wait');
+                clearTimeout(window.__hmWaitT);
+                window.__hmWaitT = setTimeout(function () {
+                    if (deferred) return;
+                    nativeBtn.hidden = true;
+                    var st = sheet.querySelector('[data-pwa-os="android"]');
+                    if (st) { st.classList.add('pwa-steps-hl'); }
+                }, 20000);
+            }
             else nativeBtn.hidden = true;
         }
         sheet.hidden = false;
