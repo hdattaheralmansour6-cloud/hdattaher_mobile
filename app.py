@@ -2337,10 +2337,26 @@ def admin_order_invoice(order_id):
         return redirect(url_for('admin_orders'))
 
     # Récupérer le nom du client pour l'affichage sur la facture
-    customer = db.fetch_one('customers', 'full_name, email', {'id': order.get('customer_id')})
-    order['customer_name'] = customer['full_name'] if customer else 'Client supprimé'
+    # Commande sans compte : pas de client à chercher (Supabase refuse un identifiant vide).
+    customer = None
+    if order.get('customer_id'):
+        try:
+            customer = db.fetch_one('customers', 'full_name, email', {'id': order['customer_id']})
+        except Exception:
+            customer = None
+    if customer:
+        order['customer_name'] = customer.get('full_name') or order.get('shipping_name') or 'Client'
+    elif order.get('customer_id'):
+        order['customer_name'] = order.get('shipping_name') or 'Client supprimé'
+    else:
+        order['customer_name'] = order.get('shipping_name') or 'Client'
 
-    pdf_bytes = generate_invoice_pdf(order, items, get_settings())
+    try:
+        pdf_bytes = generate_invoice_pdf(order, items, get_settings())
+    except Exception:
+        app.logger.exception('Facture impossible pour la commande %s', order_id)
+        flash("La facture n'a pas pu être créée. Réessayez dans un instant.", 'error')
+        return redirect(url_for('admin_order_detail', order_id=order_id))
     return Response(
         pdf_bytes,
         mimetype='application/pdf',
@@ -2610,7 +2626,12 @@ def customer_order_invoice(order_id):
 
     order['customer_name'] = current_user.full_name
 
-    pdf_bytes = generate_invoice_pdf(order, items, get_settings())
+    try:
+        pdf_bytes = generate_invoice_pdf(order, items, get_settings())
+    except Exception:
+        app.logger.exception('Facture impossible pour la commande %s', order_id)
+        flash("La facture n'a pas pu être créée. Réessayez dans un instant.", 'error')
+        return redirect(url_for('customer_order_detail', order_id=order_id))
     return Response(
         pdf_bytes,
         mimetype='application/pdf',
@@ -2693,8 +2714,10 @@ def _error_page(code):
         wa = (get_settings_dict().get('whatsapp') or wa).replace('+', '').replace(' ', '')
     except Exception:
         pass
+    is_admin = request.path.startswith(('/azawad', '/admin')) and 'logged_in' in session
     html = app.jinja_env.get_template('public/error.html').render(
-        code=code, wa=wa, home=url_for('index'), shop=url_for('products'),
+        code=code, wa=wa, admin=is_admin,
+        home=url_for('admin_dashboard') if is_admin else url_for('index'), shop=url_for('products'),
         logo=url_for('static', filename='img/logo-hm.png'))
     return Response(html, status=code, mimetype='text/html')
 

@@ -38,20 +38,30 @@ p { margin-top: 10px; color: #B9B3A5; line-height: 1.55; font-size: .95rem; }
     <p data-t="d404">Ce lien n'existe plus ou le produit a été retiré. Retrouvez tous nos téléphones dans la boutique.</p>
     {% else %}
     <h1 data-t="t500">Petit souci technique</h1>
+    {% if admin %}
+    <p data-t="d500a">Cette action n'a pas marché. Réessayez dans un instant, ou revenez à l'espace admin.</p>
+    {% else %}
     <p data-t="d500">Le site met un peu de temps à répondre. Réessayez dans un instant, ou écrivez-nous sur WhatsApp : nous vous répondons.</p>
     {% endif %}
+    {% endif %}
     <div class="btns">
-        {% if code == 404 %}
+        {% if admin %}
+        {% if code != 404 %}<button type="button" class="btn gold" onclick="location.reload()" data-t="retry">Réessayer</button>{% endif %}
+        <a class="btn {{ 'gold' if code == 404 }}" href="{{ home }}" data-t="admin">Retour à l'admin</a>
+        <button type="button" class="btn" onclick="history.back()" data-t="back">Page précédente</button>
+        {% elif code == 404 %}
         <a class="btn gold" href="{{ shop }}" data-t="shop">Voir la boutique</a>
         <a class="btn" href="{{ home }}" data-t="home">Retour à l'accueil</a>
         {% else %}
         <button type="button" class="btn gold" onclick="location.reload()" data-t="retry">Réessayer</button>
         <a class="btn" href="{{ home }}" data-t="home">Retour à l'accueil</a>
         {% endif %}
+        {% if not admin %}
         <a class="btn wa" href="https://wa.me/{{ wa }}" target="_blank" rel="noopener">
             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.5-.1-.7.1-.2.3-.8.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6l.4-.5c.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3.1 4.9 4.3.7.3 1.2.5 1.7.6.7.2 1.3.2 1.8.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.1-.3-.2-.6-.3zM12 21.8c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4C2.7 15.6 2.2 13.8 2.2 12 2.2 6.6 6.6 2.2 12 2.2c2.6 0 5.1 1 6.9 2.9 1.8 1.8 2.9 4.3 2.9 6.9 0 5.4-4.4 9.8-9.8 9.8zM20.5 3.5C18.2 1.2 15.2 0 12 0 5.4 0 0 5.4 0 12c0 2.1.6 4.2 1.6 6L0 24l6.2-1.6c1.8 1 3.8 1.5 5.8 1.5 6.6 0 12-5.4 12-12 0-3.2-1.2-6.2-3.5-8.4z"/></svg>
             <span data-t="wa">Nous écrire sur WhatsApp</span>
         </a>
+        {% endif %}
     </div>
 </main>
 <script>
@@ -59,10 +69,10 @@ p { margin-top: 10px; color: #B9B3A5; line-height: 1.55; font-size: .95rem; }
     var T = {
         en: { t404: 'Page not found', d404: 'This link no longer exists or the product was removed. Find all our phones in the shop.',
               t500: 'A small technical issue', d500: 'The site is taking a little time to respond. Try again in a moment, or message us on WhatsApp: we will reply.',
-              shop: 'See the shop', home: 'Back to home', retry: 'Try again', wa: 'Message us on WhatsApp' },
+              shop: 'See the shop', home: 'Back to home', retry: 'Try again', admin: 'Back to admin', d500a: 'This action did not work. Try again in a moment, or go back to the admin area.', back: 'Previous page', wa: 'Message us on WhatsApp' },
         ar: { t404: 'الصفحة غير موجودة', d404: 'هذا الرابط لم يعد موجودًا أو تم سحب المنتج. تجد كل هواتفنا في المتجر.',
               t500: 'مشكلة تقنية بسيطة', d500: 'الموقع يتأخر قليلًا في الاستجابة. حاول مرة أخرى بعد لحظة، أو راسلنا على واتساب: سنرد عليك.',
-              shop: 'زيارة المتجر', home: 'العودة إلى الرئيسية', retry: 'حاول مرة أخرى', wa: 'راسلنا على واتساب' }
+              shop: 'زيارة المتجر', home: 'العودة إلى الرئيسية', retry: 'حاول مرة أخرى', admin: 'العودة إلى الإدارة', d500a: 'لم ينجح هذا الإجراء. حاول مرة أخرى بعد لحظة، أو عد إلى لوحة الإدارة.', back: 'الصفحة السابقة', wa: 'راسلنا على واتساب' }
     };
     var lang = 'fr';
     try { lang = localStorage.getItem('lang') || 'fr'; } catch (e) {}
