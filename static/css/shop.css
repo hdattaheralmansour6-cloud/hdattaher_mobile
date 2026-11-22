@@ -545,6 +545,18 @@ body.no-scroll { overflow: hidden; }
 .qty input::-webkit-outer-spin-button, .qty input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .qty.is-busy { opacity: .6; pointer-events: none; }
 
+.pd-alert { margin-top: 12px; padding: 16px; border-radius: 18px; border: 1px solid rgba(212, 175, 55, .35); background: linear-gradient(160deg, rgba(212, 175, 55, .10), rgba(212, 175, 55, .02)); display: grid; gap: 10px; scroll-margin-top: 90px; }
+.pd-alert-head { display: flex; gap: 12px; align-items: center; }
+.pd-alert-head b { display: block; font-size: .98rem; }
+.pd-alert-head small { display: block; color: var(--text-secondary, #9CA3AF); font-size: .8rem; line-height: 1.4; margin-top: 2px; }
+.pd-alert-ic { flex: none; width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; background: linear-gradient(135deg, #F1D88A, #B8892A); color: #1a1406; font-size: 1.05rem; animation: pdRing 2.4s ease-in-out infinite; }
+@keyframes pdRing { 0%, 80%, 100% { transform: rotate(0); } 85% { transform: rotate(-12deg); } 90% { transform: rotate(10deg); } 95% { transform: rotate(-6deg); } }
+.pd-alert input { width: 100%; min-height: 48px; padding: 0 14px; border-radius: 12px; border: 1.5px solid var(--border-color, rgba(255,255,255,.12)); background: var(--bg-input, rgba(0,0,0,.25)); color: inherit; font: inherit; font-size: 16px; }
+.pd-alert input:focus { outline: none; border-color: #D4AF37; }
+.pd-alert-row { display: flex; gap: 8px; }
+.pd-alert-row input { flex: 1; min-width: 0; }
+.pd-alert-row .btn { flex: none; min-height: 48px; padding: 0 16px; border-radius: 12px; white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .pd-alert-ic { animation: none; } }
 .pd-wa { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; min-height: 48px; border-radius: 14px; border: 1.5px solid rgba(37, 211, 102, .65); color: #22C55E; font-weight: 700; font-size: .88rem; text-decoration: none; }
 
 .pd-perks { list-style: none; padding: 0; margin: 20px 0; display: grid; gap: 10px; }

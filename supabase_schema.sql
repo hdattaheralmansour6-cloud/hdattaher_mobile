@@ -577,3 +577,16 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS coupon_code TEXT;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS discount_amount NUMERIC(12,2) DEFAULT 0;
 ALTER TABLE coupons ENABLE ROW LEVEL SECURITY;
 GRANT ALL ON coupons TO service_role;
+
+-- ---------- Alertes retour en stock ----------
+CREATE TABLE IF NOT EXISTS stock_alerts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    phone TEXT NOT NULL,
+    name TEXT,
+    notified BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_stock_alerts_waiting ON stock_alerts (product_id) WHERE notified = false;
+ALTER TABLE stock_alerts ENABLE ROW LEVEL SECURITY;
+GRANT ALL ON stock_alerts TO service_role;

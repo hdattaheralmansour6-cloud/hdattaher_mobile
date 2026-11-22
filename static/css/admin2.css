@@ -366,6 +366,8 @@ a.ax-row:active, a.ax-row:hover { background: rgba(212, 175, 55, .04); }
 .ax-dl dd { margin: 0; text-align: right; font-weight: 600; overflow-wrap: anywhere; }
 .ax-contact { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 6px; }
 .ax-wa-btn { background: #25D366 !important; color: #fff !important; border: none !important; }
+.ax-review-btn { margin-top: 14px; width: 100%; justify-content: center; background: rgba(212, 175, 55, .12); color: var(--admin-primary, #D4AF37) !important; border: 1px solid rgba(212, 175, 55, .45); }
+.ax-review-btn i { color: #F5C542; }
 .ax-pay { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
 .ax-pay img { height: 40px; border-radius: 8px; background: #fff; padding: 2px 4px; }
 .ax-pay div { display: flex; flex-direction: column; }

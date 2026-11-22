@@ -1,0 +1,105 @@
+{% extends "admin/base.html" %}
+{% block title %}Alertes stock{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <div>
+        <h1>Alertes stock</h1>
+        <span class="breadcrumb">Les clients qui attendent un produit épuisé. Quand il revient, prévenez-les en un clic.</span>
+    </div>
+</div>
+
+{% if missing %}
+<div class="ax-empty"><i class="fas fa-database"></i>Lancez d'abord la mise à jour SQL dans Supabase pour activer les alertes de stock.</div>
+{% elif not groups %}
+<div class="ax-empty"><i class="fas fa-bell-slash"></i>Aucune demande pour l'instant. Sur la page d'un produit épuisé, les clients peuvent laisser leur numéro pour être prévenus.</div>
+{% else %}
+<div class="sa-list">
+    {% for g in groups %}
+    {% set p = g.product %}
+    {% set link = base ~ url_for('product_detail', product_id=p.id) %}
+    <section class="admin-card sa-card {{ 'is-ready' if g.ready }}">
+        <div class="sa-head">
+            {% if p.image and p.image != 'default.png' %}<img src="{{ p.image }}" alt="" loading="lazy">{% else %}<span class="sa-noimg"><i class="fas fa-mobile-screen"></i></span>{% endif %}
+            <div class="sa-info">
+                <b>{{ p.name }}</b>
+                {% if g.ready %}
+                <em class="sa-tag ok"><i class="fas fa-circle-check"></i> De retour en stock ({{ p.stock }})</em>
+                {% else %}
+                <em class="sa-tag"><i class="fas fa-clock"></i> Toujours épuisé</em>
+                {% endif %}
+            </div>
+            <span class="sa-count" title="Clients en attente"><i class="fas fa-user-clock"></i> {{ g.alerts|length }}</span>
+        </div>
+        {% if not g.ready %}
+        <p class="sa-hint"><i class="fas fa-circle-info"></i> Remettez du stock sur ce produit : vous pourrez ensuite prévenir ces clients sur WhatsApp.
+            <a href="{{ url_for('admin_edit_product', product_id=p.id) }}">Modifier le produit</a></p>
+        {% endif %}
+        <ul class="sa-people">
+            {% for a in g.alerts %}
+            {% set msg = 'Bonjour' ~ ((' ' ~ a.name.split()[0]) if a.name else '') ~ ', bonne nouvelle ! « ' ~ p.name ~ ' » est de retour en stock chez HDATTAHER MOBILE 🎉 Il est à ' ~ (p.price|fcfa) ~ '. Commandez vite ici : ' ~ link %}
+            <li id="sa-{{ a.id }}">
+                <div class="sa-who">
+                    <b>{{ a.name or 'Client' }}</b>
+                    <small dir="ltr">{{ a.phone }}</small>
+                    {% if a.created_at %}<small class="sa-date">{{ (a.created_at|string)[8:10] }}/{{ (a.created_at|string)[5:7] }}</small>{% endif %}
+                </div>
+                <form method="POST" action="{{ url_for('admin_stock_alert_action', alert_id=a.id) }}" class="sa-actions">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    {% if g.ready %}
+                    <a href="https://wa.me/{{ a.phone|wa }}?text={{ msg|urlencode }}" target="_blank" rel="noopener"
+                       class="btn-admin ax-wa-btn sa-notify" data-id="{{ a.id }}"><i class="fab fa-whatsapp"></i> Prévenir</a>
+                    <button type="submit" name="action" value="done" class="btn-admin sa-done" title="Marquer comme prévenu" aria-label="Marquer comme prévenu"><i class="fas fa-check"></i></button>
+                    {% endif %}
+                    <button type="submit" name="action" value="delete" class="btn-admin danger" onclick="return confirm('Supprimer cette demande ?');" aria-label="Supprimer"><i class="fas fa-trash"></i></button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+    {% endfor %}
+</div>
+<p class="ax-muted sa-foot">Après avoir appuyé sur « Prévenir », envoyez le message dans WhatsApp : le client disparaît de la liste.</p>
+{% endif %}
+
+<style>
+.sa-list { display: grid; gap: 1rem; }
+@media (min-width: 960px) { .sa-list { grid-template-columns: 1fr 1fr; align-items: start; } }
+.sa-card { padding: 0; overflow: hidden; }
+.sa-card.is-ready { border-color: rgba(74, 222, 128, .35); }
+.sa-head { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid rgba(255, 255, 255, .06); }
+.sa-head img, .sa-noimg { width: 52px; height: 52px; border-radius: 12px; object-fit: contain; background: #fff; flex: none; }
+.sa-noimg { display: grid; place-items: center; background: var(--admin-bg); color: #D4AF37; font-size: 1.3rem; }
+.sa-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.sa-info b { font-size: .98rem; overflow-wrap: anywhere; }
+.sa-tag { font-style: normal; font-weight: 700; font-size: .75rem; color: #FBBF24; }
+.sa-tag.ok { color: #4ADE80; }
+.sa-count { flex: none; font-weight: 800; font-size: .9rem; padding: 6px 10px; border-radius: 999px; background: rgba(212, 175, 55, .12); color: #E8C86E; }
+.sa-hint { margin: 0; padding: 10px 16px; font-size: .82rem; color: var(--admin-text-sec); background: rgba(251, 191, 36, .06); }
+.sa-hint a { color: #E8C86E; font-weight: 700; }
+.sa-people { list-style: none; margin: 0; padding: 0; }
+.sa-people li { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-top: 1px solid rgba(255, 255, 255, .04); transition: opacity .3s; }
+.sa-people li:first-child { border-top: none; }
+.sa-people li.gone { opacity: 0; }
+.sa-who { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.sa-who b { font-size: .92rem; overflow-wrap: anywhere; }
+.sa-who small { color: var(--admin-text-sec); font-size: .8rem; }
+.sa-who .sa-date { font-size: .72rem; opacity: .7; }
+.sa-actions { display: flex; gap: 6px; margin: 0; flex: none; }
+.sa-actions .btn-admin { width: auto; min-height: 42px; margin: 0; padding: 8px 12px; }
+.sa-actions .sa-notify { padding: 8px 14px; }
+.sa-foot { display: block; margin-top: 1rem; text-align: center; }
+</style>
+<script>
+document.querySelectorAll('.sa-notify').forEach(function (a) {
+    a.addEventListener('click', function () {
+        var li = document.getElementById('sa-' + a.dataset.id), fd = new FormData();
+        fd.append('csrf_token', '{{ csrf_token() }}'); fd.append('action', 'done');
+        fetch(a.closest('form').action, { method: 'POST', body: fd, headers: { 'X-Requested-With': 'fetch', 'X-CSRFToken': '{{ csrf_token() }}' } })
+            .then(function (r) { return r.json(); })
+            .then(function (j) { if (j.ok && li) { setTimeout(function () { li.classList.add('gone'); setTimeout(function () { li.remove(); }, 300); }, 600); } })
+            .catch(function () {});
+    });
+});
+</script>
+{% endblock %}

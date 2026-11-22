@@ -220,3 +220,70 @@ def use_coupon(coupon):
         db.update('coupons', {'uses': int(coupon.get('uses') or 0) + 1}, {'id': coupon['id']})
     except Exception:
         pass
+
+
+# ============================================================
+#  ALERTES « DE RETOUR EN STOCK »
+# ============================================================
+
+def _digits(phone):
+    return ''.join(ch for ch in (phone or '') if ch.isdigit())
+
+
+def add_stock_alert(product_id, phone, name=''):
+    """Enregistre un numéro à prévenir. Renvoie 'ok', 'phone', 'dup', 'full' ou 'error'."""
+    digits = _digits(phone)
+    if len(digits) < 8 or len(digits) > 15:
+        return 'phone'
+    try:
+        waiting = db.fetch_all('stock_alerts', 'id, phone', {'product_id': product_id, 'notified': False})
+        if any(_digits(r.get('phone')) == digits for r in waiting):
+            return 'dup'
+        if len(waiting) >= 300:
+            return 'full'
+        db.insert('stock_alerts', {'product_id': product_id, 'phone': (phone or '').strip()[:30],
+                                   'name': ' '.join((name or '').split())[:60], 'notified': False})
+    except Exception:
+        return 'error'
+    return 'ok'
+
+
+def get_stock_alerts():
+    """Alertes en attente regroupées par produit (produits revenus en stock d'abord).
+    Renvoie None si la table n'existe pas encore."""
+    try:
+        alerts = db.fetch_all('stock_alerts', '*', {'notified': False}, order=('created_at', True))
+    except Exception:
+        return None
+    ids = list({a.get('product_id') for a in alerts if a.get('product_id')})
+    products = {}
+    if ids:
+        try:
+            from database import get_supabase
+            rows = get_supabase().table('products').select('id, name, stock, image, price, is_active') \
+                .in_('id', ids).execute().data or []
+            products = {p['id']: p for p in rows}
+        except Exception:
+            products = {}
+    groups = {}
+    for a in alerts:
+        p = products.get(a.get('product_id'))
+        if not p:
+            continue
+        g = groups.setdefault(p['id'], {'product': p, 'alerts': [],
+                                        'ready': int(p.get('stock') or 0) > 0 and p.get('is_active', True) is not False})
+        g['alerts'].append(a)
+    return sorted(groups.values(), key=lambda g: (not g['ready'], -len(g['alerts'])))
+
+
+def count_ready_alerts():
+    """Nombre de clients à prévenir (produit revenu en stock) — pour la pastille du menu admin."""
+    groups = get_stock_alerts()
+    return sum(len(g['alerts']) for g in groups if g['ready']) if groups else 0
+
+
+def count_waiting_alerts(product_id):
+    try:
+        return db.count('stock_alerts', {'product_id': product_id, 'notified': False})
+    except Exception:
+        return 0

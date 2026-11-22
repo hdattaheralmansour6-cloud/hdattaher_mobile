@@ -39,7 +39,8 @@ from order_manager import (create_order_from_cart, get_customer_orders, get_orde
 from invoice_generator import generate_invoice_pdf
 from shop_extras import (get_zones, get_zone, get_variants, variant_label, variant_price, save_variants,
                          remove_variants, sync_product_stock, get_reviews, refresh_rating, count_pending_reviews,
-                         check_coupon, use_coupon, get_coupons, normalize_code)
+                         check_coupon, use_coupon, get_coupons, normalize_code,
+                         add_stock_alert, get_stock_alerts, count_ready_alerts, count_waiting_alerts)
 # test redeploiement storage 2
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -255,9 +256,11 @@ def inject_globals():
     pending_reset_count = 0
     pending_orders_count = 0
     pending_reviews_count = 0
+    ready_alerts_count = 0
     if session.get('logged_in'):
         pending_reset_count = count_pending_reset_requests()
         pending_reviews_count = count_pending_reviews()
+        ready_alerts_count = count_ready_alerts()
         try:
             pending_orders_count = db.count('orders', {'status': 'En attente'})
         except Exception:
@@ -265,6 +268,7 @@ def inject_globals():
     return dict(settings=settings, categories=categories, dynamic_css=dynamic_css,
                 cart_count=cart_count, pending_reset_count=pending_reset_count,
                 pending_orders_count=pending_orders_count, pending_reviews_count=pending_reviews_count,
+                ready_alerts_count=ready_alerts_count,
                 now_year=datetime.now().year)
 
 
@@ -731,6 +735,38 @@ def product_review(product_id):
         flash("Impossible d'enregistrer votre avis pour le moment. Réessayez plus tard.", 'error')
         return redirect(back)
     flash('Merci ! Votre avis sera publié après vérification.', 'success')
+    return redirect(back)
+
+
+@app.route('/product/<product_id>/alerte', methods=['POST'])
+def product_stock_alert(product_id):
+    """Un visiteur laisse son numéro pour être prévenu du retour en stock (sans compte)."""
+    product = db.fetch_one('products', 'id, stock', {'id': product_id})
+    if not product:
+        flash('Produit introuvable.', 'error')
+        return redirect(url_for('products'))
+    back = url_for('product_detail', product_id=product_id) + '#alerte'
+    if int(product.get('stock') or 0) > 0:
+        flash('Bonne nouvelle : ce produit est déjà disponible !', 'success')
+        return redirect(back)
+    asked = session.get('stock_alerts') or []
+    if len(asked) >= 15 and product_id not in asked:
+        flash('Vous avez déjà demandé beaucoup d\'alertes. Contactez-nous sur WhatsApp.', 'info')
+        return redirect(back)
+    name = request.form.get('name') or ''
+    if current_user.is_authenticated and not name:
+        name = getattr(current_user, 'full_name', '') or ''
+    res = add_stock_alert(product_id, request.form.get('phone'), name)
+    if res in ('ok', 'dup'):
+        if product_id not in asked:
+            session['stock_alerts'] = (asked + [product_id])[-15:]
+        flash('C\'est noté ! Nous vous prévenons sur WhatsApp dès que le produit revient.', 'success')
+    elif res == 'phone':
+        flash('Numéro invalide : écrivez votre numéro WhatsApp (au moins 8 chiffres).', 'error')
+    elif res == 'full':
+        flash('Trop de demandes pour ce produit. Contactez-nous sur WhatsApp.', 'info')
+    else:
+        flash('Impossible d\'enregistrer votre demande pour le moment. Écrivez-nous sur WhatsApp.', 'error')
     return redirect(back)
 
 
@@ -1496,6 +1532,11 @@ def admin_edit_product(product_id):
             problem = _save_etat(product_id, etat_fields) or problem
         log_action('Modification produit', f'Produit: {name}')
         flash(problem or 'Produit modifié avec succès!', 'warning' if problem else 'success')
+        if int(product.get('stock') or 0) <= 0:
+            fresh = db.fetch_one('products', 'stock', {'id': product_id}) or {}
+            waiting = count_waiting_alerts(product_id) if int(fresh.get('stock') or 0) > 0 else 0
+            if waiting:
+                flash(f'{waiting} client(s) attendent ce produit : prévenez-les dans « Alertes stock ».', 'info')
         return redirect(url_for('admin_products'))
 
     variants = get_variants(product_id) if product.get('has_variants') else []
@@ -1730,6 +1771,40 @@ def admin_coupon_action(coupon_id):
 # ============================================================
 #  ZONES DE LIVRAISON
 # ============================================================
+
+
+@app.route('/azawad/alertes-stock')
+def admin_stock_alerts():
+    if 'logged_in' not in session:
+        return redirect(url_for('admin_login'))
+    groups = get_stock_alerts()
+    base = (app.config.get('SITE_URL') or Config.SITE_URL or request.url_root).rstrip('/')
+    return render_template('admin/stock_alerts.html', groups=groups or [], missing=groups is None, base=base)
+
+
+@app.route('/azawad/alertes-stock/<alert_id>', methods=['POST'])
+def admin_stock_alert_action(alert_id):
+    if 'logged_in' not in session:
+        return redirect(url_for('admin_login'))
+    action = request.form.get('action')
+    ok = True
+    try:
+        if action == 'done':
+            db.update('stock_alerts', {'notified': True}, {'id': alert_id})
+        elif action == 'delete':
+            db.delete('stock_alerts', {'id': alert_id})
+        else:
+            ok = False
+    except Exception:
+        ok = False
+    if request.headers.get('X-Requested-With') == 'fetch':
+        return jsonify(ok=ok)
+    if not ok:
+        flash('Action impossible pour le moment.', 'error')
+    elif action == 'delete':
+        flash('Demande supprimée.', 'success')
+    return redirect(url_for('admin_stock_alerts'))
+
 
 @app.route('/azawad/livraison')
 @login_required
@@ -2197,8 +2272,24 @@ def admin_order_detail(order_id):
     if order.get('customer_id'):
         rows = db.fetch_all('customers', filters={'id': order['customer_id']}, limit=1)
         customer = rows[0] if rows else None
+    review_msg = ''
+    if order.get('status') == 'Livrée':
+        base = (app.config.get('SITE_URL') or Config.SITE_URL or request.url_root).rstrip('/')
+        seen, lines = set(), []
+        for it in items or []:
+            pid = it.get('product_id')
+            if pid and pid not in seen:
+                seen.add(pid)
+                nm = (it.get('product_name') or 'Produit').split(' — ')[0]
+                lines.append(f"👉 {nm} : {base}{url_for('product_detail', product_id=pid)}#avis")
+        if lines:
+            first = (order.get('shipping_name') or '').split()
+            review_msg = (f"Bonjour {first[0] if first else ''}, merci pour votre achat chez HDATTAHER MOBILE ! "
+                          "Êtes-vous satisfait ? Votre avis nous aide beaucoup : il suffit de mettre des "
+                          "étoiles ici (30 secondes) ⭐\n" + '\n'.join(lines[:5]))
     return render_template('admin/order_detail.html', order=order, items=items,
-                           statuses=ORDER_STATUSES, customer=customer, next_status=NEXT_STATUS)
+                           statuses=ORDER_STATUSES, customer=customer, next_status=NEXT_STATUS,
+                           review_msg=review_msg)
 
 
 @app.route('/azawad/commande/statut/<order_id>', methods=['POST'])

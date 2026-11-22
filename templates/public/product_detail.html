@@ -180,10 +180,29 @@
                 </div>
                 <button type="submit" class="btn btn-primary pd-add"><i class="fas fa-bag-shopping"></i> <span data-i18n="add_to_cart">Ajouter au panier</span></button>
             </form>
+            {% else %}
+            <!-- Prévenir du retour en stock (sans compte) -->
+            <form method="POST" action="{{ url_for('product_stock_alert', product_id=product.id) }}" class="pd-alert" id="alerte">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="pd-alert-head">
+                    <span class="pd-alert-ic"><i class="fas fa-bell"></i></span>
+                    <div><b data-i18n="alert_title">Prévenez-moi quand il revient</b>
+                        <small data-i18n="alert_sub">Laissez votre numéro WhatsApp : on vous écrit dès son retour.</small></div>
+                </div>
+                {% if not current_user.is_authenticated %}
+                <input type="text" name="name" maxlength="60" autocomplete="given-name" placeholder="Votre prénom (facultatif)" data-i18n-placeholder="alert_name">
+                {% endif %}
+                <div class="pd-alert-row">
+                    <input type="tel" name="phone" required inputmode="tel" autocomplete="tel" maxlength="30" dir="ltr"
+                           value="{{ current_user.phone if current_user.is_authenticated and current_user.phone else '' }}"
+                           placeholder="Ex : 96 00 00 00" data-i18n-placeholder="alert_phone" aria-label="Numéro WhatsApp">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-bell"></i> <span data-i18n="alert_btn">Me prévenir</span></button>
+                </div>
+            </form>
             {% endif %}
             <a href="https://wa.me/{{ wa }}?text={{ ('Bonjour, je suis intéressé par : ' ~ product.name ~ ' (' ~ (product.price|fcfa) ~ '). Est-il disponible ?')|urlencode }}"
                target="_blank" rel="noopener" class="pd-wa">
-                <i class="fab fa-whatsapp"></i> <span data-i18n="{{ 'ask_whatsapp_product' if in_stock else 'notify_whatsapp' }}">{{ 'Une question ? Écrivez-nous' if in_stock else 'Être prévenu du retour en stock' }}</span>
+                <i class="fab fa-whatsapp"></i> <span data-i18n="ask_whatsapp_product">Une question ? Écrivez-nous</span>
             </a>
 
             <!-- Avantages -->
@@ -288,8 +307,8 @@
     <button type="button" class="btn btn-primary" onclick="document.querySelector('#pdBuy .pd-add').click()">
         <i class="fas fa-bag-shopping"></i> <span data-i18n="add_to_cart">Ajouter au panier</span></button>
     {% else %}
-    <a href="https://wa.me/{{ wa }}?text={{ ('Bonjour, prévenez-moi quand ce produit revient en stock : ' ~ product.name)|urlencode }}"
-       target="_blank" rel="noopener" class="btn pd-sticky-wa"><i class="fab fa-whatsapp"></i> <span data-i18n="notify_short">Me prévenir</span></a>
+    <a href="#alerte" class="btn btn-primary" onclick="var f=document.getElementById('alerte');if(f){event.preventDefault();f.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(function(){f.querySelector('input[name=phone]').focus({preventScroll:true});},450);}">
+        <i class="fas fa-bell"></i> <span data-i18n="notify_short">Me prévenir</span></a>
     {% endif %}
 </div>
 

@@ -101,6 +101,11 @@
                 <a href="tel:+{{ phone }}" class="btn-admin"><i class="fas fa-phone"></i> Appeler</a>
             </div>
             <small class="ax-muted">Le message WhatsApp est déjà écrit selon le statut actuel.</small>
+            {% if review_msg %}
+            <a href="https://wa.me/{{ phone }}?text={{ review_msg|urlencode }}" target="_blank" rel="noopener" class="btn-admin ax-review-btn">
+                <i class="fas fa-star"></i> Demander un avis</a>
+            <small class="ax-muted">Envoie au client le lien pour noter {{ 'le produit' if items|length < 2 else 'les produits' }} (quelques étoiles = plus de confiance pour les prochains acheteurs).</small>
+            {% endif %}
             {% endif %}
         </div>
     </section>
