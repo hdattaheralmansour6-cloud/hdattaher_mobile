@@ -407,6 +407,7 @@ a.ax-row:active, a.ax-row:hover { background: rgba(212, 175, 55, .04); }
         background: rgba(17, 17, 20, .94); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
         border-top: 1px solid var(--admin-border);
     }
+    .ax-tabs.ax-tabs-4 { grid-template-columns: repeat(4, 1fr); }
     .ax-tabs a, .ax-tabs button {
         position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
         background: none; border: none; color: var(--admin-text-sec); font-size: .64rem; font-weight: 700; font-family: inherit; text-decoration: none; cursor: pointer;

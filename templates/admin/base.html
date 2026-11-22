@@ -16,7 +16,7 @@
     <title>{% block title %}Admin{% endblock %} - HDATTAHER MOBILE</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v=3">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin2.css') }}?v=4">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin2.css') }}?v=5">
 </head>
 
 {% set ep = request.endpoint or '' %}
@@ -33,15 +33,24 @@
     ('admin_banners', 'Bannières', 'fa-images', ['admin_banners', 'admin_add_banner', 'admin_edit_banner']),
     ('admin_reset_requests', 'Codes mot de passe', 'fa-key', ['admin_reset_requests']),
     ('admin_settings', 'Paramètres', 'fa-gear', ['admin_settings']),
+    ('admin_team', 'Équipe', 'fa-user-group', ['admin_team']),
     ('admin_logs', 'Journal', 'fa-clipboard-list', ['admin_logs']),
     ('admin_profile', 'Mon profil', 'fa-user-shield', ['admin_profile']),
 ] %}
-{% set more_active = ep in ['admin_categories', 'admin_zones', 'admin_coupons', 'admin_reviews', 'admin_stock_alerts', 'admin_banners', 'admin_add_banner', 'admin_edit_banner', 'admin_reset_requests', 'admin_settings', 'admin_logs', 'admin_profile'] %}
+{% set owner = session.get('role', 'owner') != 'products' %}
+{% if not owner %}
+{% set nav = [
+    ('admin_products', 'Produits', 'fa-box', ['admin_products', 'admin_edit_product']),
+    ('admin_add_product', 'Ajouter un produit', 'fa-plus', ['admin_add_product']),
+    ('admin_profile', 'Mon profil', 'fa-user-shield', ['admin_profile']),
+] %}
+{% endif %}
+{% set more_active = ep in ['admin_categories', 'admin_zones', 'admin_coupons', 'admin_reviews', 'admin_stock_alerts', 'admin_banners', 'admin_add_banner', 'admin_edit_banner', 'admin_reset_requests', 'admin_settings', 'admin_team', 'admin_logs', 'admin_profile'] %}
 
 <body class="admin-body ax">
     <!-- ===== Barre du haut (mobile) ===== -->
     <header class="ax-top">
-        <a href="{{ url_for('admin_dashboard') }}" class="ax-logo" aria-label="Tableau de bord"><img src="{{ url_for('static', filename='img/logo-hm.svg') }}" alt="HM" width="40" height="40"></a>
+        <a href="{{ url_for('admin_dashboard' if owner else 'admin_products') }}" class="ax-logo" aria-label="Accueil admin"><img src="{{ url_for('static', filename='img/logo-hm.svg') }}" alt="HM" width="40" height="40"></a>
         <div class="ax-top-title">
             <b>{% block top_title %}{{ self.title() }}{% endblock %}</b>
             <small>Espace admin</small>
@@ -94,6 +103,7 @@
     </div>
 
     <!-- ===== Barre d'onglets (mobile) ===== -->
+    {% if owner %}
     <nav class="ax-tabs" aria-label="Navigation admin">
         <a href="{{ url_for('admin_dashboard') }}" class="{{ 'on' if ep == 'admin_dashboard' }}">
             <i class="fas fa-house"></i><span>Accueil</span></a>
@@ -106,6 +116,18 @@
         <button type="button" class="{{ 'on' if more_active }}" onclick="axSheet(true)">
             <span class="ax-tab-ic"><i class="fas fa-grip"></i>{% set more_badge = (pending_reset_count or 0) + (pending_reviews_count or 0) + (ready_alerts_count or 0) %}{% if more_badge %}<em>{{ more_badge }}</em>{% endif %}</span><span>Plus</span></button>
     </nav>
+    {% else %}
+    <nav class="ax-tabs ax-tabs-4" aria-label="Navigation admin">
+        <a href="{{ url_for('admin_products') }}" class="{{ 'on' if ep in ['admin_products', 'admin_edit_product'] }}">
+            <i class="fas fa-box"></i><span>Produits</span></a>
+        <a href="{{ url_for('admin_add_product') }}" class="{{ 'on' if ep == 'admin_add_product' }}">
+            <i class="fas fa-plus"></i><span>Ajouter</span></a>
+        <a href="{{ url_for('admin_profile') }}" class="{{ 'on' if ep == 'admin_profile' }}">
+            <i class="fas fa-user-shield"></i><span>Profil</span></a>
+        <a href="{{ url_for('admin_logout') }}">
+            <i class="fas fa-right-from-bracket"></i><span>Sortir</span></a>
+    </nav>
+    {% endif %}
 
     <!-- ===== Menu « Plus » ===== -->
     <div class="ax-sheet-back" id="axSheetBack" hidden onclick="axSheet(false)"></div>

@@ -266,7 +266,7 @@ def inject_globals():
     pending_orders_count = 0
     pending_reviews_count = 0
     ready_alerts_count = 0
-    if session.get('logged_in'):
+    if session.get('logged_in') and session.get('role', 'owner') != 'products':
         pending_reset_count = count_pending_reset_requests()
         pending_reviews_count = count_pending_reviews()
         ready_alerts_count = count_ready_alerts()
@@ -961,6 +961,73 @@ def api_products():
 #  ROUTES ADMIN
 # ============================================================
 
+# ============================================================
+#  ÉQUIPE : rôles admin
+#  owner    = propriétaire (tous les droits)
+#  products = peut seulement ajouter / modifier / supprimer des produits
+# ============================================================
+ADMIN_ROLES = {'owner': 'Propriétaire', 'products': 'Produits seulement'}
+PRODUCTS_ROLE_ENDPOINTS = {
+    'admin_login', 'admin_logout', 'admin_profile',
+    'admin_products', 'admin_add_product', 'admin_edit_product', 'admin_delete_product',
+    'admin_product_stock', 'admin_product_toggle', 'admin_product_duplicate', 'admin_optimize_photos',
+}
+
+
+def _admin_role(admin_id):
+    """Rôle d'un admin. 'owner' si la mise à jour SQL n'est pas encore faite (personne d'autre ne peut exister).
+    None si Supabase ne répond pas (on ne donne jamais plus de droits par erreur)."""
+    try:
+        row = db.fetch_one('admins', 'role', {'id': admin_id})
+        return (row or {}).get('role') or 'owner'
+    except Exception:
+        pass
+    try:
+        db.fetch_one('admins', 'id', {'id': admin_id})   # la table répond : c'est la colonne « role » qui manque
+        return 'owner'
+    except Exception:
+        return None
+
+
+def is_owner():
+    return session.get('role', 'owner') != 'products'
+
+
+@app.before_request
+def _admin_role_guard():
+    """Un compte « produits seulement » ne peut ouvrir que les pages des produits.
+    Le rôle est revérifié toutes les 60 s (compte désactivé ou supprimé = déconnexion)."""
+    if 'logged_in' not in session:
+        return
+    ep = request.endpoint or ''
+    if not ep.startswith('admin_') or ep in ('admin_login', 'admin_logout'):
+        return
+    if time.time() - session.get('role_at', 0) > 60:
+        row, ok = None, True
+        try:
+            row = db.fetch_one('admins', 'role, is_active', {'id': session.get('user_id')})
+        except Exception:
+            try:
+                row = db.fetch_one('admins', 'id, is_active', {'id': session.get('user_id')})
+                if row is not None:
+                    row['role'] = 'owner'
+            except Exception:
+                ok = False          # Supabase injoignable : on garde le rôle déjà connu
+        if ok:
+            if not row or row.get('is_active') is False:
+                session.clear()
+                flash('Votre accès à l\'espace admin a été retiré.', 'warning')
+                return redirect(url_for('admin_login'))
+            session['role'] = row.get('role') or 'owner'
+        session['role_at'] = time.time()
+    if session.get('role') == 'products' and ep not in PRODUCTS_ROLE_ENDPOINTS:
+        if request.headers.get('X-Requested-With') == 'fetch':
+            return jsonify(ok=False, error='Accès réservé au propriétaire.'), 403
+        if ep != 'admin_dashboard':
+            flash('Votre compte peut seulement gérer les produits.', 'warning')
+        return redirect(url_for('admin_products'))
+
+
 @app.route('/azawad', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'GET' and 'logged_in' in session:
@@ -987,6 +1054,10 @@ def admin_login():
         # Vérifier via RPC Supabase (bcrypt côté serveur)
         admin = verify_admin_password(username, password)
 
+        role = _admin_role(admin.get('id')) if admin else None
+        if admin and role is None:
+            flash('Connexion impossible pour le moment. Réessayez dans un instant.', 'error')
+            return render_template('admin/login.html')
         if admin:
             _reset_login_attempts(ip)
             db.update('admins', {'last_login': datetime.utcnow().isoformat()},
@@ -997,11 +1068,13 @@ def admin_login():
             session['user_id'] = admin['id']
             session['username'] = admin['username']
             session['login_time'] = time.time()
+            session['role'] = role
+            session['role_at'] = time.time()
             session.permanent = True
 
             log_action('Connexion réussie', f'IP: {ip}')
             flash('Connexion réussie!', 'success')
-            return redirect(url_for('admin_dashboard'))
+            return redirect(url_for('admin_products' if role == 'products' else 'admin_dashboard'))
         else:
             blocked = _record_failed_login(ip)
             attempts_left = Config.LOGIN_MAX_ATTEMPTS - _login_attempts.get(ip, {}).get('count', 0)
@@ -1620,7 +1693,7 @@ def admin_edit_product(product_id):
         if int(product.get('stock') or 0) <= 0:
             fresh = db.fetch_one('products', 'stock', {'id': product_id}) or {}
             waiting = count_waiting_alerts(product_id) if int(fresh.get('stock') or 0) > 0 else 0
-            if waiting:
+            if waiting and is_owner():
                 flash(f'{waiting} client(s) attendent ce produit : prévenez-les dans « Alertes stock ».', 'info')
         return redirect(url_for('admin_products'))
 
@@ -2091,6 +2164,89 @@ def admin_settings():
         return redirect(url_for('admin_settings'))
 
     return render_template('admin/settings.html')
+
+
+@app.route('/azawad/equipe')
+def admin_team():
+    if 'logged_in' not in session:
+        return redirect(url_for('admin_login'))
+    missing = False
+    try:
+        members = db.fetch_all('admins', 'id, username, role, is_active, last_login, created_at', order=('created_at', True))
+    except Exception:
+        missing, members = True, []
+    return render_template('admin/team.html', members=members, missing=missing, roles=ADMIN_ROLES,
+                           me=str(session.get('user_id')))
+
+
+def _clean_username(u):
+    u = (u or '').strip()
+    return u if re.fullmatch(r'[A-Za-z0-9._-]{3,30}', u) else ''
+
+
+@app.route('/azawad/equipe/ajouter', methods=['POST'])
+def admin_team_add():
+    if 'logged_in' not in session:
+        return redirect(url_for('admin_login'))
+    username = _clean_username(request.form.get('username'))
+    password = request.form.get('password') or ''
+    if not username:
+        flash('Nom d\'utilisateur : 3 à 30 caractères, lettres, chiffres, point, tiret (sans espace ni accent).', 'error')
+        return redirect(url_for('admin_team'))
+    if len(password) < 8:
+        flash('Mot de passe : au moins 8 caractères.', 'error')
+        return redirect(url_for('admin_team'))
+    try:
+        if db.fetch_one('admins', 'id', {'username': username}):
+            flash('Ce nom d\'utilisateur existe déjà.', 'error')
+            return redirect(url_for('admin_team'))
+        get_supabase().rpc('create_admin_member', {'p_username': username, 'p_password': password,
+                                                   'p_role': 'products'}).execute()
+    except Exception:
+        flash('Impossible de créer le compte. Avez-vous lancé la mise à jour SQL « équipe » dans Supabase ?', 'error')
+        return redirect(url_for('admin_team'))
+    log_action('Équipe : compte créé', f'{username} (produits seulement)')
+    flash(f'Compte « {username} » créé ! Il peut seulement gérer les produits.', 'success')
+    return redirect(url_for('admin_team'))
+
+
+@app.route('/azawad/equipe/<member_id>', methods=['POST'])
+def admin_team_action(member_id):
+    if 'logged_in' not in session:
+        return redirect(url_for('admin_login'))
+    action = request.form.get('action')
+    try:
+        member = db.fetch_one('admins', 'id, username, role, is_active', {'id': member_id})
+    except Exception:
+        member = None
+    if not member:
+        flash('Compte introuvable.', 'error')
+        return redirect(url_for('admin_team'))
+    if str(member['id']) == str(session.get('user_id')) or member.get('role') != 'products':
+        flash('Le compte propriétaire ne peut pas être modifié ici (utilisez « Mon profil »).', 'error')
+        return redirect(url_for('admin_team'))
+    name = member['username']
+    try:
+        if action == 'password':
+            pw = request.form.get('new_password') or ''
+            if len(pw) < 8:
+                flash('Mot de passe : au moins 8 caractères.', 'error')
+                return redirect(url_for('admin_team'))
+            get_supabase().rpc('set_admin_password', {'p_admin_id': member['id'], 'p_new_password': pw}).execute()
+            log_action('Équipe : mot de passe changé', name)
+            flash(f'Nouveau mot de passe enregistré pour « {name} ».', 'success')
+        elif action == 'toggle':
+            new_state = not (member.get('is_active') is not False)
+            db.update('admins', {'is_active': new_state}, {'id': member['id']})
+            log_action('Équipe : compte ' + ('réactivé' if new_state else 'désactivé'), name)
+            flash(f'Compte « {name} » ' + ('réactivé.' if new_state else 'désactivé : il ne peut plus se connecter.'), 'success')
+        elif action == 'delete':
+            db.delete('admins', {'id': member['id']})
+            log_action('Équipe : compte supprimé', name)
+            flash(f'Compte « {name} » supprimé.', 'success')
+    except Exception:
+        flash('Action impossible pour le moment. Réessayez.', 'error')
+    return redirect(url_for('admin_team'))
 
 
 @app.route('/azawad/logs')

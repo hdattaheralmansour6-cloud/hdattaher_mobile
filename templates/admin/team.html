@@ -1,0 +1,134 @@
+{% extends "admin/base.html" %}
+{% block title %}Équipe{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <div>
+        <h1>Équipe</h1>
+        <span class="breadcrumb">Donnez un accès à quelqu'un pour gérer les produits, sans voir le reste</span>
+    </div>
+</div>
+
+{% if missing %}
+<div class="ax-empty"><i class="fas fa-database"></i>Lancez d'abord la mise à jour SQL « équipe » dans Supabase (fichier mise_a_jour_equipe.sql).</div>
+{% else %}
+<div class="tm-grid">
+    <section class="admin-card">
+        <div class="admin-card-header"><h3><i class="fas fa-user-plus"></i> Nouveau compte : produits seulement</h3></div>
+        <div class="admin-card-body">
+            <ul class="tm-rights">
+                <li class="ok"><i class="fas fa-check"></i> <span>Peut ajouter, modifier, supprimer des produits (photos, prix, stock, versions)</span></li>
+                <li class="no"><i class="fas fa-xmark"></i> <span>Ne voit <b>pas</b> les commandes, clients, codes promo, paramètres et chiffres</span></li>
+            </ul>
+            <form method="POST" action="{{ url_for('admin_team_add') }}" autocomplete="off">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group">
+                    <label for="tmUser">Nom d'utilisateur *</label>
+                    <input type="text" name="username" id="tmUser" class="form-control" required minlength="3" maxlength="30"
+                           pattern="[A-Za-z0-9._\-]{3,30}" placeholder="Ex : moussa" autocapitalize="none" autocorrect="off" spellcheck="false">
+                    <small class="ax-muted">Lettres, chiffres, point ou tiret. Sans espace ni accent.</small>
+                </div>
+                <div class="form-group">
+                    <label for="tmPass">Mot de passe *</label>
+                    <div class="tm-pass">
+                        <input type="text" name="password" id="tmPass" class="form-control" required minlength="8" maxlength="72"
+                               placeholder="Au moins 8 caractères" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="new-password">
+                        <button type="button" class="btn-admin" onclick="tmGen('tmPass')" title="Créer un mot de passe"><i class="fas fa-wand-magic-sparkles"></i></button>
+                    </div>
+                    <small class="ax-muted">Notez-le et donnez-le à votre ami avec l'adresse de l'espace admin.</small>
+                </div>
+                <button type="submit" class="btn-admin primary"><i class="fas fa-user-plus"></i> Créer le compte</button>
+            </form>
+        </div>
+    </section>
+
+    <section class="tm-list">
+        {% for m in members %}
+        {% set mine = (m.id|string) == me %}
+        {% set owner = m.role != 'products' %}
+        <article class="admin-card tm-card {{ 'off' if m.is_active is false }}">
+            <div class="tm-head">
+                <span class="tm-av {{ 'gold' if owner }}">{{ (m.username or '?')[:1]|upper }}</span>
+                <div class="tm-info">
+                    <b>{{ m.username }}{% if mine %} <small class="ax-muted">(vous)</small>{% endif %}</b>
+                    <span class="tm-tags">
+                        <em class="tm-tag {{ 'gold' if owner }}"><i class="fas {{ 'fa-crown' if owner else 'fa-box' }}"></i> {{ roles.get(m.role or 'owner', m.role) }}</em>
+                        {% if m.is_active is false %}<em class="tm-tag off"><i class="fas fa-ban"></i> Désactivé</em>{% endif %}
+                    </span>
+                    <small class="ax-muted">Dernière connexion : {{ (m.last_login|string)[:10] if m.last_login else 'jamais' }}</small>
+                </div>
+            </div>
+            {% if not owner and not mine %}
+            <details class="tm-more">
+                <summary><i class="fas fa-key"></i> Nouveau mot de passe</summary>
+                <form method="POST" action="{{ url_for('admin_team_action', member_id=m.id) }}" class="tm-pass" autocomplete="off">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="action" value="password">
+                    <input type="text" name="new_password" id="np{{ loop.index }}" class="form-control" required minlength="8" maxlength="72"
+                           placeholder="Au moins 8 caractères" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="new-password">
+                    <button type="button" class="btn-admin" onclick="tmGen('np{{ loop.index }}')" title="Créer un mot de passe"><i class="fas fa-wand-magic-sparkles"></i></button>
+                    <button type="submit" class="btn-admin primary">OK</button>
+                </form>
+            </details>
+            <div class="tm-actions">
+                <form method="POST" action="{{ url_for('admin_team_action', member_id=m.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" name="action" value="toggle" class="btn-admin">
+                        {% if m.is_active is false %}<i class="fas fa-circle-check"></i> Réactiver{% else %}<i class="fas fa-ban"></i> Désactiver{% endif %}</button>
+                </form>
+                <form method="POST" action="{{ url_for('admin_team_action', member_id=m.id) }}" onsubmit="return confirm('Supprimer le compte « {{ m.username }} » ?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" name="action" value="delete" class="btn-admin danger" aria-label="Supprimer"><i class="fas fa-trash"></i></button>
+                </form>
+            </div>
+            {% endif %}
+        </article>
+        {% endfor %}
+        <p class="ax-muted tm-foot"><i class="fas fa-clipboard-list"></i> Tout ce que fait chaque compte est visible dans le <a href="{{ url_for('admin_logs') }}">Journal</a>.</p>
+    </section>
+</div>
+{% endif %}
+
+<style>
+.tm-grid { display: grid; gap: 1rem; }
+@media (min-width: 960px) { .tm-grid { grid-template-columns: 1fr 1fr; align-items: start; } }
+.tm-rights { list-style: none; margin: 0 0 16px; padding: 12px 14px; border-radius: 12px; background: rgba(255, 255, 255, .03); display: grid; gap: 8px; font-size: .88rem; }
+.tm-rights li { display: flex; gap: 10px; align-items: baseline; line-height: 1.4; }
+.tm-rights .ok i { color: #4ADE80; }
+.tm-rights .no i { color: #F87171; }
+.tm-pass { display: flex; gap: 8px; }
+.tm-pass .form-control { flex: 1; min-width: 0; }
+.tm-pass .btn-admin { width: auto; flex: none; margin: 0; }
+.tm-list { display: grid; gap: .8rem; align-content: start; }
+.tm-card { padding: 14px 16px; margin: 0; }
+.tm-card.off { opacity: .65; }
+.tm-head { display: flex; gap: 12px; align-items: center; }
+.tm-av { flex: none; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 1.1rem;
+         background: rgba(255, 255, 255, .08); color: var(--admin-text); }
+.tm-av.gold { background: linear-gradient(135deg, #F1D88A, #B8892A); color: #17120a; }
+.tm-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.tm-info b { overflow-wrap: anywhere; }
+.tm-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.tm-tag { font-style: normal; font-size: .74rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: rgba(96, 165, 250, .14); color: #93C5FD; }
+.tm-tag.gold { background: rgba(212, 175, 55, .15); color: #E8C86E; }
+.tm-tag.off { background: rgba(248, 113, 113, .14); color: #FCA5A5; }
+.tm-more { margin-top: 12px; }
+.tm-more summary { cursor: pointer; font-weight: 600; font-size: .88rem; color: var(--admin-text-sec); padding: 6px 0; }
+.tm-more .tm-pass { margin-top: 8px; }
+.tm-actions { display: flex; gap: 8px; margin-top: 12px; }
+.tm-actions form { margin: 0; }
+.tm-actions form:first-child { flex: 1; }
+.tm-actions .btn-admin { width: 100%; margin: 0; }
+.tm-actions .btn-admin.danger { width: 48px; }
+.tm-foot { text-align: center; font-size: .85rem; }
+.tm-foot a { color: #E8C86E; font-weight: 700; }
+</style>
+<script>
+function tmGen(id) {
+    var a = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789', out = '', r = new Uint32Array(10);
+    (window.crypto || window.msCrypto).getRandomValues(r);
+    for (var i = 0; i < 10; i++) out += a[r[i] % a.length];
+    var el = document.getElementById(id); el.value = out; el.focus(); el.select();
+}
+</script>
+{% endblock %}
