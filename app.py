@@ -38,7 +38,8 @@ from order_manager import (create_order_from_cart, get_customer_orders, get_orde
                             get_dashboard_stats, get_admin_overview, NEXT_STATUS)
 from invoice_generator import generate_invoice_pdf
 from shop_extras import (get_zones, get_zone, get_variants, variant_label, variant_price, save_variants,
-                         remove_variants, sync_product_stock, get_reviews, refresh_rating, count_pending_reviews)
+                         remove_variants, sync_product_stock, get_reviews, refresh_rating, count_pending_reviews,
+                         check_coupon, use_coupon, get_coupons, normalize_code)
 # test redeploiement storage 2
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -1669,6 +1670,64 @@ def admin_delete_category(cat_id):
 
 
 # ============================================================
+#  CODES PROMO
+# ============================================================
+
+@app.route('/azawad/codes-promo')
+@login_required
+def admin_coupons():
+    from datetime import date
+    return render_template('admin/coupons.html', coupons=get_coupons(), today=date.today().isoformat())
+
+
+@app.route('/azawad/codes-promo/ajouter', methods=['POST'])
+@login_required
+def admin_add_coupon():
+    code = normalize_code(request.form.get('code'))
+    value = safe_float(request.form.get('value'), 0)
+    kind = 'amount' if request.form.get('kind') == 'amount' else 'percent'
+    if len(code) < 3:
+        flash('Le code doit avoir au moins 3 lettres ou chiffres.', 'error')
+        return redirect(url_for('admin_coupons'))
+    if value <= 0 or (kind == 'percent' and value > 90):
+        flash('Réduction invalide : entre 1 et 90 % pour un pourcentage, ou un montant en FCFA.', 'error')
+        return redirect(url_for('admin_coupons'))
+    ends = (request.form.get('ends_at') or '').strip()[:10] or None
+    max_uses = safe_int(request.form.get('max_uses'), 0)
+    try:
+        if db.fetch_one('coupons', 'id', {'code': code}):
+            flash(f'Le code « {code} » existe déjà.', 'error')
+            return redirect(url_for('admin_coupons'))
+        db.insert('coupons', {'code': code, 'kind': kind, 'value': value,
+                              'min_total': max(0, safe_float(request.form.get('min_total'), 0)),
+                              'max_uses': max_uses if max_uses > 0 else None, 'uses': 0,
+                              'ends_at': ends, 'is_active': True})
+        log_action('Code promo créé', code)
+        flash(f'Code « {code} » créé.', 'success')
+    except Exception:
+        flash("Impossible de créer le code : lancez d'abord la mise à jour SQL dans Supabase.", 'error')
+    return redirect(url_for('admin_coupons'))
+
+
+@app.route('/azawad/codes-promo/<coupon_id>', methods=['POST'])
+@login_required
+def admin_coupon_action(coupon_id):
+    c = db.fetch_one('coupons', '*', {'id': coupon_id})
+    if not c:
+        flash('Code introuvable.', 'error')
+        return redirect(url_for('admin_coupons'))
+    if request.form.get('action') == 'delete':
+        db.delete('coupons', {'id': coupon_id})
+        flash(f"Code « {c['code']} » supprimé.", 'success')
+    else:
+        active = c.get('is_active') is not False
+        db.update('coupons', {'is_active': not active}, {'id': coupon_id})
+        flash(f"Code « {c['code']} » " + ('désactivé.' if active else 'réactivé.'), 'success')
+    log_action('Code promo modifié', c['code'])
+    return redirect(url_for('admin_coupons'))
+
+
+# ============================================================
 #  ZONES DE LIVRAISON
 # ============================================================
 
@@ -2009,6 +2068,7 @@ def checkout():
         return render_template('public/checkout.html', items=items, total=total, customer=customer, guest=not logged,
                                payment_number=Config.PAYMENT_NUMBER, zones=zones,
                                selected_zone=request.form.get('zone_id', ''),
+                               coupon_code=normalize_code(request.form.get('coupon_code')),
                                payment_methods=Config.PAYMENT_METHODS, **extra)
 
     if request.method == 'POST':
@@ -2037,6 +2097,14 @@ def checkout():
                 flash('Veuillez choisir votre zone de livraison.', 'error')
                 return _render(selected_method=payment_method, notes=notes)
 
+        coupon, discount = None, 0
+        code = normalize_code(request.form.get('coupon_code'))
+        if code:
+            coupon, discount, cerr = check_coupon(code, total)
+            if cerr:
+                flash(cerr, 'error')
+                return _render(selected_method=payment_method, notes=notes)
+
         if payment_method not in Config.PAYMENT_METHODS:
             flash('Veuillez choisir un moyen de paiement (Amana ou Nita).', 'error')
             return _render(notes=notes)
@@ -2050,13 +2118,16 @@ def checkout():
             current_user.id if logged else None, items, shipping_name, shipping_phone, shipping_address, notes,
             payment_method=payment_method, payment_proof=proof_url,
             delivery_zone=zone['name'] if zone else None,
-            delivery_fee=float(zone.get('fee') or 0) if zone else 0
+            delivery_fee=float(zone.get('fee') or 0) if zone else 0,
+            coupon_code=coupon['code'] if coupon else None, discount=discount
         )
 
         if error:
             flash(error, 'error')
             return _render(selected_method=payment_method, notes=notes)
 
+        if coupon:
+            use_coupon(coupon)
         cart_module.clear_cart()
         who = current_user.email if logged else f'{shipping_name} ({shipping_phone}, sans compte)'
         if not logged:
@@ -2068,6 +2139,17 @@ def checkout():
         return redirect(url_for('order_confirmation', order_id=order['id']))
 
     return _render()
+
+
+@app.route('/commande/code-promo', methods=['POST'])
+def checkout_coupon():
+    """Vérifie un code promo pendant la commande (le total est recalculé au moment de valider)."""
+    _items, total = cart_module.get_cart_details()
+    coupon, discount, err = check_coupon(request.form.get('code'), total)
+    if err or not coupon:
+        return jsonify(ok=False, error=err or 'Écrivez un code promo.')
+    label = (f"-{float(coupon['value']):g} %" if coupon.get('kind') == 'percent' else '')
+    return jsonify(ok=True, code=coupon['code'], discount=discount, label=label)
 
 
 @app.route('/commande/confirmation/<order_id>')

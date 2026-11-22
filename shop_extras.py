@@ -166,3 +166,57 @@ def count_pending_reviews():
         return db.count('reviews', {'is_approved': False})
     except Exception:
         return 0
+
+
+# ============================================================
+#  CODES PROMO
+# ============================================================
+
+def normalize_code(code):
+    return ''.join(ch for ch in (code or '').upper() if ch.isalnum() or ch in '-_')[:24]
+
+
+def get_coupons():
+    try:
+        return db.fetch_all('coupons', '*', order=('created_at', False)) or []
+    except Exception:
+        return None
+
+
+def check_coupon(code, subtotal):
+    """
+    Vérifie un code promo pour un panier.
+    Retourne (coupon, réduction en FCFA, message d'erreur).
+    """
+    from datetime import date
+    code = normalize_code(code)
+    if not code:
+        return None, 0, None
+    try:
+        c = db.fetch_one('coupons', '*', {'code': code})
+    except Exception:
+        c = None
+    if not c or c.get('is_active') is False:
+        return None, 0, "Ce code promo n'existe pas."
+    ends = str(c.get('ends_at') or '')[:10]
+    if ends and ends < date.today().isoformat():
+        return None, 0, 'Ce code promo a expiré.'
+    if c.get('max_uses') and int(c.get('uses') or 0) >= int(c['max_uses']):
+        return None, 0, "Ce code promo a déjà été utilisé le nombre de fois prévu."
+    minimum = float(c.get('min_total') or 0)
+    if subtotal < minimum:
+        return None, 0, f"Ce code est valable à partir de {minimum:,.0f} FCFA d'achat.".replace(',', ' ')
+    value = float(c.get('value') or 0)
+    if c.get('kind') == 'percent':
+        discount = round(subtotal * min(value, 90) / 100)
+    else:
+        discount = value
+    discount = max(0, min(discount, subtotal))
+    return c, discount, None
+
+
+def use_coupon(coupon):
+    try:
+        db.update('coupons', {'uses': int(coupon.get('uses') or 0) + 1}, {'id': coupon['id']})
+    except Exception:
+        pass

@@ -20,6 +20,7 @@
     ('admin_customers', 'Clients', 'fa-users', ['admin_customers']),
     ('admin_categories', 'Catégories', 'fa-layer-group', ['admin_categories']),
     ('admin_zones', 'Livraison', 'fa-truck-fast', ['admin_zones']),
+    ('admin_coupons', 'Codes promo', 'fa-ticket', ['admin_coupons']),
     ('admin_reviews', 'Avis clients', 'fa-star', ['admin_reviews']),
     ('admin_banners', 'Bannières', 'fa-images', ['admin_banners', 'admin_add_banner', 'admin_edit_banner']),
     ('admin_reset_requests', 'Codes mot de passe', 'fa-key', ['admin_reset_requests']),
@@ -27,7 +28,7 @@
     ('admin_logs', 'Journal', 'fa-clipboard-list', ['admin_logs']),
     ('admin_profile', 'Mon profil', 'fa-user-shield', ['admin_profile']),
 ] %}
-{% set more_active = ep in ['admin_categories', 'admin_zones', 'admin_reviews', 'admin_banners', 'admin_add_banner', 'admin_edit_banner', 'admin_reset_requests', 'admin_settings', 'admin_logs', 'admin_profile'] %}
+{% set more_active = ep in ['admin_categories', 'admin_zones', 'admin_coupons', 'admin_reviews', 'admin_banners', 'admin_add_banner', 'admin_edit_banner', 'admin_reset_requests', 'admin_settings', 'admin_logs', 'admin_profile'] %}
 
 <body class="admin-body ax">
     <!-- ===== Barre du haut (mobile) ===== -->

@@ -584,6 +584,7 @@ const translations = {
 
 // Versions, zones de livraison, avis clients
 Object.assign(translations.fr, {
+  promo_title: 'Code promo', promo_code: 'Code promo', promo_placeholder: 'Vous avez un code ? (facultatif)', promo_apply: 'Appliquer', promo_ok: 'Code appliqué : vous économisez', discount_label: 'Réduction',
   guest_note: 'Pas besoin de compte : votre nom et votre téléphone suffisent. Gardez le numéro de commande pour la suivre.', have_account: "J'ai un compte",
   our_address: 'Adresse', made_in_niger: 'Fièrement basé au Niger',
   opt_storage: 'Stockage', opt_color: 'Couleur', choose_version: 'Choisir', variant_out: 'Indisponible dans cette version',
@@ -599,6 +600,7 @@ Object.assign(translations.fr, {
   cond_bon: 'Bon état', cond_correct: 'État correct'
 });
 Object.assign(translations.en, {
+  promo_title: 'Promo code', promo_code: 'Promo code', promo_placeholder: 'Have a code? (optional)', promo_apply: 'Apply', promo_ok: 'Code applied: you save', discount_label: 'Discount',
   guest_note: 'No account needed: your name and phone number are enough. Keep the order number to track it.', have_account: 'I have an account',
   our_address: 'Address', made_in_niger: 'Proudly based in Niger',
   opt_storage: 'Storage', opt_color: 'Color', choose_version: 'Choose', variant_out: 'Unavailable in this version',
@@ -614,6 +616,7 @@ Object.assign(translations.en, {
   cond_bon: 'Good', cond_correct: 'Fair'
 });
 Object.assign(translations.ar, {
+  promo_title: 'رمز الخصم', promo_code: 'رمز الخصم', promo_placeholder: 'لديك رمز؟ (اختياري)', promo_apply: 'تطبيق', promo_ok: 'تم تطبيق الرمز: توفّر', discount_label: 'الخصم',
   guest_note: 'لا حاجة إلى حساب: يكفي اسمك ورقم هاتفك. احتفظ برقم الطلب لتتبعه.', have_account: 'لدي حساب',
   our_address: 'العنوان', made_in_niger: 'بكل فخر من النيجر',
   opt_storage: 'السعة', opt_color: 'اللون', choose_version: 'اختر', variant_out: 'غير متوفر في هذا الخيار',

@@ -68,6 +68,15 @@
             <strong class="acc-item-price">{{ item.subtotal|fcfa }}</strong>
         </div>
         {% endfor %}
+        {% if order.discount_amount %}
+        <div class="acc-item">
+            <div class="acc-item-name">
+                <strong data-i18n="promo_code">Code promo</strong>
+                <small>{{ order.coupon_code }}</small>
+            </div>
+            <strong class="acc-item-price" style="color:#16A34A">− {{ order.discount_amount|fcfa }}</strong>
+        </div>
+        {% endif %}
         {% if order.delivery_zone %}
         <div class="acc-item">
             <div class="acc-item-name">

@@ -25,6 +25,14 @@
 .zone-opt em{font-style:normal;font-weight:800;white-space:nowrap;}
 .zone-opt input:checked + span{border-color:#D4AF37;background:rgba(212,175,55,.12);}
 .co-label{display:block;font-size:.8rem;color:var(--text-secondary);font-weight:500;}
+.promo-box{display:flex;gap:8px;}
+.promo-box input{flex:1;min-width:0;padding:13px 14px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:16px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;}
+.promo-box input::placeholder{text-transform:none;letter-spacing:0;font-weight:500;}
+.promo-box button{padding:0 18px;border-radius:12px;border:none;background:#D4AF37;color:#111;font-weight:800;cursor:pointer;white-space:nowrap;}
+.promo-msg{margin:10px 0 0;font-size:.88rem;font-weight:600;}
+.promo-msg.ok{color:#16A34A;} .promo-msg.err{color:#DC2626;}
+[data-theme="dark"] .promo-msg.ok{color:#4ADE80;} [data-theme="dark"] .promo-msg.err{color:#F87171;}
+.co-disc{color:#16A34A;} [data-theme="dark"] .co-disc{color:#4ADE80;}
 .guest-note{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px;border:1px solid rgba(212,175,55,.35);background:rgba(212,175,55,.07);margin-bottom:14px;}
 .guest-note i{color:#D4AF37;font-size:1.1rem;}
 .guest-note p{margin:0;flex:1;font-size:.84rem;line-height:1.45;color:var(--text);}
@@ -62,6 +70,10 @@
                     <strong id="coFee" data-i18n="choose_zone_short">À choisir</strong>
                 </div>
                 {% endif %}
+                <div class="account-order-row co-disc-row" id="coDiscRow" hidden>
+                    <span><span data-i18n="promo_code">Code promo</span> <small class="co-label" id="coDiscCode"></small></span>
+                    <strong class="co-disc" id="coDisc"></strong>
+                </div>
                 <div class="account-order-row" style="border-bottom:none;">
                     <strong data-i18n="cart_total">Total</strong>
                     <strong class="co-total">{{ total|fcfa }}</strong>
@@ -89,6 +101,16 @@
                     </div>
                 </div>
                 {% endif %}
+
+                <div class="account-card account-section">
+                    <h2 data-i18n="promo_title">Code promo</h2>
+                    <div class="promo-box">
+                        <input type="text" name="coupon_code" id="couponInput" value="{{ coupon_code or '' }}" maxlength="24" autocomplete="off" autocapitalize="characters"
+                               data-i18n-placeholder="promo_placeholder" placeholder="Vous avez un code ? (facultatif)">
+                        <button type="button" id="couponBtn" data-i18n="promo_apply">Appliquer</button>
+                    </div>
+                    <p class="promo-msg" id="couponMsg" hidden></p>
+                </div>
 
                 <div class="account-card account-section">
                     <h2 data-i18n="pay_title">Paiement</h2>
@@ -168,13 +190,38 @@
     // Livraison : le total se met à jour selon la zone choisie
     var base={{ total|int }}, fee=document.getElementById('coFee');
     function money(n){return new Intl.NumberFormat('fr-FR').format(Math.round(n)).replace(/\u202f|\u00a0/g,' ')+' FCFA';}
+    var disc=0;
     function zoneSync(){
         var z=document.querySelector('input[name=zone_id]:checked');
-        if(!fee) return;
         var f=z?parseInt(z.dataset.fee,10)||0:0;
-        if(z){fee.removeAttribute('data-i18n');if(f){fee.textContent=money(f);}else{fee.innerHTML='<span data-i18n="free">'+(window.t?t('free','Gratuit'):'Gratuit')+'</span>';}}
-        document.querySelectorAll('.co-total').forEach(function(el){el.textContent=money(base+f);});
+        if(fee&&z){fee.removeAttribute('data-i18n');if(f){fee.textContent=money(f);}else{fee.innerHTML='<span data-i18n="free">'+(window.t?t('free','Gratuit'):'Gratuit')+'</span>';}}
+        document.querySelectorAll('.co-total').forEach(function(el){el.textContent=money(base-disc+f);});
     }
+    // Code promo : vérifié tout de suite, puis de nouveau au moment de valider
+    var cIn=document.getElementById('couponInput'),cBtn=document.getElementById('couponBtn'),cMsg=document.getElementById('couponMsg');
+    function couponMsg(txt,ok){cMsg.textContent=txt;cMsg.className='promo-msg '+(ok?'ok':'err');cMsg.hidden=!txt;}
+    function setDisc(d,code){
+        disc=d; var row=document.getElementById('coDiscRow');
+        row.hidden=!d; document.getElementById('coDisc').textContent='− '+money(d); document.getElementById('coDiscCode').textContent=code||'';
+        zoneSync();
+    }
+    function applyCoupon(){
+        var code=(cIn.value||'').trim();
+        if(!code){setDisc(0);couponMsg('',true);return;}
+        cBtn.disabled=true;
+        var fd=new FormData(); fd.append('code',code);
+        fetch('{{ url_for("checkout_coupon") }}',{method:'POST',body:fd,credentials:'same-origin',headers:{'X-CSRFToken':'{{ csrf_token() }}'}})
+            .then(function(r){return r.json();})
+            .then(function(d){
+                if(d.ok){cIn.value=d.code;setDisc(d.discount,d.code);couponMsg((window.t?t('promo_ok','Code appliqué : vous économisez'):'Code appliqué : vous économisez')+' '+money(d.discount),true);}
+                else{setDisc(0);couponMsg(d.error,false);}
+            }).catch(function(){couponMsg('Connexion impossible, réessayez.',false);})
+            .then(function(){cBtn.disabled=false;});
+    }
+    cBtn.addEventListener('click',applyCoupon);
+    cIn.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();applyCoupon();}});
+    cIn.addEventListener('input',function(){if(disc){setDisc(0);couponMsg('',true);}});
+    if(cIn.value) applyCoupon();
     document.querySelectorAll('input[name=zone_id]').forEach(function(r){r.addEventListener('change',zoneSync);});
     zoneSync();
     var inp=document.getElementById('payment_proof'),img=document.getElementById('payProofPreview');

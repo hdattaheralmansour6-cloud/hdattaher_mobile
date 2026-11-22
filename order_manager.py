@@ -17,7 +17,8 @@ def generate_order_number():
 
 
 def create_order_from_cart(customer_id, cart_items, shipping_name, shipping_phone, shipping_address, notes='',
-                           payment_method=None, payment_proof=None, delivery_zone=None, delivery_fee=0):
+                           payment_method=None, payment_proof=None, delivery_zone=None, delivery_fee=0,
+                           coupon_code=None, discount=0):
     """
     Crée une commande à partir des articles du panier (déjà validés/enrichis
     par cart.get_cart_details). Diminue le stock de chaque produit (ou version) commandé.
@@ -40,7 +41,9 @@ def create_order_from_cart(customer_id, cart_items, shipping_name, shipping_phon
             return None, f"Stock insuffisant pour \"{name}\" (disponible : {current_stock})."
 
     delivery_fee = max(0, float(delivery_fee or 0))
-    total = sum(item['subtotal'] for item in cart_items) + delivery_fee
+    items_total = sum(item['subtotal'] for item in cart_items)
+    discount = max(0, min(float(discount or 0), items_total))
+    total = items_total - discount + delivery_fee
 
     data = {
         'order_number': generate_order_number(),
@@ -56,6 +59,8 @@ def create_order_from_cart(customer_id, cart_items, shipping_name, shipping_phon
     }
     if delivery_zone:
         data.update(delivery_zone=delivery_zone, delivery_fee=delivery_fee)
+    if coupon_code and discount > 0:
+        data.update(coupon_code=coupon_code, discount_amount=discount)
     order = db.insert('orders', data)
 
     if not order:

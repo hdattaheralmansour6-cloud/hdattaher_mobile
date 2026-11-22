@@ -1,0 +1,123 @@
+{% extends "admin/base.html" %}
+{% block title %}Codes promo{% endblock %}
+
+{% block admin_content %}
+<div class="admin-header">
+    <div>
+        <h1>Codes promo</h1>
+        <span class="breadcrumb">Le client écrit le code au moment de payer, la réduction s'applique toute seule</span>
+    </div>
+</div>
+
+{% if coupons is none %}
+<div class="ax-empty"><i class="fas fa-database"></i>Lancez d'abord la mise à jour SQL dans Supabase pour activer les codes promo.</div>
+{% else %}
+<div class="cp-grid">
+    <section class="admin-card">
+        <div class="admin-card-header"><h3><i class="fas fa-plus"></i> Nouveau code</h3></div>
+        <div class="admin-card-body">
+            <form method="POST" action="{{ url_for('admin_add_coupon') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group">
+                    <label for="cCode">Code *</label>
+                    <input type="text" name="code" id="cCode" class="form-control cp-code-in" required minlength="3" maxlength="24" placeholder="Ex : BIENVENUE" autocapitalize="characters" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label>Type de réduction</label>
+                    <div class="cp-kind">
+                        <label><input type="radio" name="kind" value="percent" checked><span>% Pourcentage</span></label>
+                        <label><input type="radio" name="kind" value="amount"><span>Montant FCFA</span></label>
+                    </div>
+                </div>
+                <div class="ax-form-2">
+                    <div class="form-group">
+                        <label for="cVal" id="cValLab">Réduction (%) *</label>
+                        <input type="number" name="value" id="cVal" class="form-control" required min="1" step="1" inputmode="numeric" placeholder="Ex : 5">
+                    </div>
+                    <div class="form-group">
+                        <label for="cMin">Achat minimum <small class="ax-muted">(FCFA)</small></label>
+                        <input type="number" name="min_total" id="cMin" class="form-control" min="0" step="1" inputmode="numeric" placeholder="0 = aucun">
+                    </div>
+                </div>
+                <div class="ax-form-2">
+                    <div class="form-group">
+                        <label for="cMax">Nombre d'utilisations</label>
+                        <input type="number" name="max_uses" id="cMax" class="form-control" min="1" step="1" inputmode="numeric" placeholder="Vide = illimité">
+                    </div>
+                    <div class="form-group">
+                        <label for="cEnd">Valable jusqu'au</label>
+                        <input type="date" name="ends_at" id="cEnd" class="form-control" min="{{ today }}">
+                    </div>
+                </div>
+                <button type="submit" class="btn-admin primary"><i class="fas fa-ticket"></i> Créer le code</button>
+            </form>
+        </div>
+    </section>
+
+    <section class="admin-card">
+        <div class="admin-card-header"><h3><i class="fas fa-ticket"></i> Vos codes</h3><small class="ax-muted">{{ coupons|length }}</small></div>
+        {% for c in coupons %}
+        {% set expired = c.ends_at and (c.ends_at|string)[:10] < today %}
+        {% set used_up = c.max_uses and (c.uses or 0) >= c.max_uses %}
+        {% set off = c.is_active is sameas false %}
+        <div class="cp-row {{ 'is-off' if off or expired or used_up }}">
+            <div class="cp-top">
+                <span class="cp-code">{{ c.code }}</span>
+                <b class="cp-val">{% if c.kind == 'percent' %}-{{ '%g'|format(c.value|float) }} %{% else %}-{{ c.value|fcfa }}{% endif %}</b>
+            </div>
+            <div class="cp-meta">
+                <span><i class="fas fa-users"></i> {{ c.uses or 0 }}{% if c.max_uses %} / {{ c.max_uses }}{% endif %} utilisation(s)</span>
+                {% if c.min_total %}<span><i class="fas fa-basket-shopping"></i> dès {{ c.min_total|fcfa }}</span>{% endif %}
+                {% if c.ends_at %}<span><i class="fas fa-calendar"></i> jusqu'au {{ (c.ends_at|string)[8:10] }}/{{ (c.ends_at|string)[5:7] }}/{{ (c.ends_at|string)[:4] }}</span>{% endif %}
+                {% if expired %}<em class="cp-tag">Expiré</em>{% elif used_up %}<em class="cp-tag">Épuisé</em>{% elif off %}<em class="cp-tag">Désactivé</em>{% else %}<em class="cp-tag ok">Actif</em>{% endif %}
+            </div>
+            <form method="POST" action="{{ url_for('admin_coupon_action', coupon_id=c.id) }}" class="cp-actions">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" name="action" value="toggle" class="btn-admin">{% if off %}<i class="fas fa-play"></i> Réactiver{% else %}<i class="fas fa-pause"></i> Désactiver{% endif %}</button>
+                <button type="button" class="btn-admin" onclick="copyCode('{{ c.code }}', this)"><i class="fas fa-copy"></i> Copier</button>
+                <button type="submit" name="action" value="delete" class="btn-admin danger" onclick="return confirm('Supprimer le code {{ c.code }} ?');" aria-label="Supprimer"><i class="fas fa-trash"></i></button>
+            </form>
+        </div>
+        {% else %}
+        <p class="ax-empty-line">Aucun code pour l'instant. Créez-en un, puis partagez-le sur WhatsApp ou en statut.</p>
+        {% endfor %}
+    </section>
+</div>
+{% endif %}
+
+<style>
+.cp-grid { display: grid; gap: 1.2rem; }
+@media (min-width: 960px) { .cp-grid { grid-template-columns: 1fr 1.2fr; align-items: start; } }
+.cp-code-in { text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
+.cp-kind { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.cp-kind label { margin: 0; position: relative; cursor: pointer; }
+.cp-kind input { position: absolute; opacity: 0; pointer-events: none; }
+.cp-kind span { display: flex; align-items: center; justify-content: center; min-height: 46px; border-radius: 12px; border: 1.5px solid var(--admin-border); background: var(--admin-bg); font-weight: 700; font-size: .9rem; }
+.cp-kind input:checked + span { background: var(--admin-gradient); color: var(--on-gold); border-color: transparent; }
+.cp-row { padding: 14px 16px; border-bottom: 1px solid rgba(255, 255, 255, .05); }
+.cp-row:last-child { border-bottom: none; }
+.cp-row.is-off .cp-code, .cp-row.is-off .cp-val { opacity: .5; }
+.cp-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.cp-code { font-family: ui-monospace, Menlo, monospace; font-weight: 800; letter-spacing: .1em; padding: 6px 12px; border-radius: 10px; border: 1.5px dashed #D4AF37; color: #F1D88A; background: rgba(212, 175, 55, .08); overflow-wrap: anywhere; }
+.cp-val { font-size: 1.15rem; color: #E8C86E; white-space: nowrap; }
+.cp-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 10px 0; font-size: .82rem; color: var(--admin-text-sec); align-items: center; }
+.cp-meta i { color: #D4AF37; margin-right: 3px; }
+.cp-tag { font-style: normal; font-weight: 800; font-size: .72rem; padding: 2px 8px; border-radius: 999px; background: rgba(248, 113, 113, .14); color: #F87171; }
+.cp-tag.ok { background: rgba(74, 222, 128, .14); color: #4ADE80; }
+.cp-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 0; }
+.cp-actions .btn-admin { width: auto; flex: 1 1 0; min-width: 0; margin: 0; padding-left: 10px; padding-right: 10px; white-space: nowrap; }
+.cp-actions .btn-admin.danger { flex: 0 0 48px; }
+</style>
+<script>
+document.querySelectorAll('input[name=kind]').forEach(function (r) { r.addEventListener('change', function () {
+    var pct = document.querySelector('input[name=kind]:checked').value === 'percent', v = document.getElementById('cVal');
+    document.getElementById('cValLab').textContent = pct ? 'Réduction (%) *' : 'Réduction (FCFA) *';
+    v.max = pct ? 90 : ''; v.placeholder = pct ? 'Ex : 5' : 'Ex : 10000';
+}); });
+document.querySelector('input[name=kind]:checked').dispatchEvent(new Event('change'));
+function copyCode(code, btn) {
+    var done = function () { btn.innerHTML = '<i class="fas fa-check"></i> Copié'; setTimeout(function () { btn.innerHTML = '<i class="fas fa-copy"></i> Copier'; }, 1500); };
+    if (navigator.clipboard) navigator.clipboard.writeText(code).then(done, done); else done();
+}
+</script>
+{% endblock %}

@@ -368,6 +368,9 @@ def generate_invoice_pdf(order, items, settings=None):
         ]))
 
     rows = [[Paragraph('Sous-total', s_norm), Paragraph(_money(items_total), s_r)]]
+    if float(order.get('discount_amount') or 0) > 0:
+        rows.append([[Paragraph('Code promo', s_norm), Paragraph(_e(order.get('coupon_code') or ''), s_small)],
+                     Paragraph('− ' + _money(order.get('discount_amount')), st('dz', alignment=TA_RIGHT, textColor=colors.HexColor('#1F9D55')))])
     if order.get('delivery_zone'):
         rows.append([[Paragraph('Livraison', s_norm), Paragraph(_e(order.get('delivery_zone')), s_small)],
                      Paragraph(_money(fee) if fee else 'Gratuite', s_r)])

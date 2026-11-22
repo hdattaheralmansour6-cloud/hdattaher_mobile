@@ -144,6 +144,13 @@
             <span class="ax-row-side"><b>{{ (order.delivery_fee or 0)|fcfa }}</b></span>
         </div>
         {% endif %}
+        {% if order.discount_amount %}
+        <div class="ax-row">
+            <span class="ax-thumb"><i class="fas fa-ticket"></i></span>
+            <span class="ax-row-main"><b>Code promo</b><small>{{ order.coupon_code }}</small></span>
+            <span class="ax-row-side"><b style="color:#4ADE80">− {{ order.discount_amount|fcfa }}</b></span>
+        </div>
+        {% endif %}
         <div class="ax-total"><span>Total</span><b>{{ order.total|fcfa }}</b></div>
     </div>
 </section>
