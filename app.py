@@ -414,6 +414,17 @@ def ping():
     return Response('ok', mimetype='text/plain', headers={'Cache-Control': 'no-store'})
 
 
+@app.route('/ping/db')
+def ping_db():
+    """Lit une toute petite donnée dans Supabase : garde la base active (sinon pause après 7 jours sans activité).
+    Répond 503 si Supabase ne répond pas, pour que la tâche GitHub le signale par e-mail."""
+    try:
+        db.fetch_all('settings', 'key', limit=1)
+    except Exception:
+        return Response('supabase injoignable', status=503, mimetype='text/plain', headers={'Cache-Control': 'no-store'})
+    return Response('ok', mimetype='text/plain', headers={'Cache-Control': 'no-store'})
+
+
 @app.route('/robots.txt')
 def robots_txt():
     lines = [
