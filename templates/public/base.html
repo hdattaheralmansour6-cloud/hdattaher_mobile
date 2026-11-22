@@ -42,6 +42,14 @@
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon/favicon-32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon/favicon-16.png') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon/apple-touch-icon.png') }}">
+    <!-- Application installable (écran d'accueil) -->
+    <link rel="manifest" href="{{ url_for('pwa_manifest') }}">
+    <meta name="theme-color" content="#0B0B0D">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="HDATTAHER">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="application-name" content="HDATTAHER">
     <!-- Vitesse : connexions préparées à l'avance + icônes chargées sans bloquer l'affichage -->
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -61,7 +69,7 @@
     </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=27">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}?v=8">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/shop.css') }}?v=8">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/shop.css') }}?v=9">
     <!-- CSS dynamique depuis les paramètres admin -->
     <style>
         {
@@ -281,6 +289,11 @@
                 <span data-i18n="contact">Contact</span>
                 <i class="fas fa-chevron-right mobile-link-arrow"></i>
             </a>
+            <a href="#installer" class="mobile-menu-link pwa-menu-link" data-pwa-open hidden>
+                <div class="mobile-link-icon"><i class="fas fa-mobile-screen-button"></i></div>
+                <span data-i18n="pwa_menu">Installer l'application</span>
+                <i class="fas fa-chevron-right mobile-link-arrow"></i>
+            </a>
             {% if current_user.is_authenticated %}
             <a href="{{ url_for('customer_profile') }}" class="mobile-menu-link">
                 <div class="mobile-link-icon" style="overflow:hidden;">{% if current_user.avatar_url %}<img src="{{ current_user.avatar_url }}" alt="" style="width:100%;height:100%;object-fit:cover;">{% else %}<i class="fas fa-user"></i>{% endif %}</div>
@@ -489,6 +502,37 @@
         {% endif %}
     </nav>
 
+    <!-- ============ INSTALLER L'APPLICATION ============ -->
+    <div class="pwa-bar" id="pwaBar" hidden>
+        <img src="{{ url_for('static', filename='pwa/icon-192.png') }}" alt="" width="44" height="44">
+        <div class="pwa-bar-txt"><b data-i18n="pwa_bar_title">L'app HDATTAHER</b>
+            <small data-i18n="pwa_bar_sub">Sur votre écran d'accueil, gratuite et légère</small></div>
+        <button type="button" class="pwa-bar-go" data-pwa-open data-i18n="pwa_install">Installer</button>
+        <button type="button" class="pwa-bar-x" id="pwaBarX" aria-label="Fermer"><i class="fas fa-xmark"></i></button>
+    </div>
+    <div class="pwa-sheet" id="pwaSheet" hidden role="dialog" aria-modal="true" aria-labelledby="pwaTitle">
+        <div class="pwa-sheet-bg" data-pwa-close></div>
+        <div class="pwa-sheet-card">
+            <button type="button" class="pwa-sheet-x" data-pwa-close aria-label="Fermer"><i class="fas fa-xmark"></i></button>
+            <img class="pwa-sheet-ic" src="{{ url_for('static', filename='pwa/icon-192.png') }}" alt="" width="72" height="72">
+            <h3 id="pwaTitle" data-i18n="pwa_title">Installer l'application</h3>
+            <p class="pwa-sheet-sub" data-i18n="pwa_sub">Ouvrez la boutique en un geste, comme une vraie application.</p>
+            <div class="pwa-steps" data-pwa-os="ios">
+                <div class="pwa-inapp" data-pwa-inapp hidden><i class="fas fa-circle-info"></i> <span data-i18n="pwa_inapp">Ouvrez d'abord ce site dans Safari (bouton ⋯ ou « Ouvrir dans le navigateur »).</span></div>
+                <div class="pwa-step"><span>1</span><p><span data-i18n="pwa_ios1">Touchez le bouton Partager</span> <i class="fas fa-arrow-up-from-bracket pwa-key"></i> <small data-i18n="pwa_ios1b">(ou ⋯ puis Partager)</small></p></div>
+                <div class="pwa-step"><span>2</span><p><span data-i18n="pwa_ios2">Choisissez « Sur l'écran d'accueil »</span> <i class="far fa-square-plus pwa-key"></i></p></div>
+                <div class="pwa-step"><span>3</span><p data-i18n="pwa_ios3">Touchez « Ajouter » : l'icône HM apparaît sur votre écran.</p></div>
+            </div>
+            <div class="pwa-steps" data-pwa-os="android" hidden>
+                <div class="pwa-step"><span>1</span><p><span data-i18n="pwa_and1">Touchez le menu du navigateur</span> <i class="fas fa-ellipsis-vertical pwa-key"></i></p></div>
+                <div class="pwa-step"><span>2</span><p data-i18n="pwa_and2">Choisissez « Installer l'application » ou « Ajouter à l'écran d'accueil ».</p></div>
+                <div class="pwa-step"><span>3</span><p data-i18n="pwa_and3">Confirmez : l'icône HM apparaît sur votre écran.</p></div>
+            </div>
+            <button type="button" class="btn btn-primary pwa-native" id="pwaNative" hidden><i class="fas fa-download"></i> <span data-i18n="pwa_install_now">Installer maintenant</span></button>
+            <button type="button" class="pwa-later" data-pwa-close data-i18n="pwa_later">Plus tard</button>
+        </div>
+    </div>
+
     <!-- Message « ajouté au panier » -->
     <div class="toast" id="toast" role="status" aria-live="polite" hidden>
         <i class="fas fa-circle-check"></i>
@@ -502,7 +546,8 @@
         <i class="fab fa-whatsapp"></i>
     </a>
 
-    <script src="{{ url_for('static', filename='js/main.js') }}?v=40"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}?v=41"></script>
+    <script src="{{ url_for('static', filename='js/pwa.js') }}?v=1" defer data-quiet="{{ 1 if request.endpoint in ('checkout', 'cart_view', 'order_confirmation', 'customer_login', 'customer_register') else 0 }}"></script>
     <script>
         // ============ Mobile Menu ============
         function toggleMobileMenu() {

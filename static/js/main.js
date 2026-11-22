@@ -585,6 +585,7 @@ const translations = {
 // Versions, zones de livraison, avis clients
 Object.assign(translations.fr, {
   alert_title: 'Prévenez-moi quand il revient', alert_sub: 'Laissez votre numéro WhatsApp : on vous écrit dès son retour.', alert_name: 'Votre prénom (facultatif)', alert_phone: 'Ex : 96 00 00 00', alert_btn: 'Me prévenir',
+  pwa_menu: 'Installer l\'application', pwa_bar_title: 'L\'app HDATTAHER', pwa_bar_sub: 'Sur votre écran d\'accueil, gratuite et légère', pwa_install: 'Installer', pwa_title: 'Installer l\'application', pwa_sub: 'Ouvrez la boutique en un geste, comme une vraie application.', pwa_inapp: 'Ouvrez d\'abord ce site dans Safari (bouton ⋯ ou « Ouvrir dans le navigateur »).', pwa_ios1: 'Touchez le bouton Partager', pwa_ios1b: '(ou ⋯ puis Partager)', pwa_ios2: 'Choisissez « Sur l\'écran d\'accueil »', pwa_ios3: 'Touchez « Ajouter » : l\'icône HM apparaît sur votre écran.', pwa_and1: 'Touchez le menu du navigateur', pwa_and2: 'Choisissez « Installer l\'application » ou « Ajouter à l\'écran d\'accueil ».', pwa_and3: 'Confirmez : l\'icône HM apparaît sur votre écran.', pwa_install_now: 'Installer maintenant', pwa_later: 'Plus tard',
   promo_title: 'Code promo', promo_code: 'Code promo', promo_placeholder: 'Vous avez un code ? (facultatif)', promo_apply: 'Appliquer', promo_ok: 'Code appliqué : vous économisez', discount_label: 'Réduction',
   guest_note: 'Pas besoin de compte : votre nom et votre téléphone suffisent. Gardez le numéro de commande pour la suivre.', have_account: "J'ai un compte",
   our_address: 'Adresse', made_in_niger: 'Fièrement basé au Niger',
@@ -602,6 +603,7 @@ Object.assign(translations.fr, {
 });
 Object.assign(translations.en, {
   alert_title: 'Tell me when it\'s back', alert_sub: 'Leave your WhatsApp number: we\'ll message you as soon as it returns.', alert_name: 'Your first name (optional)', alert_phone: 'E.g. 96 00 00 00', alert_btn: 'Notify me',
+  pwa_menu: 'Install the app', pwa_bar_title: 'HDATTAHER app', pwa_bar_sub: 'On your home screen, free and light', pwa_install: 'Install', pwa_title: 'Install the app', pwa_sub: 'Open the shop in one tap, like a real app.', pwa_inapp: 'First open this site in Safari (⋯ button or “Open in browser”).', pwa_ios1: 'Tap the Share button', pwa_ios1b: '(or ⋯ then Share)', pwa_ios2: 'Choose “Add to Home Screen”', pwa_ios3: 'Tap “Add”: the HM icon appears on your screen.', pwa_and1: 'Tap the browser menu', pwa_and2: 'Choose “Install app” or “Add to Home screen”.', pwa_and3: 'Confirm: the HM icon appears on your screen.', pwa_install_now: 'Install now', pwa_later: 'Later',
   promo_title: 'Promo code', promo_code: 'Promo code', promo_placeholder: 'Have a code? (optional)', promo_apply: 'Apply', promo_ok: 'Code applied: you save', discount_label: 'Discount',
   guest_note: 'No account needed: your name and phone number are enough. Keep the order number to track it.', have_account: 'I have an account',
   our_address: 'Address', made_in_niger: 'Proudly based in Niger',
@@ -619,6 +621,7 @@ Object.assign(translations.en, {
 });
 Object.assign(translations.ar, {
   alert_title: 'أعلمني عند توفره', alert_sub: 'اترك رقم واتساب الخاص بك: سنراسلك فور عودته.', alert_name: 'اسمك (اختياري)', alert_phone: '96 00 00 00', alert_btn: 'أعلمني',
+  pwa_menu: 'تثبيت التطبيق', pwa_bar_title: 'تطبيق HDATTAHER', pwa_bar_sub: 'على شاشتك الرئيسية، مجاني وخفيف', pwa_install: 'تثبيت', pwa_title: 'تثبيت التطبيق', pwa_sub: 'افتح المتجر بلمسة واحدة، مثل تطبيق حقيقي.', pwa_inapp: 'افتح هذا الموقع أولًا في Safari (زر ⋯ أو «فتح في المتصفح»).', pwa_ios1: 'اضغط على زر المشاركة', pwa_ios1b: '(أو ⋯ ثم مشاركة)', pwa_ios2: 'اختر «إضافة إلى الشاشة الرئيسية»', pwa_ios3: 'اضغط «إضافة»: تظهر أيقونة HM على شاشتك.', pwa_and1: 'اضغط على قائمة المتصفح', pwa_and2: 'اختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».', pwa_and3: 'أكّد: تظهر أيقونة HM على شاشتك.', pwa_install_now: 'ثبّت الآن', pwa_later: 'لاحقًا',
   promo_title: 'رمز الخصم', promo_code: 'رمز الخصم', promo_placeholder: 'لديك رمز؟ (اختياري)', promo_apply: 'تطبيق', promo_ok: 'تم تطبيق الرمز: توفّر', discount_label: 'الخصم',
   guest_note: 'لا حاجة إلى حساب: يكفي اسمك ورقم هاتفك. احتفظ برقم الطلب لتتبعه.', have_account: 'لدي حساب',
   our_address: 'العنوان', made_in_niger: 'بكل فخر من النيجر',

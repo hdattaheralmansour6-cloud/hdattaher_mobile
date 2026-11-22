@@ -4,6 +4,7 @@ Site e-commerce de vente de téléphones et accessoires
 Propriétaire : Hdattaher | Localisation : Niger
 """
 import os
+import json
 import io
 import re
 import time
@@ -412,6 +413,71 @@ def share_home_image():
 def ping():
     """Petite page ultra-légère : sert à garder le site réveillé (UptimeRobot, cron-job.org…)."""
     return Response('ok', mimetype='text/plain', headers={'Cache-Control': 'no-store'})
+
+
+# ============================================================
+#  APPLICATION INSTALLABLE (PWA) : icône sur l'écran d'accueil, ouverture plein écran
+# ============================================================
+
+PWA_VERSION = '1'
+
+
+def _manifest(admin=False):
+    icons = [
+        {'src': url_for('static', filename='pwa/icon-192.png'), 'sizes': '192x192', 'type': 'image/png', 'purpose': 'any'},
+        {'src': url_for('static', filename='pwa/icon-512.png'), 'sizes': '512x512', 'type': 'image/png', 'purpose': 'any'},
+        {'src': url_for('static', filename='pwa/maskable-192.png'), 'sizes': '192x192', 'type': 'image/png', 'purpose': 'maskable'},
+        {'src': url_for('static', filename='pwa/maskable-512.png'), 'sizes': '512x512', 'type': 'image/png', 'purpose': 'maskable'},
+    ]
+    if admin:
+        data = {'id': '/azawad-app', 'name': 'HM Admin · HDATTAHER MOBILE', 'short_name': 'HM Admin',
+                'description': 'Espace admin de la boutique HDATTAHER MOBILE',
+                'start_url': url_for('admin_dashboard') + '?source=app'}
+    else:
+        data = {'id': '/', 'name': 'HDATTAHER MOBILE', 'short_name': 'HDATTAHER',
+                'description': 'Smartphones et accessoires au Niger, livrés chez vous.',
+                'start_url': '/?source=app',
+                'shortcuts': [
+                    {'name': 'Boutique', 'url': url_for('products'), 'icons': [{'src': url_for('static', filename='pwa/icon-192.png'), 'sizes': '192x192'}]},
+                    {'name': 'Panier', 'url': url_for('cart_view'), 'icons': [{'src': url_for('static', filename='pwa/icon-192.png'), 'sizes': '192x192'}]},
+                    {'name': 'Suivre ma commande', 'url': url_for('order_tracking'), 'icons': [{'src': url_for('static', filename='pwa/icon-192.png'), 'sizes': '192x192'}]},
+                ]}
+    data.update({'scope': '/', 'display': 'standalone', 'orientation': 'portrait',
+                 'background_color': '#0B0B0D', 'theme_color': '#0B0B0D', 'lang': 'fr', 'dir': 'auto',
+                 'categories': ['shopping'], 'icons': icons})
+    resp = Response(json.dumps(data, ensure_ascii=False), mimetype='application/manifest+json')
+    resp.headers['Cache-Control'] = 'public, max-age=3600'
+    return resp
+
+
+@app.route('/manifest.webmanifest')
+def pwa_manifest():
+    return _manifest()
+
+
+@app.route('/manifest-admin.webmanifest')
+def pwa_manifest_admin():
+    return _manifest(admin=True)
+
+
+@app.route('/sw.js')
+def service_worker():
+    """Le « service worker » doit être servi depuis la racine du site pour couvrir toutes les pages."""
+    path = os.path.join(app.root_path, 'static', 'js', 'sw.js')
+    with open(path, encoding='utf-8') as f:
+        js = f.read().replace('__VERSION__', PWA_VERSION)
+    resp = Response(js, mimetype='application/javascript')
+    resp.headers['Cache-Control'] = 'no-cache'
+    resp.headers['Service-Worker-Allowed'] = '/'
+    return resp
+
+
+@app.route('/hors-ligne')
+def offline_page():
+    """Page affichée par l'application quand il n'y a pas d'internet (aucun appel à Supabase)."""
+    html = app.jinja_env.get_template('public/offline.html').render(
+        home=url_for('index'), logo=url_for('static', filename='img/logo-hm.png'))
+    return Response(html, mimetype='text/html')
 
 
 @app.route('/ping/db')
