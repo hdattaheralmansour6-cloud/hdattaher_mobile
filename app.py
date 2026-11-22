@@ -1990,20 +1990,23 @@ def _save_payment_proof(file, customer_id):
 
 
 @app.route('/commande/valider', methods=['GET', 'POST'])
-@customer_login_required
 def checkout():
+    """Validation de la commande : avec un compte, ou sans compte (nom + téléphone)."""
     items, total = cart_module.get_cart_details()
     if not items:
         flash('Votre panier est vide.', 'error')
         return redirect(url_for('cart_view'))
 
-    rows = db.fetch_all('customers', filters={'id': current_user.id}, limit=1)
-    customer = rows[0] if rows else {}
+    logged = current_user.is_authenticated
+    customer = {}
+    if logged:
+        rows = db.fetch_all('customers', filters={'id': current_user.id}, limit=1)
+        customer = rows[0] if rows else {}
 
     zones = get_zones()
 
     def _render(**extra):
-        return render_template('public/checkout.html', items=items, total=total, customer=customer,
+        return render_template('public/checkout.html', items=items, total=total, customer=customer, guest=not logged,
                                payment_number=Config.PAYMENT_NUMBER, zones=zones,
                                selected_zone=request.form.get('zone_id', ''),
                                payment_methods=Config.PAYMENT_METHODS, **extra)
@@ -2022,6 +2025,10 @@ def checkout():
         if not shipping_name or not shipping_phone or not shipping_address:
             flash('Veuillez remplir toutes les informations de livraison.', 'error')
             return _render(selected_method=payment_method, notes=notes)
+        if len(''.join(ch for ch in shipping_phone if ch.isdigit())) < 8:
+            flash('Numéro de téléphone incomplet : écrivez au moins 8 chiffres.', 'error')
+            return _render(selected_method=payment_method, notes=notes)
+        shipping_name, shipping_address, notes = shipping_name[:80], shipping_address[:300], notes[:500]
 
         zone = None
         if zones:
@@ -2034,13 +2041,13 @@ def checkout():
             flash('Veuillez choisir un moyen de paiement (Amana ou Nita).', 'error')
             return _render(notes=notes)
 
-        proof_url, proof_error = _save_payment_proof(request.files.get('payment_proof'), current_user.id)
+        proof_url, proof_error = _save_payment_proof(request.files.get('payment_proof'), current_user.id if logged else 'invite')
         if proof_error:
             flash(proof_error, 'error')
             return _render(selected_method=payment_method, notes=notes)
 
         order, error = create_order_from_cart(
-            current_user.id, items, shipping_name, shipping_phone, shipping_address, notes,
+            current_user.id if logged else None, items, shipping_name, shipping_phone, shipping_address, notes,
             payment_method=payment_method, payment_proof=proof_url,
             delivery_zone=zone['name'] if zone else None,
             delivery_fee=float(zone.get('fee') or 0) if zone else 0
@@ -2051,7 +2058,12 @@ def checkout():
             return _render(selected_method=payment_method, notes=notes)
 
         cart_module.clear_cart()
-        log_action('Nouvelle commande', f'N° {order["order_number"]} - Client: {current_user.email} - Paiement {payment_method}')
+        who = current_user.email if logged else f'{shipping_name} ({shipping_phone}, sans compte)'
+        if not logged:
+            # Le client sans compte peut revoir sa confirmation depuis ce navigateur
+            mine = [o for o in session.get('guest_orders', []) if o != str(order['id'])][-9:]
+            session['guest_orders'] = mine + [str(order['id'])]
+        log_action('Nouvelle commande', f'N° {order["order_number"]} - Client: {who} - Paiement {payment_method}')
         flash(f'Commande {order["order_number"]} enregistrée avec succès !', 'success')
         return redirect(url_for('order_confirmation', order_id=order['id']))
 
@@ -2059,10 +2071,12 @@ def checkout():
 
 
 @app.route('/commande/confirmation/<order_id>')
-@customer_login_required
 def order_confirmation(order_id):
     order, items = get_order_with_items(order_id)
-    if not order or str(order.get('customer_id')) != str(current_user.id):
+    mine = bool(order) and (
+        (current_user.is_authenticated and str(order.get('customer_id')) == str(current_user.id))
+        or (not order.get('customer_id') and str(order_id) in session.get('guest_orders', [])))
+    if not mine:
         flash('Commande introuvable.', 'error')
         return redirect(url_for('index'))
     return render_template('public/order_confirmation.html', order=order, items=items)

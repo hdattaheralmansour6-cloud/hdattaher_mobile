@@ -584,6 +584,7 @@ const translations = {
 
 // Versions, zones de livraison, avis clients
 Object.assign(translations.fr, {
+  guest_note: 'Pas besoin de compte : votre nom et votre téléphone suffisent. Gardez le numéro de commande pour la suivre.', have_account: "J'ai un compte",
   our_address: 'Adresse', made_in_niger: 'Fièrement basé au Niger',
   opt_storage: 'Stockage', opt_color: 'Couleur', choose_version: 'Choisir', variant_out: 'Indisponible dans cette version',
   delivery_fee: 'Livraison', delivery_next: "Choisie à l'étape suivante", delivery_zone_title: 'Zone de livraison',
@@ -598,6 +599,7 @@ Object.assign(translations.fr, {
   cond_bon: 'Bon état', cond_correct: 'État correct'
 });
 Object.assign(translations.en, {
+  guest_note: 'No account needed: your name and phone number are enough. Keep the order number to track it.', have_account: 'I have an account',
   our_address: 'Address', made_in_niger: 'Proudly based in Niger',
   opt_storage: 'Storage', opt_color: 'Color', choose_version: 'Choose', variant_out: 'Unavailable in this version',
   delivery_fee: 'Delivery', delivery_next: 'Chosen at the next step', delivery_zone_title: 'Delivery area',
@@ -612,6 +614,7 @@ Object.assign(translations.en, {
   cond_bon: 'Good', cond_correct: 'Fair'
 });
 Object.assign(translations.ar, {
+  guest_note: 'لا حاجة إلى حساب: يكفي اسمك ورقم هاتفك. احتفظ برقم الطلب لتتبعه.', have_account: 'لدي حساب',
   our_address: 'العنوان', made_in_niger: 'بكل فخر من النيجر',
   opt_storage: 'السعة', opt_color: 'اللون', choose_version: 'اختر', variant_out: 'غير متوفر في هذا الخيار',
   delivery_fee: 'التوصيل', delivery_next: 'يُحدد في الخطوة التالية', delivery_zone_title: 'منطقة التوصيل',

@@ -25,6 +25,11 @@
 .zone-opt em{font-style:normal;font-weight:800;white-space:nowrap;}
 .zone-opt input:checked + span{border-color:#D4AF37;background:rgba(212,175,55,.12);}
 .co-label{display:block;font-size:.8rem;color:var(--text-secondary);font-weight:500;}
+.guest-note{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px;border:1px solid rgba(212,175,55,.35);background:rgba(212,175,55,.07);margin-bottom:14px;}
+.guest-note i{color:#D4AF37;font-size:1.1rem;}
+.guest-note p{margin:0;flex:1;font-size:.84rem;line-height:1.45;color:var(--text);}
+.guest-note a{white-space:nowrap;font-weight:700;color:#B8892E;text-decoration:none;}
+[data-theme="dark"] .guest-note a{color:#E8C86E;}
 </style>
 {% endblock %}
 
@@ -36,6 +41,13 @@
         </div>
 
         <div class="account-wrapper account-wide" style="margin-top:0;">
+            {% if guest %}
+            <div class="guest-note">
+                <i class="fas fa-bolt"></i>
+                <p data-i18n="guest_note">Pas besoin de compte : votre nom et votre téléphone suffisent. Gardez le numéro de commande pour la suivre.</p>
+                <a href="{{ url_for('customer_login', next=url_for('checkout')) }}" data-i18n="have_account">J'ai un compte</a>
+            </div>
+            {% endif %}
             <div class="account-card account-section">
                 <h2 data-i18n="order_summary">Récapitulatif</h2>
                 {% for item in items %}

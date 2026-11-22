@@ -39,7 +39,11 @@
                 </p>
 
                 <div style="display:flex; gap:10px; justify-content:center; margin-top:20px; flex-wrap:wrap;">
+                    {% if current_user.is_authenticated %}
                     <a href="{{ url_for('customer_orders') }}" class="btn btn-outline" data-i18n="my_orders_tab">Mes commandes</a>
+                    {% else %}
+                    <a href="{{ url_for('order_tracking') }}" class="btn btn-outline" data-i18n="track_order">Suivre ma commande</a>
+                    {% endif %}
                     <a href="{{ url_for('products') }}" class="btn btn-primary" data-i18n="continue_shopping_btn">Continuer mes achats</a>
                 </div>
             </div>
