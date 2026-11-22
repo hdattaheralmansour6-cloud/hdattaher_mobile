@@ -43,6 +43,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon/favicon-16.png') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon/apple-touch-icon.png') }}">
     <!-- Application installable (écran d'accueil) -->
+    <script>window.__hmBip=null;window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__hmBip=e;document.dispatchEvent(new Event('hm-bip'));});</script>
     <link rel="manifest" href="{{ url_for('pwa_manifest') }}">
     <meta name="theme-color" content="#0B0B0D">
     <meta name="mobile-web-app-capable" content="yes">
@@ -547,7 +548,7 @@
     </a>
 
     <script src="{{ url_for('static', filename='js/main.js') }}?v=41"></script>
-    <script src="{{ url_for('static', filename='js/pwa.js') }}?v=1" defer data-quiet="{{ 1 if request.endpoint in ('checkout', 'cart_view', 'order_confirmation', 'customer_login', 'customer_register') else 0 }}"></script>
+    <script src="{{ url_for('static', filename='js/pwa.js') }}?v=2" defer data-quiet="{{ 1 if request.endpoint in ('checkout', 'cart_view', 'order_confirmation', 'customer_login', 'customer_register') else 0 }}"></script>
     <script>
         // ============ Mobile Menu ============
         function toggleMobileMenu() {

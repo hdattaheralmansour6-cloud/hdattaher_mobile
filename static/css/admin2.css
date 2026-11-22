@@ -514,3 +514,7 @@ a.ax-row:active, a.ax-row:hover { background: rgba(212, 175, 55, .04); }
   padding: 12px 14px; border-radius: 14px; font-size: .85rem; line-height: 1.55; background: #1b1b1f; border: 1px solid rgba(212, 175, 55, .3); }
 .ax-install-help i { color: #4DA3FF; }
 @media (min-width: 900px) { .ax-install, .ax-install-help { left: auto; right: 24px; width: 380px; } .ax-install { bottom: 24px; } .ax-install-help { bottom: 96px; } }
+.ax-install-help ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.ax-install-help li { padding-left: 2px; }
+.ax-install-help small { color: var(--admin-text-sec); }
+.ax-ih-warn { margin: 0 0 8px; padding: 8px 10px; border-radius: 10px; background: rgba(251, 191, 36, .1); color: #FBD38D; }

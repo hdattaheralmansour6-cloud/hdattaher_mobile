@@ -26,13 +26,14 @@
         return; // déjà ouverte comme application : rien à proposer
     }
 
-    var deferred = null; // invite d'installation Android / Chrome
-    window.addEventListener('beforeinstallprompt', function (e) {
-        e.preventDefault();
-        deferred = e;
-        if (nativeBtn) nativeBtn.hidden = false;
+    var deferred = window.__hmBip || null; // invite d'installation Android / Chrome (captée dès le début de la page)
+    function gotPrompt() {
+        deferred = window.__hmBip || deferred;
+        if (nativeBtn) nativeBtn.hidden = !deferred;
         showEntry();
-    });
+    }
+    document.addEventListener('hm-bip', gotPrompt);
+    window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); window.__hmBip = e; gotPrompt(); });
     window.addEventListener('appinstalled', function () {
         store('pwa_installed', '1'); deferred = null;
         hideBar(); close();

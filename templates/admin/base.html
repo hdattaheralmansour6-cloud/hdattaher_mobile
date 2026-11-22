@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#0B0B0D">
     <meta name="robots" content="noindex, nofollow">
+    <script>window.__hmBip=null;window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__hmBip=e;document.dispatchEvent(new Event('hm-bip'));});</script>
     <link rel="manifest" href="{{ url_for('pwa_manifest_admin') }}">
     <link rel="icon" href="{{ url_for('static', filename='favicon/favicon.ico') }}">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='favicon/apple-touch-icon.png') }}">
@@ -16,7 +17,7 @@
     <title>{% block title %}Admin{% endblock %} - HDATTAHER MOBILE</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}?v=3">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin2.css') }}?v=6">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin2.css') }}?v=7">
 </head>
 
 {% set ep = request.endpoint or '' %}
@@ -202,8 +203,21 @@
         <button type="button" class="ax-install-x" id="axInstallX" aria-label="Fermer"><i class="fas fa-xmark"></i></button>
     </div>
     <div class="ax-install-help" id="axInstallHelp" hidden>
-        <b>Sur iPhone :</b> touchez <i class="fas fa-arrow-up-from-bracket"></i> Partager (ou ⋯ puis Partager), puis « Sur l'écran d'accueil », puis « Ajouter ».<br>
-        <b>Sur Android :</b> touchez le menu <i class="fas fa-ellipsis-vertical"></i> de Chrome, puis « Installer l'application » ou « Ajouter à l'écran d'accueil ».
+        <div data-os="android">
+            <p class="ax-ih-warn" data-notchrome hidden><i class="fas fa-circle-info"></i> Ouvrez d'abord cette page dans <b>Google Chrome</b>.</p>
+            <ol>
+                <li>Touchez les <b>3 points</b> <i class="fas fa-ellipsis-vertical"></i> en haut à droite de Chrome.</li>
+                <li>Touchez <b>« Installer l'application »</b> <small>(ou « Ajouter à l'écran d'accueil »)</small>.</li>
+                <li>Touchez <b>« Installer »</b> : l'icône HM Admin arrive sur l'écran.</li>
+            </ol>
+        </div>
+        <div data-os="ios" hidden>
+            <ol>
+                <li>Touchez <i class="fas fa-arrow-up-from-bracket"></i> <b>Partager</b> (ou ⋯ puis Partager).</li>
+                <li>Touchez <b>« Sur l'écran d'accueil »</b>.</li>
+                <li>Touchez <b>« Ajouter »</b>.</li>
+            </ol>
+        </div>
     </div>
     <script>
     (function () {
@@ -214,15 +228,20 @@
         var closed = 0; try { closed = +localStorage.getItem('ax_install_closed') || 0; } catch (e) {}
         if (Date.now() - closed < 7 * 864e5) return;
         var ua = navigator.userAgent, mobile = /android|iphone|ipad|ipod/i.test(ua) || (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
-        var deferred = null;
+        var isIOS = /iphone|ipad|ipod/i.test(ua) || (/macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+        var isChrome = /Chrome\/\d+/.test(ua) && !/SamsungBrowser|OPR|Opera|EdgA|PHX|Phoenix|UCBrowser|MiuiBrowser|HeyTap|VivoBrowser|Firefox|YaBrowser|wv\)/.test(ua);
+        help.querySelector('[data-os="ios"]').hidden = !isIOS;
+        help.querySelector('[data-os="android"]').hidden = isIOS;
+        help.querySelector('[data-notchrome]').hidden = isIOS || isChrome;
         function show() { box.hidden = false; }
-        window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferred = e; show(); });
+        document.addEventListener('hm-bip', show);
         window.addEventListener('appinstalled', function () { box.hidden = true; help.hidden = true; });
-        if (mobile) setTimeout(show, 800);
+        if (mobile || window.__hmBip) setTimeout(show, 800);
         document.getElementById('axInstallGo').addEventListener('click', function () {
-            if (deferred) {
-                deferred.prompt();
-                deferred.userChoice.then(function (c) { deferred = null; if (c && c.outcome === 'accepted') box.hidden = true; }).catch(function () {});
+            var d = window.__hmBip;
+            if (d) {
+                d.prompt();
+                d.userChoice.then(function (c) { window.__hmBip = null; if (c && c.outcome === 'accepted') { box.hidden = true; help.hidden = true; } }).catch(function () {});
             } else {
                 help.hidden = !help.hidden;
             }
