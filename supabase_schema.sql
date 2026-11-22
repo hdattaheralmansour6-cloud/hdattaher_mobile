@@ -626,3 +626,6 @@ REVOKE ALL ON FUNCTION create_admin_member(TEXT, TEXT, TEXT) FROM PUBLIC, anon, 
 REVOKE ALL ON FUNCTION set_admin_password(UUID, TEXT) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION create_admin_member(TEXT, TEXT, TEXT) TO service_role;
 GRANT EXECUTE ON FUNCTION set_admin_password(UUID, TEXT) TO service_role;
+
+-- ---------- Catalogue PDF ----------
+ALTER TABLE products ADD COLUMN IF NOT EXISTS in_catalog BOOLEAN NOT NULL DEFAULT true;

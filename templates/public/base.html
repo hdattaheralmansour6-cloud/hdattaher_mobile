@@ -70,7 +70,7 @@
     </script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=27">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}?v=8">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/shop.css') }}?v=11">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/shop.css') }}?v=12">
     <!-- CSS dynamique depuis les paramètres admin -->
     <style>
         {
@@ -288,6 +288,11 @@
             <a href="{{ url_for('contact') }}" class="mobile-menu-link">
                 <div class="mobile-link-icon"><i class="fas fa-envelope"></i></div>
                 <span data-i18n="contact">Contact</span>
+                <i class="fas fa-chevron-right mobile-link-arrow"></i>
+            </a>
+            <a href="{{ url_for('catalogue_pdf') }}" class="mobile-menu-link" target="_blank" rel="noopener">
+                <div class="mobile-link-icon"><i class="fas fa-file-pdf"></i></div>
+                <span data-i18n="cat_pdf">Catalogue PDF</span>
                 <i class="fas fa-chevron-right mobile-link-arrow"></i>
             </a>
             <a href="#installer" class="mobile-menu-link pwa-menu-link" data-pwa-open hidden>
@@ -541,7 +546,7 @@
         <i class="fab fa-whatsapp"></i>
     </a>
 
-    <script src="{{ url_for('static', filename='js/main.js') }}?v=41"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}?v=42"></script>
     <script src="{{ url_for('static', filename='js/pwa.js') }}?v=5" defer data-quiet="{{ 1 if request.endpoint in ('checkout', 'cart_view', 'order_confirmation', 'customer_login', 'customer_register') else 0 }}"></script>
     <script>
         // ============ Mobile Menu ============

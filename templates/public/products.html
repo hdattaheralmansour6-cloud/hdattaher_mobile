@@ -14,6 +14,13 @@
         <h1>{% if page_title %}{{ page_title }}{% elif search %}« {{ search }} »{% else %}<span data-i18n="shop_title">La boutique</span>{% endif %}</h1>
         <p><b>{{ products|length }}</b> <span data-i18n="{{ 'product_one' if products|length == 1 else 'product_many' }}">produits</span></p>
     </div>
+    {% set _cat_ok = current_category and (current_category|string) in (all_categories|map(attribute='id')|map('string')|list) %}
+    <a class="cat-link" target="_blank" rel="noopener"
+       href="{{ url_for('catalogue_pdf', categorie=current_category if _cat_ok else None, promo='1' if promo_only else None) }}">
+        <span class="cat-link-ic"><i class="fas fa-file-pdf"></i></span>
+        <span class="cat-link-txt"><b data-i18n="cat_pdf">Catalogue PDF</b><small data-i18n="cat_pdf_sub">Tous nos prix dans un fichier, à garder ou partager</small></span>
+        <i class="fas fa-download cat-link-go"></i>
+    </a>
 
     <!-- Recherche + bouton filtres -->
     <form method="GET" action="{{ url_for('products') }}" class="shop-bar" id="shopForm">

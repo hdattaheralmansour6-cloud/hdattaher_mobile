@@ -409,6 +409,125 @@ def share_home_image():
                            lambda: share_image.render_home([_share_photo(x['image']) for x in with_photo]))
 
 
+# ============================================================
+#  CATALOGUE PDF (site public + admin)
+# ============================================================
+from catalogue_generator import generate_catalogue_pdf
+_catalogue_photos = {}
+
+
+def _catalogue_photo(url):
+    """Photo réduite (JPEG ~420 px) pour le catalogue, gardée en mémoire."""
+    if not url or url == 'default.png':
+        return None
+    if url in _catalogue_photos:
+        return _catalogue_photos[url]
+    from PIL import Image, ImageOps
+    data = None
+    for u in (thumb_url(url), url):
+        try:
+            raw = _download_image(u, 8 * 1024 * 1024)
+            img = Image.open(io.BytesIO(raw))
+            img = ImageOps.exif_transpose(img)
+            if img.mode in ('RGBA', 'LA', 'P'):
+                img = img.convert('RGBA')
+                bg = Image.new('RGB', img.size, (244, 241, 234))
+                bg.paste(img, mask=img.split()[-1])
+                img = bg
+            else:
+                img = img.convert('RGB')
+            img.thumbnail((420, 420), Image.LANCZOS)
+            out = io.BytesIO()
+            img.save(out, 'JPEG', quality=82, optimize=True)
+            data = out.getvalue()
+            break
+        except Exception:
+            continue
+    if len(_catalogue_photos) > 400:
+        _catalogue_photos.clear()
+    _catalogue_photos[url] = data
+    return data
+
+
+def _catalogue_sections(category_id='', promo_only=False):
+    """Produits du catalogue regroupés par catégorie (ordre des catégories du site)."""
+    rows = get_supabase().table('products').select('*, categories(name)').eq('is_active', True) \
+        .order('created_at', desc=True).execute().data or []
+    rows = _fix_cat_and_image(rows)
+    rows = [p for p in rows if p.get('in_catalog') is not False]
+    if promo_only:
+        rows = [p for p in rows if float(p.get('discount') or 0) > 0 or float(p.get('old_price') or 0) > float(p.get('price') or 0)]
+    if category_id:
+        rows = [p for p in rows if str(p.get('category_id')) == str(category_id)]
+    # versions : prix « à partir de »
+    with_var = [p['id'] for p in rows if p.get('has_variants')]
+    var_min = {}
+    if with_var:
+        try:
+            for v in get_supabase().table('product_variants').select('product_id, price, stock') \
+                    .in_('product_id', with_var).execute().data or []:
+                if v.get('price') is not None:
+                    k = v['product_id']
+                    var_min.setdefault(k, set()).add(float(v['price']))
+        except Exception:
+            var_min = {}
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=8) as ex:
+        photos = list(ex.map(_catalogue_photo, [p.get('image') for p in rows]))
+    base = (app.config.get('SITE_URL') or Config.SITE_URL or request.url_root).rstrip('/')
+    items = []
+    for p, photo in zip(rows, photos):
+        prices = var_min.get(p['id'])
+        items.append({
+            'name': p.get('name'), 'brand': p.get('brand'), 'price': p.get('price'),
+            'old_price': p.get('old_price'), 'discount': p.get('discount'), 'etat': p.get('etat') or 'neuf',
+            'stock': p.get('stock'), 'from_price': bool(prices and len(prices) > 1),
+            'url': f"{base}/product/{p['id']}", 'photo': photo,
+            '_cat': p.get('category_id'), '_cat_name': p.get('category_name'),
+        })
+    order = [c for c in get_categories_list() if c.get('name') != 'Promotions']
+    sections, used = [], set()
+    for c in order:
+        ps = [x for x in items if str(x['_cat']) == str(c['id'])]
+        if ps:
+            sections.append((c['name'], ps))
+            used.update(id(x) for x in ps)
+    rest = [x for x in items if id(x) not in used]
+    if rest:
+        sections.append(('Autres produits', rest))
+    return sections
+
+
+@shop_cached(900)
+def _catalogue_pdf(category_id, promo_only):
+    sections = _catalogue_sections(category_id, promo_only)
+    subtitle = 'Smartphones & accessoires'
+    if promo_only:
+        subtitle = 'Les promotions du moment'
+    elif category_id and sections:
+        subtitle = sections[0][0]
+    base = (app.config.get('SITE_URL') or Config.SITE_URL or request.url_root).rstrip('/')
+    return generate_catalogue_pdf(sections, get_settings(), base, subtitle)
+
+
+@app.route('/catalogue.pdf')
+def catalogue_pdf():
+    category_id = (request.args.get('categorie') or '').strip()
+    if category_id and not re.fullmatch(r'[A-Za-z0-9-]{1,64}', category_id):
+        category_id = ''
+    promo_only = request.args.get('promo') == '1'
+    try:
+        pdf = _catalogue_pdf(category_id, promo_only)
+    except Exception:
+        app.logger.exception('Catalogue PDF impossible')
+        flash("Le catalogue n'a pas pu être créé. Réessayez dans un instant.", 'error')
+        return redirect(url_for('products'))
+    name = 'catalogue-hdattaher-mobile' + ('-promos' if promo_only else '') + '.pdf'
+    return Response(pdf, mimetype='application/pdf', headers={
+        'Content-Disposition': f'inline; filename={name}',
+        'Cache-Control': 'public, max-age=600'})
+
+
 @app.route('/ping')
 def ping():
     """Petite page ultra-légère : sert à garder le site réveillé (UptimeRobot, cron-job.org…)."""
@@ -1554,6 +1673,21 @@ def _save_extra_photos(product_id, photos, before):
         return "Les autres photos n'ont pas pu être enregistrées : lancez d'abord la mise à jour SQL dans Supabase."
 
 
+def _save_in_catalog(product_id, before):
+    """Case « Mettre dans le catalogue PDF » (enregistrée à part, tolérante sans la mise à jour SQL)."""
+    if request.form.get('in_catalog_field') != '1':
+        return None   # formulaire sans cette case (ancienne page ouverte avant la mise à jour) : on ne touche à rien
+    want = bool(request.form.get('in_catalog'))
+    if want == (before is not False):
+        return None
+    try:
+        db.update('products', {'in_catalog': want}, {'id': product_id})
+        return None
+    except Exception as e:
+        app.logger.warning('Catalogue %s : %s', product_id, e)
+        return "Le choix « catalogue PDF » n'a pas pu être enregistré : lancez d'abord la mise à jour SQL dans Supabase."
+
+
 def _prices_from_form():
     """Prix, ancien prix et réduction cohérents (réduction calculée depuis l'ancien prix)."""
     price = max(0, safe_float(request.form.get('price'), 0))
@@ -1646,6 +1780,7 @@ def admin_add_product():
         problem = _apply_variants(new_product['id'], variant_rows, False) if (new_product and variant_rows) else None
         if new_product:
             problem = _save_extra_photos(new_product['id'], _extra_photos_from_form([]), []) or problem
+            problem = _save_in_catalog(new_product['id'], True) or problem
         etat_fields = _etat_from_form()
         if new_product and etat_fields['etat'] != 'neuf':
             problem = _save_etat(new_product['id'], etat_fields) or problem
@@ -1705,6 +1840,7 @@ def admin_edit_product(product_id):
         problem = _apply_variants(product_id, variant_rows, bool(product.get('has_variants')))
         problem = _save_extra_photos(product_id, _extra_photos_from_form(product.get('extra_images')),
                                      product.get('extra_images')) or problem
+        problem = _save_in_catalog(product_id, product.get('in_catalog')) or problem
         etat_fields = _etat_from_form()
         if etat_fields['etat'] != 'neuf' or (product.get('etat') or 'neuf') != 'neuf':
             problem = _save_etat(product_id, etat_fields) or problem

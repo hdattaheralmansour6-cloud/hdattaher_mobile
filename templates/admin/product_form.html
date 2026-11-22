@@ -210,6 +210,11 @@
                 <span><b>Nouvel arrivage</b><small>Apparaît dans « Nouveautés »</small></span>
                 <span class="ax-switch"><input type="checkbox" name="is_new" {{ 'checked' if product and product.is_new }}><span></span></span>
             </label>
+            <label class="ax-toggle-row">
+                <span><b>Dans le catalogue PDF</b><small>Décochez pour ne pas mettre ce produit dans le catalogue</small></span>
+                <input type="hidden" name="in_catalog_field" value="1">
+                <span class="ax-switch"><input type="checkbox" name="in_catalog" {{ 'checked' if not product or product.get('in_catalog') is not false }}><span></span></span>
+            </label>
             {% if action == 'edit' %}
             <label class="ax-toggle-row">
                 <span><b>Visible sur le site</b><small>Désactivé : le produit est caché aux clients mais pas supprimé</small></span>
